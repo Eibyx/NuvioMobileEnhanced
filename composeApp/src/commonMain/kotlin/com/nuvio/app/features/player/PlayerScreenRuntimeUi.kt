@@ -305,6 +305,9 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
                         if (message != null && tryRefreshCredentialedSourceAfterError(message)) {
                             return@PlatformPlayerSurface
                         }
+                        if (message != null && recoverFromFailedEngineSwitch()) {
+                            return@PlatformPlayerSurface
+                        }
                         errorMessage = message
                         if (message != null) {
                             scrubbingPositionMs = null
@@ -599,7 +602,7 @@ private fun PlayerScreenRuntime.RenderPlayerControls(isEpisode: Boolean) {
                 null
             },
             onSwitchEngineClick = if (playerController?.playbackEngine != null) {
-                { switchPlaybackEngine() }
+                { showEnginePicker = true }
             } else {
                 null
             },
@@ -812,6 +815,18 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
         onImported = { subtitle -> onLocalSubtitleImported(subtitle) },
         onError = { error -> onLocalSubtitleImportFailed(error) },
     )
+    if (showEnginePicker) {
+        PlayerEnginePickerDialog(
+            selected = selectedEngineChoice,
+            activeEngine = playerController?.playbackEngine,
+            defaultEngine = defaultResolvedEngine,
+            onSelected = { choice ->
+                showEnginePicker = false
+                selectPlaybackEngine(choice)
+            },
+            onDismiss = { showEnginePicker = false },
+        )
+    }
     PlayerScreenModalHosts(
         pendingP2pSwitch = pendingP2pSwitch,
         onPendingP2pSwitchChanged = { pendingP2pSwitch = it },

@@ -2823,4 +2823,11 @@
     <string name="player_local_subtitle_section">Imported</string>
     <string name="player_local_subtitle_import_action">Import subtitle file…</string>
     <string name="player_local_subtitle_source">Local file</string>
+    <string name="player_engine_picker_title">Playback engine</string>
+    <string name="player_engine_option_auto">Automatic</string>
+    <string name="player_engine_option_auto_desc">Uses the default engine from Settings (%1$s) and switches to libmpv for ASS/SSA when enabled</string>
+    <string name="player_engine_option_exo_desc">Android media engine. Basic ASS/SSA styling</string>
+    <string name="player_engine_option_libmpv_desc">mpvRx engine with libass: ASS/SSA rendered as authored</string>
+    <string name="player_engine_option_in_use">in use</string>
+    <string name="player_engine_switch_failed_message">%1$s failed. Back to %2$s</string>
 </resources>

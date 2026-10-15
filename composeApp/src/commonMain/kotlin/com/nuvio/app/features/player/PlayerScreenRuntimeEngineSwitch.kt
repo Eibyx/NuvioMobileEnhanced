@@ -3,6 +3,7 @@ package com.nuvio.app.features.player
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.player_engine_switch_failed_message
 import nuvio.composeapp.generated.resources.player_engine_switching_ass_message
 import nuvio.composeapp.generated.resources.player_engine_switching_manual_message
 
@@ -45,6 +46,8 @@ internal fun PlayerScreenRuntime.switchPlaybackEngine(
     if (resolvedTarget == current) return
 
     pendingEngineSwitchRestore = captureEngineSwitchRestore(resolvedTarget)
+    // If the new engine fails before it starts playing, go back to this one (see recoverFromFailedEngineSwitch).
+    engineSwitchFallback = current
     flushWatchProgress()
     if (initialSeekApplied) {
         activeInitialPositionMs = playbackSnapshot.positionMs.coerceAtLeast(0L)
@@ -88,6 +91,7 @@ internal fun PlayerScreenRuntime.applyPendingEngineSwitchRestore() {
     val controller = playerController ?: return
     if (controller.playbackEngine != restore.target || playbackSnapshot.isLoading) return
     pendingEngineSwitchRestore = null
+    engineSwitchFallback = null
     // Runs on the runtime scope so recompositions (loading flips, key changes) cannot cancel it.
     scope.launch { restoreEngineSwitchState(controller, restore) }
 }
@@ -198,4 +202,72 @@ internal fun PlayerScreenRuntime.maybeSwitchToLibmpvForAss() {
     if (autoAssEngineSwitchItemKey == itemKey) return
     autoAssEngineSwitchItemKey = itemKey
     switchPlaybackEngine(target = AndroidPlaybackEngine.Libmpv, manual = false)
+}
+
+/** Engine the player is following when "Automatic" is chosen in the player: the default from Settings. */
+internal val PlayerScreenRuntime.defaultResolvedEngine: AndroidPlaybackEngine
+    get() = if (configuredPlaybackEngine == AndroidPlaybackEngine.Libmpv) {
+        AndroidPlaybackEngine.Libmpv
+    } else {
+        AndroidPlaybackEngine.ExoPlayer
+    }
+
+/** Choice shown as selected in the in-player engine picker. */
+internal val PlayerScreenRuntime.selectedEngineChoice: AndroidPlaybackEngine
+    get() = playbackEngineOverride ?: AndroidPlaybackEngine.Auto
+
+/**
+ * In-player engine picker: Automatic (follow the default engine from Settings, forget the engine
+ * remembered for this title), ExoPlayer or libmpv (mpvRx). State is preserved as in
+ * [switchPlaybackEngine].
+ */
+internal fun PlayerScreenRuntime.selectPlaybackEngine(choice: AndroidPlaybackEngine) {
+    val current = playerController?.playbackEngine ?: return
+    if (choice != AndroidPlaybackEngine.Auto) {
+        switchPlaybackEngine(target = choice, manual = true)
+        return
+    }
+    AvixPlaybackEnginePreferences.forgetTitle(engineTitleKey)
+    if (playbackEngineOverride == null) return
+    val target = defaultResolvedEngine
+    pendingEngineSwitchRestore = captureEngineSwitchRestore(target)
+    engineSwitchFallback = current.takeIf { it != target }
+    flushWatchProgress()
+    if (initialSeekApplied) {
+        activeInitialPositionMs = playbackSnapshot.positionMs.coerceAtLeast(0L)
+        activeInitialProgressFraction = null
+    }
+    playbackEngineOverride = null
+    if (target != current) {
+        showGestureFeedback(
+            GestureFeedbackState(
+                messageRes = Res.string.player_engine_switching_manual_message,
+                messageArgs = listOf(target.label),
+            ),
+        )
+    }
+}
+
+/**
+ * Called on a player error. When the engine the user just switched to fails before it plays,
+ * returns to the previous engine (same position and tracks) instead of showing the error, and
+ * does not keep the failed engine remembered for this title. Returns true when it recovered.
+ */
+internal fun PlayerScreenRuntime.recoverFromFailedEngineSwitch(): Boolean {
+    val previous = engineSwitchFallback ?: return false
+    val failed = playerController?.playbackEngine ?: playbackEngineOverride ?: return false
+    engineSwitchFallback = null
+    if (failed == previous) return false
+    AvixPlaybackEnginePreferences.forgetTitle(engineTitleKey)
+    pendingEngineSwitchRestore = pendingEngineSwitchRestore?.copy(target = previous)
+        ?: captureEngineSwitchRestore(previous)
+    playbackEngineOverride = previous
+    showGestureFeedback(
+        GestureFeedbackState(
+            messageRes = Res.string.player_engine_switch_failed_message,
+            messageArgs = listOf(failed.label, previous.label),
+            isDanger = true,
+        ),
+    )
+    return true
 }

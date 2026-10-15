@@ -181,6 +181,9 @@ internal class PlayerScreenRuntime(
     var showSourcesPanel by mutableStateOf(false)
     var showQualityPanel by mutableStateOf(false)
     var showSpeedPanel by mutableStateOf(false)
+    var showEnginePicker by mutableStateOf(false)
+    /** Engine to return to if a just-selected engine fails before playing. */
+    var engineSwitchFallback by mutableStateOf<AndroidPlaybackEngine?>(null)
     var showEpisodesPanel by mutableStateOf(false)
     var showChaptersPanel by mutableStateOf(false)
     var showLiveChannelsPanel by mutableStateOf(false)

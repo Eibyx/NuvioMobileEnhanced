@@ -30,7 +30,8 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 | Cambio de motor en el reproductor conservando estado | COMPILADA | `PlayerScreenRuntimeEngineSwitch.kt` | Dispositivo: NOT RUN |
 | Motor recordado por serie/película, reset | COMPILADA | `AvixPlaybackEnginePreferences.kt`, `AvixEngineSettingsRows.kt` | Dispositivo: NOT RUN |
 | Automático → libmpv al elegir ASS/SSA | COMPILADA | `maybeSwitchToLibmpvForAss()` | Dispositivo: NOT RUN |
-| Selector con 3 opciones (Automático / ExoPlayer / libmpv (mpvRx)) en el reproductor | PENDIENTE | — | Hoy: alternar entre motores + ajuste global heredado |
+| Selector con 3 opciones (Automático / ExoPlayer / libmpv (mpvRx)) en el reproductor | COMPILADA | `PlayerEnginePickerDialog.kt`, `selectPlaybackEngine()` | Dispositivo: NOT RUN |
+| Volver al motor anterior si el elegido falla antes de reproducir | COMPILADA | `recoverFromFailedEngineSwitch()` | Dispositivo: NOT RUN |
 | Importar subtítulos locales | COMPILADA | `LocalSubtitleImport.kt`, `LocalSubtitlePicker.*`, `SubtitleModal.kt` | `LocalSubtitleImportTest` 11/11 PASS; dispositivo NOT RUN; iOS no soportado |
 | libmpv: `sub-ass-override=no`, fuentes incrustadas, carpeta de fuentes | COMPILADA | `PlayerEngine.android.kt` | ASS_SSA_TESTS.md NOT RUN |
 | Importar fuentes (UI) | PENDIENTE | — | Port de Yesnt10 |

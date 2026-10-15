@@ -86,7 +86,7 @@ enum class AndroidPlaybackEngine(
 ) {
     Auto("Auto"),
     ExoPlayer("ExoPlayer"),
-    Libmpv("libmpv"),
+    Libmpv("libmpv (mpvRx)"),
 }
 
 enum class AndroidLibmpvVideoOutput(

@@ -15,6 +15,8 @@
 - Tests heredados de Luqman que no compilaban (`AndroidDownloadTransferTest`, `NextEpisodeCardTest`, `PlayerGestureOverlayTest`, `PlayerSurfaceGesturesTest`) actualizados a las firmas actuales.
 
 ### Reproductor
+- Selector de motor en el reproductor: Automático (motor por defecto de Ajustes; olvida el motor recordado del título), ExoPlayer o libmpv (mpvRx). Si el motor elegido falla antes de reproducir, se vuelve al anterior en la misma posición y no se recuerda para el título.
+- Motor libmpv sustituido por el de mpvRx (`mpvlib 1.1.3`, SHA-256 verificado); el anterior sigue disponible con `-Pavix.legacyLibmpv=true`.
 - Cambio de motor dentro del reproductor conservando posición, velocidad, pista de audio y subtítulo; recordar motor por serie/película; cambio automático a libmpv al elegir un subtítulo ASS/SSA en modo Automático (una vez por elemento). Ajustes: «Preferir libmpv para ASS/SSA», «Recordar motor por título», «Olvidar motores recordados».
 - Importar subtítulos locales (SRT, ASS, SSA, VTT, TTML; UTF-8, UTF-8 BOM, UTF-16 LE/BE, Windows-1252) desde Reproductor → Subtítulos → Importar archivo. ASS no se convierte a SRT.
 - libmpv: `sub-ass-override=no`, fuentes incrustadas, carpeta de fuentes del usuario (`sub-fonts-dir`); subtítulos externos no UTF-8 se recodifican a UTF-8 antes de `sub-add`.
