@@ -1,4 +1,4 @@
-name: PR Full Debug Build
+name: PR Full Release Build
 
 on:
   pull_request:
@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-full-debug-build-${{ github.event.pull_request.number || github.ref }}
+  group: pr-full-release-build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  full-debug-build:
-    name: Build fullDebug APK
+  full-release-build:
+    name: Build fullRelease APK
     runs-on: ubuntu-latest
 
     steps:
@@ -42,13 +42,13 @@ jobs:
             touch local.properties
           fi
 
-      - name: Build fullDebug APK
-        run: ./gradlew :androidApp:assembleFullDebug -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore --stacktrace
+      - name: Build fullRelease APK
+        run: ./gradlew :androidApp:assembleFullRelease -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore --stacktrace
 
-      - name: Upload fullDebug APK
+      - name: Upload fullRelease APK
         uses: actions/upload-artifact@v7
         with:
-          path: androidApp/build/outputs/apk/full/debug/androidApp-full-debug.apk
+          path: androidApp/build/outputs/apk/full/release/androidApp-full-release.apk
           archive: false
           if-no-files-found: error
           retention-days: 7
