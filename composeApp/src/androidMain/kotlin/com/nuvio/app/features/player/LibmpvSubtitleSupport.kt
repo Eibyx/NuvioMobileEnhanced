@@ -13,6 +13,10 @@ import java.security.MessageDigest
 /**
  * Avix: subtitle fidelity helpers for the bundled libmpv.
  *
+ * Note: the mpvRx engine (mpvlib 1.1.3) is built with iconv and uchardet, so `sub-codepage=auto`
+ * works there; the re-encoding below is kept because it is harmless for UTF-8 and still needed
+ * by the legacy backend (-Pavix.legacyLibmpv).
+ *
  * The bundled libmpv (io.github.abdallahmehiz:mpv-android-lib 0.1.12) is built with
  * `-Diconv=disabled` and without uchardet, so `sub-codepage` cannot convert anything: an external
  * subtitle that is not UTF-8 (UTF-16 ASS from Aegisub, Windows-1252/Shift-JIS SRT…) reaches libass

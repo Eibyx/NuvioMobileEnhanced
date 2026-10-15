@@ -117,7 +117,7 @@ jobs:
           :androidApp:assembleFullDebug
           -Pnuvio.android.distribution=full
           -Pnuvio.ios.distribution=appstore
-          -Pavix.versionCode=${{ 100000 + github.run_number }}
+          -Pavix.versionCode=$((100000 + GITHUB_RUN_NUMBER))
 
       - name: Rename debug APK
         shell: bash

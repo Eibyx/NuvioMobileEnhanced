@@ -1,9 +1,11 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -12,6 +14,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import java.security.MessageDigest
 import java.util.Properties
 
 abstract class GenerateRuntimeConfigsTask : DefaultTask() {
@@ -362,8 +365,54 @@ val generateRuntimeConfigs = tasks.register<GenerateRuntimeConfigsTask>("generat
     )
 }
 
+// Avix: libmpv engine. Default = mpvRx engine (app.gyrolet.mpvlib:mpvlib, DECISIONS D-10).
+// -Pavix.legacyLibmpv=true builds with the previous io.github.abdallahmehiz:mpv-android-lib
+// during validation. Both AARs ship libmpv.so/libav*.so with the same names: never both.
+val avixLegacyLibmpv = providers.gradleProperty("avix.legacyLibmpv").orNull?.toBoolean() == true
+val mpvlibExpectedSha256 = "1b2161c1b424017a333032fb9644dab53c7ff2c0e1295d62300598382cf4fd7b"
+
+abstract class VerifyChecksumTask : DefaultTask() {
+    @get:InputFiles
+    abstract val artifact: ConfigurableFileCollection
+
+    @get:Input
+    abstract val expectedSha256: Property<String>
+
+    @TaskAction
+    fun verify() {
+        val file = artifact.singleFile
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(1 shl 16)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        val actual = digest.digest().joinToString("") { "%02x".format(it) }
+        if (!actual.equals(expectedSha256.get(), ignoreCase = true)) {
+            throw GradleException(
+                "SHA-256 mismatch for ${file.name}: expected ${expectedSha256.get()}, got $actual. " +
+                    "Refusing to build with an unverified libmpv engine."
+            )
+        }
+        logger.lifecycle("Verified ${file.name} sha256=$actual")
+    }
+}
+
+val verifyMpvlibChecksum = tasks.register<VerifyChecksumTask>("verifyMpvlibChecksum") {
+    artifact.from(
+        configurations.detachedConfiguration(
+            dependencies.create("app.gyrolet.mpvlib:mpvlib:${libs.versions.mpvlib.get()}@aar")
+        )
+    )
+    expectedSha256.set(mpvlibExpectedSha256)
+}
+
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
     dependsOn(generateRuntimeConfigs)
+    if (!avixLegacyLibmpv) dependsOn(verifyMpvlibChecksum)
 }
 
 kotlin {
@@ -468,6 +517,7 @@ kotlin {
         }
         androidMain {
             kotlin.srcDir(project.file(androidDistributionSourceDir))
+            kotlin.srcDir(project.file(if (avixLegacyLibmpv) "src/androidLibmpvLegacy/kotlin" else "src/androidLibmpvMpvrx/kotlin"))
             if (androidDistribution == "full") {
                 kotlin.srcDir(fullCommonSourceDir)
             }
@@ -503,7 +553,12 @@ kotlin {
                 implementation(libs.androidx.media3.common)
                 implementation(libs.androidx.media3.container)
                 implementation(libs.androidx.media3.extractor)
-                implementation(libs.mpv.android.lib)
+                if (avixLegacyLibmpv) {
+                    implementation(libs.mpv.android.lib)
+                } else {
+                    // @aar: the Ivy (GitHub releases) metadata would otherwise expose it as a jar.
+                    implementation("app.gyrolet.mpvlib:mpvlib:${libs.versions.mpvlib.get()}@aar")
+                }
                 implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("lib-*.aar"))))
                 if (androidDistribution == "full") {
                     implementation(files("libs/quickjs-kt-android-1.0.5-nuvio.aar"))
