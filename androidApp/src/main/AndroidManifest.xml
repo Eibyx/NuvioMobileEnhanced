@@ -39,7 +39,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="nuvio"
+                    android:scheme="avixnuvio"
                     android:host="auth"
                     android:path="/simkl" />
             </intent-filter>
@@ -50,7 +50,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="nuvio"
+                    android:scheme="avixnuvio"
                     android:host="auth"
                     android:path="/trakt" />
             </intent-filter>
@@ -60,7 +60,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="nuvio" />
+                <data android:scheme="avixnuvio" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -41,7 +41,9 @@ val appVersionConfigFile = rootProject.file("iosApp/Configuration/Version.xcconf
 val releaseAppVersionName = providers.gradleProperty("nuvio.app.versionName").orNull
     ?: readXcconfigValue(appVersionConfigFile, "MARKETING_VERSION")
     ?: error("MARKETING_VERSION is missing from ${appVersionConfigFile.path}")
-val releaseAppVersionCode = readXcconfigValue(appVersionConfigFile, "CURRENT_PROJECT_VERSION")
+// Avix: CI passes -Pavix.versionCode so every published APK has a monotonic versionCode.
+val releaseAppVersionCode = providers.gradleProperty("avix.versionCode").orNull?.toIntOrNull()
+    ?: readXcconfigValue(appVersionConfigFile, "CURRENT_PROJECT_VERSION")
     ?.toIntOrNull()
     ?: error("CURRENT_PROJECT_VERSION is missing or invalid in ${appVersionConfigFile.path}")
 val requestedTaskNames = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
@@ -66,7 +68,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.nuvio.media"
+        applicationId = "com.avix.nuvio"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = releaseAppVersionCode
@@ -114,7 +116,7 @@ android {
             isEnable = buildsReleaseApks
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = false
+            isUniversalApk = true
         }
     }
 
@@ -145,7 +147,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
-        variant.applicationId.set("com.nuviodebug.com")
+        variant.applicationId.set("com.avix.nuvio.debug")
     }
 }
 

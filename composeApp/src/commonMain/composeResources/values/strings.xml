@@ -2764,6 +2764,7 @@
     <string name="cd_switch_player_engine">Switch player engine</string>
     <string name="cd_stream_info">Stream info</string>
     <string name="player_engine_switching_manual_message">Switching to %1$s...</string>
+    <string name="player_engine_switching_ass_message">ASS/SSA subtitles: switching to %1$s…</string>
     <string name="stream_info_section_source">SOURCE</string>
     <string name="stream_info_section_video">VIDEO</string>
     <string name="stream_info_section_audio">AUDIO</string>
@@ -2807,4 +2808,19 @@
     <string name="profile_enable_biometric_for">Enable biometric unlock for %1$s</string>
     <string name="profile_disable_biometric_for">Disable biometric unlock for %1$s</string>
     <string name="profile_pin_clear_cleanup_failed">Your profile PIN was removed from your account, but Nuvio couldn't confirm removal of all local profile-lock data. Biometric unlock or saved offline PIN data may still be present; reopen Profile Security and try again.</string>
+    <string name="settings_avix_engine_prefer_libmpv_ass">Use libmpv for ASS/SSA subtitles</string>
+    <string name="settings_avix_engine_prefer_libmpv_ass_description">In Auto mode, switch to libmpv when an ASS/SSA subtitle is selected so styling, signs and karaoke render as authored.</string>
+    <string name="settings_avix_engine_remember_title">Remember engine per title</string>
+    <string name="settings_avix_engine_remember_title_description">When you switch engine inside the player, use it again for that series or movie.</string>
+    <string name="settings_avix_engine_reset_titles">Reset remembered engines</string>
+    <string name="settings_avix_engine_reset_titles_description">%1$d titles remembered</string>
+    <string name="player_local_subtitle_imported">Subtitle imported: %1$s</string>
+    <string name="player_local_subtitle_error_empty">The subtitle file is empty.</string>
+    <string name="player_local_subtitle_error_too_large">The subtitle file is too large (max 20 MB).</string>
+    <string name="player_local_subtitle_error_unsupported">Unsupported subtitle file. Use SRT, ASS, SSA, VTT or TTML.</string>
+    <string name="player_local_subtitle_error_no_cues">No subtitle lines were found in this file.</string>
+    <string name="player_local_subtitle_error_generic">The subtitle file could not be read.</string>
+    <string name="player_local_subtitle_section">Imported</string>
+    <string name="player_local_subtitle_import_action">Import subtitle file…</string>
+    <string name="player_local_subtitle_source">Local file</string>
 </resources>

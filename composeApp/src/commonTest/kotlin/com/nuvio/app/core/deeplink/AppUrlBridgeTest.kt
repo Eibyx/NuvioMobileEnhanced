@@ -10,7 +10,7 @@ class AppUrlBridgeTest {
     fun `parses existing notification meta deeplink`() {
         assertEquals(
             AppDeepLink.Meta(type = "series", id = "tt0944947"),
-            parseAppDeepLink("nuvio://meta?type=series&id=tt0944947"),
+            parseAppDeepLink("avixnuvio://meta?type=series&id=tt0944947"),
         )
     }
 
@@ -18,7 +18,7 @@ class AppUrlBridgeTest {
     fun `parses direct nuvio addon install deeplink`() {
         assertEquals(
             AppDeepLink.AddonInstall("https://free.nebulapro.xyz/sports/i/free/manifest.json"),
-            parseAppDeepLink("nuvio://free.nebulapro.xyz/sports/i/free/manifest.json"),
+            parseAppDeepLink("avixnuvio://free.nebulapro.xyz/sports/i/free/manifest.json"),
         )
     }
 
@@ -34,7 +34,7 @@ class AppUrlBridgeTest {
     fun `parses direct imdb detail deeplink`() {
         assertEquals(
             AppDeepLink.Meta(type = "series", id = "tt0944947"),
-            parseAppDeepLink("nuvio://series/tt0944947"),
+            parseAppDeepLink("avixnuvio://series/tt0944947"),
         )
     }
 
@@ -42,7 +42,7 @@ class AppUrlBridgeTest {
     fun `parses provider imdb detail deeplink`() {
         assertEquals(
             AppDeepLink.Meta(type = "series", id = "tt0944947"),
-            parseAppDeepLink("nuvio://imdb/series/tt0944947"),
+            parseAppDeepLink("avixnuvio://imdb/series/tt0944947"),
         )
     }
 
@@ -50,13 +50,13 @@ class AppUrlBridgeTest {
     fun `parses provider tmdb detail deeplink`() {
         assertEquals(
             AppDeepLink.Meta(type = "series", id = "tmdb:1399"),
-            parseAppDeepLink("nuvio://tmdb/tv/1399"),
+            parseAppDeepLink("avixnuvio://tmdb/tv/1399"),
         )
     }
 
     @Test
     fun `does not treat reserved auth link as addon install`() {
-        assertNull(parseAppDeepLink("nuvio://auth/trakt?code=abc"))
+        assertNull(parseAppDeepLink("avixnuvio://auth/trakt?code=abc"))
     }
 
     @Test

@@ -1021,6 +1021,10 @@ private fun PlaybackSettingsSection(
                         isTablet = isTablet,
                         onClick = { showPlaybackEngineDialog = true },
                     )
+                    AvixEngineSettingsRows(
+                        enabled = decoderEnabled,
+                        isTablet = isTablet,
+                    )
                     if (libmpvOptionsVisible) {
                         SettingsGroupDivider(isTablet = isTablet)
                         SettingsNavigationRow(

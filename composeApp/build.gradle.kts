@@ -103,7 +103,7 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
                 |object TraktConfig {
                 |    const val CLIENT_ID = "${props.getProperty("TRAKT_CLIENT_ID", "")}" 
                 |    const val CLIENT_SECRET = "${props.getProperty("TRAKT_CLIENT_SECRET", "")}" 
-                |    const val REDIRECT_URI = "${props.getProperty("TRAKT_REDIRECT_URI", "nuvio://auth/trakt")}" 
+                |    const val REDIRECT_URI = "${props.getProperty("TRAKT_REDIRECT_URI", "avixnuvio://auth/trakt")}" 
                 |}
                 """.trimMargin()
             )
@@ -117,8 +117,34 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
                 |
                 |object SimklConfig {
                 |    const val CLIENT_ID = "${props.getProperty("SIMKL_CLIENT_ID", "")}"
-                |    const val REDIRECT_URI = "${props.getProperty("SIMKL_REDIRECT_URI", "nuvio://auth/simkl")}"
-                |    const val APP_NAME = "${props.getProperty("SIMKL_APP_NAME", "nuvio")}"
+                |    const val REDIRECT_URI = "${props.getProperty("SIMKL_REDIRECT_URI", "avixnuvio://auth/simkl")}"
+                |    const val APP_NAME = "${props.getProperty("SIMKL_APP_NAME", "avixnuvio")}"
+                |}
+                """.trimMargin()
+            )
+        }
+
+        outDir.resolve("com/nuvio/app/features/anilist").apply {
+            mkdirs()
+            resolve("AniListBuildConfig.kt").writeText(
+                """
+                |package com.nuvio.app.features.anilist
+                |
+                |object AniListBuildConfig {
+                |    const val CLIENT_ID = "${props.getProperty("ANILIST_CLIENT_ID", "")}"
+                |}
+                """.trimMargin()
+            )
+        }
+
+        outDir.resolve("com/nuvio/app/features/wetrakr").apply {
+            mkdirs()
+            resolve("WeTrakrBuildConfig.kt").writeText(
+                """
+                |package com.nuvio.app.features.wetrakr
+                |
+                |object WeTrakrBuildConfig {
+                |    const val CLIENT_ID = "${props.getProperty("WETRAKR_CLIENT_ID", "")}"
                 |}
                 """.trimMargin()
             )
@@ -240,7 +266,8 @@ val appVersionConfigFile = rootProject.file("iosApp/Configuration/Version.xcconf
 val releaseAppVersionName = providers.gradleProperty("nuvio.app.versionName").orNull
     ?: readXcconfigValue(appVersionConfigFile, "MARKETING_VERSION")
     ?: error("MARKETING_VERSION is missing from ${appVersionConfigFile.path}")
-val releaseAppVersionCode = readXcconfigValue(appVersionConfigFile, "CURRENT_PROJECT_VERSION")
+val releaseAppVersionCode = providers.gradleProperty("avix.versionCode").orNull?.toIntOrNull()
+    ?: readXcconfigValue(appVersionConfigFile, "CURRENT_PROJECT_VERSION")
     ?.toIntOrNull()
     ?: error("CURRENT_PROJECT_VERSION is missing or invalid in ${appVersionConfigFile.path}")
 val iosDistribution = (

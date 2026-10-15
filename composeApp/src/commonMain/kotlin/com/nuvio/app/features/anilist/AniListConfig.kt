@@ -1,8 +1,10 @@
 package com.nuvio.app.features.anilist
 
+import com.nuvio.app.core.deeplink.APP_URL_SCHEME
+
 object AniListConfig {
-    const val CLIENT_ID = "53329"
-    const val REDIRECT_URI = "nuvio://auth/anilist"
+    const val CLIENT_ID = AniListBuildConfig.CLIENT_ID
+    const val REDIRECT_URI = APP_URL_SCHEME + "://auth/anilist"
     const val AUTHORIZE_URL = "https://anilist.co/api/v2/oauth/authorize"
     const val GRAPHQL_URL = "https://graphql.anilist.co"
     const val WEBSITE_URL = "https://anilist.co"

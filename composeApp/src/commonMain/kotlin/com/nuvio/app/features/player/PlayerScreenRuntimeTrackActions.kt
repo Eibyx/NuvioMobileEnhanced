@@ -30,6 +30,7 @@ internal val PlayerScreenRuntime.selectedAddonSubtitle: AddonSubtitle?
         val selectedId = selectedAddonSubtitleId ?: return null
         return addonSubtitles.findSelectedAddon(selectedId)
             ?: visibleAddonSubtitles.findSelectedAddon(selectedId)
+            ?: importedSubtitles.findSelectedAddon(selectedId)
     }
 
 internal fun PlayerScreenRuntime.updateTrackPreference(

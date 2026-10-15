@@ -50,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.withDuplicateSafeLazyKeys
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.player_local_subtitle_import_action
+import nuvio.composeapp.generated.resources.player_local_subtitle_section
+import nuvio.composeapp.generated.resources.player_local_subtitle_source
 import nuvio.composeapp.generated.resources.addon_title
 import nuvio.composeapp.generated.resources.compose_player_built_in
 import nuvio.composeapp.generated.resources.compose_player_fetch_subtitles
@@ -60,6 +63,8 @@ import nuvio.composeapp.generated.resources.compose_player_subtitles
 import nuvio.composeapp.generated.resources.settings_playback_option_forced
 import nuvio.composeapp.generated.resources.subtitle_language_unknown
 import org.jetbrains.compose.resources.stringResource
+
+internal const val ImportedSubtitlesLanguageKey = "__imported__"
 
 @Composable
 fun SubtitleModal(
@@ -87,14 +92,22 @@ fun SubtitleModal(
     onAutoSyncReload: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    importedSubtitles: List<AddonSubtitle> = emptyList(),
+    onImportLocalSubtitle: (() -> Unit)? = null,
 ) {
     val effectiveSelectedAddonSubtitle = selectedAddonSubtitle
         ?: addonSubtitles.findSelectedAddon(selectedAddonSubtitleId)
-    val playbackLanguageKey = selectedSubtitleLanguageKey(
-        subtitleTracks = subtitleTracks,
-        selectedSubtitleIndex = selectedSubtitleIndex,
-        selectedAddonSubtitle = effectiveSelectedAddonSubtitle,
-    )
+        ?: importedSubtitles.findSelectedAddon(selectedAddonSubtitleId)
+    val showImportedGroup = onImportLocalSubtitle != null || importedSubtitles.isNotEmpty()
+    val playbackLanguageKey = if (effectiveSelectedAddonSubtitle?.isLocalImport() == true) {
+        ImportedSubtitlesLanguageKey
+    } else {
+        selectedSubtitleLanguageKey(
+            subtitleTracks = subtitleTracks,
+            selectedSubtitleIndex = selectedSubtitleIndex,
+            selectedAddonSubtitle = effectiveSelectedAddonSubtitle,
+        )
+    }
     val playbackOptionId = selectedSubtitleOptionId(
         subtitleTracks = subtitleTracks,
         selectedSubtitleIndex = selectedSubtitleIndex,
@@ -102,7 +115,8 @@ fun SubtitleModal(
     )
     val subtitleStructureKey = subtitleTracksStructureKey(subtitleTracks)
     val addonStructureKey = addonSubtitlesStructureKey(addonSubtitles)
-    val languageItems = remember(
+    val importedStructureKey = addonSubtitlesStructureKey(importedSubtitles)
+    val baseLanguageItems = remember(
         subtitleStructureKey,
         addonStructureKey,
         preferredSubtitleLanguage,
@@ -119,16 +133,27 @@ fun SubtitleModal(
             selectedLanguageKey = playbackLanguageKey,
         )
     }
+    val languageItems = remember(baseLanguageItems, importedStructureKey, showImportedGroup) {
+        if (showImportedGroup) {
+            listOf(SubtitleLanguageItem(ImportedSubtitlesLanguageKey, importedSubtitles.size)) + baseLanguageItems
+        } else {
+            baseLanguageItems
+        }
+    }
     var activeLanguageKey by remember(visible) {
         mutableStateOf(
             playbackLanguageKey.takeIf { key -> languageItems.any { it.key == key } }
-                ?: languageItems.firstOrNull { it.key != SubtitleOffLanguageKey }?.key
+                ?: languageItems.firstOrNull { it.key != SubtitleOffLanguageKey && it.key != ImportedSubtitlesLanguageKey }?.key
                 ?: SubtitleOffLanguageKey,
         )
     }
     var pendingOptionId by remember(visible) { mutableStateOf<String?>(playbackOptionId) }
-    val options = remember(activeLanguageKey, subtitleStructureKey, addonStructureKey) {
-        buildSubtitleSelectionOptions(activeLanguageKey, subtitleTracks, addonSubtitles)
+    val options = remember(activeLanguageKey, subtitleStructureKey, addonStructureKey, importedStructureKey) {
+        if (activeLanguageKey == ImportedSubtitlesLanguageKey) {
+            importedSubtitles.map(SubtitleSelectionOption::Addon)
+        } else {
+            buildSubtitleSelectionOptions(activeLanguageKey, subtitleTracks, addonSubtitles)
+        }
     }
     val keyedOptions = remember(options) { options.withDuplicateSafeLazyKeys { it.id } }
     val selectedOptionId = pendingOptionId ?: playbackOptionId
@@ -153,7 +178,7 @@ fun SubtitleModal(
     LaunchedEffect(languageItems) {
         if (languageItems.none { it.key == activeLanguageKey }) {
             activeLanguageKey = playbackLanguageKey.takeIf { key -> languageItems.any { it.key == key } }
-                ?: languageItems.firstOrNull { it.key != SubtitleOffLanguageKey }?.key
+                ?: languageItems.firstOrNull { it.key != SubtitleOffLanguageKey && it.key != ImportedSubtitlesLanguageKey }?.key
                 ?: SubtitleOffLanguageKey
         }
     }
@@ -206,11 +231,15 @@ fun SubtitleModal(
                                     selected = item.key == activeLanguageKey,
                                     onClick = {
                                         activeLanguageKey = item.key
-                                        val availableOptions = buildSubtitleSelectionOptions(
-                                            item.key,
-                                            subtitleTracks,
-                                            addonSubtitles,
-                                        )
+                                        val availableOptions = if (item.key == ImportedSubtitlesLanguageKey) {
+                                            importedSubtitles.map(SubtitleSelectionOption::Addon)
+                                        } else {
+                                            buildSubtitleSelectionOptions(
+                                                item.key,
+                                                subtitleTracks,
+                                                addonSubtitles,
+                                            )
+                                        }
                                         pendingOptionId = playbackOptionId?.takeIf { id ->
                                             availableOptions.any { it.id == id }
                                         }
@@ -227,7 +256,14 @@ fun SubtitleModal(
                         title = stringResource(Res.string.compose_player_subtitles),
                         width = 300.dp,
                     ) {
+                        if (activeLanguageKey == ImportedSubtitlesLanguageKey && onImportLocalSubtitle != null) {
+                            SubtitleRailEmptyState(
+                                text = stringResource(Res.string.player_local_subtitle_import_action),
+                                onClick = onImportLocalSubtitle,
+                            )
+                        }
                         when {
+                            options.isEmpty() && activeLanguageKey == ImportedSubtitlesLanguageKey -> Unit
                             options.isEmpty() -> {
                                 when (
                                     subtitleOptionsRailEmptyContent(
@@ -357,6 +393,7 @@ private fun SubtitleLanguageRow(
     val label = when (item.key) {
         SubtitleOffLanguageKey -> stringResource(Res.string.compose_player_none)
         SubtitleUnknownLanguageKey -> stringResource(Res.string.subtitle_language_unknown)
+        ImportedSubtitlesLanguageKey -> stringResource(Res.string.player_local_subtitle_section)
         else -> languageLabelForCode(item.key)
     }
 
@@ -422,7 +459,11 @@ private fun SubtitleOptionRow(
             }
         }
 
-        is SubtitleSelectionOption.Addon -> {
+        is SubtitleSelectionOption.Addon -> if (option.subtitle.isLocalImport()) {
+            sourceLabel = stringResource(Res.string.player_local_subtitle_source)
+            title = option.subtitle.display
+            metadata = option.subtitle.language.takeIf { it.isNotBlank() }?.let { languageLabelForCode(it) }
+        } else {
             sourceLabel = option.subtitle.addonName ?: stringResource(Res.string.addon_title)
             title = languageLabelForCode(option.subtitle.language)
             metadata = option.subtitle.display.takeIf { it.isNotBlank() && it != title }

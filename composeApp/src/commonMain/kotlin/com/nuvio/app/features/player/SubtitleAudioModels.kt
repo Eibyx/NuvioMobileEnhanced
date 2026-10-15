@@ -23,6 +23,8 @@ data class SubtitleTrack(
     val language: String? = null,
     val isSelected: Boolean = false,
     val isForced: Boolean = false,
+    /** Codec/MIME hint (e.g. "text/x-ssa", "ass"); used to detect ASS/SSA tracks. */
+    val codec: String? = null,
 )
 
 data class AddonSubtitle(

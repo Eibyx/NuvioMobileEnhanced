@@ -1,0 +1,152 @@
+name: Release
+
+# Signed release APKs (per ABI + universal) published as a GitHub Release.
+# Run manually from the Actions tab, or push a tag named v<version>-avix.<n>.
+# Versions are semver prereleases (X.Y.Z-avix.N) so the in-app updater (Beta channel,
+# Eibyx/NuvioMobileEnhanced releases) offers them in order.
+# Refuses to run without a release keystore: release APKs are never signed with the debug key.
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Mark the GitHub Release as a pre-release
+        type: boolean
+        default: true
+  push:
+    tags:
+      - "v*-avix.*"
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      LOCAL_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
+      KEYSTORE_BASE64: ${{ secrets.AVIX_RELEASE_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.AVIX_RELEASE_STORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.AVIX_RELEASE_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.AVIX_RELEASE_KEY_PASSWORD }}
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+
+      - name: Check signing secrets
+        shell: bash
+        run: |
+          missing=()
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing release signing secrets: ${missing[*]}. See BUILDING.md."
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Prepare signing and local.properties
+        shell: bash
+        run: |
+          keystore_path="${RUNNER_TEMP}/avix-release.jks"
+          printf '%s' "${KEYSTORE_BASE64}" | base64 --decode > "${keystore_path}"
+          if [ -n "${LOCAL_PROPERTIES_BASE64}" ]; then
+            printf '%s' "${LOCAL_PROPERTIES_BASE64}" | base64 --decode > local.properties
+          else
+            : > local.properties
+            echo "::warning::NUVIO_LOCAL_PROPERTIES_BASE64 is not set; account sync and keyed integrations are disabled in this release."
+          fi
+          {
+            printf '\nNUVIO_RELEASE_STORE_FILE=%s\n' "${keystore_path}"
+            printf 'NUVIO_RELEASE_STORE_PASSWORD=%s\n' "${KEYSTORE_PASSWORD}"
+            printf 'NUVIO_RELEASE_KEY_ALIAS=%s\n' "${KEY_ALIAS}"
+            printf 'NUVIO_RELEASE_KEY_PASSWORD=%s\n' "${KEY_PASSWORD}"
+          } >> local.properties
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          base=$(grep -E '^MARKETING_VERSION=' iosApp/Configuration/Version.xcconfig | cut -d= -f2)
+          code=$((200000 + GITHUB_RUN_NUMBER))
+          if [[ "${GITHUB_REF}" == refs/tags/v*-avix.* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+          else
+            tag="v${base}-avix.${code}"
+          fi
+          echo "name=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
+          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Unit tests
+        run: >
+          ./gradlew --stacktrace
+          :composeApp:testAndroidHostTest
+          -Pnuvio.android.distribution=full
+          -Pnuvio.ios.distribution=appstore
+
+      - name: Build release APKs
+        run: >
+          ./gradlew --stacktrace
+          :androidApp:assembleFullRelease
+          -Pnuvio.android.distribution=full
+          -Pnuvio.ios.distribution=appstore
+          -Pavix.versionCode=${{ steps.version.outputs.code }}
+          -Pnuvio.app.versionName=${{ steps.version.outputs.name }}
+
+      - name: Verify signatures and checksums
+        id: files
+        shell: bash
+        run: |
+          apksigner="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)/apksigner"
+          mkdir -p dist
+          for apk in androidApp/build/outputs/apk/full/release/*.apk; do
+            "${apksigner}" verify --print-certs "${apk}" | grep -E 'Signer #1 certificate (DN|SHA-256)'
+            if "${apksigner}" verify --print-certs "${apk}" | grep -q 'CN=Android Debug'; then
+              echo "::error::${apk} is signed with a debug certificate"; exit 1
+            fi
+            variant=$(basename "${apk}" | sed -E 's/^androidApp-full-//; s/-release(-unsigned)?\.apk$//')
+            if [ "${variant}" = "universal" ]; then name="Nuvio-Avix-Release.apk"; else name="Nuvio-Avix-Release-${variant}.apk"; fi
+            cp "${apk}" "dist/${name}"
+          done
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: Nuvio-Avix-Release-${{ steps.version.outputs.code }}
+          path: dist/
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          prerelease_flag=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.prerelease }}" = "true" ]; then
+            prerelease_flag="--prerelease"
+          fi
+          gh release create "${{ steps.version.outputs.tag }}" dist/* \
+            --target "${GITHUB_SHA}" \
+            --title "Nuvio Avix ${{ steps.version.outputs.base }} (${{ steps.version.outputs.code }})" \
+            --notes-file CHANGELOG.md \
+            ${prerelease_flag}

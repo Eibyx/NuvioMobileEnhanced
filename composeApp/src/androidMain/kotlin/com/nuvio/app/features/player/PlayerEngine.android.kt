@@ -1129,6 +1129,12 @@ private fun ExoPlayerSurface(
                             url = url,
                             headers = headers,
                             useLibass = useLibass,
+                            // Avix: imported/downloaded subtitles are local files, not HTTP.
+                            rawBodyLoader = if (url.isLocalSubtitleUri()) {
+                                { withContext(Dispatchers.IO) { File(URI(url)).readText(Charsets.UTF_8) } }
+                            } else {
+                                null
+                            },
                         )
                         if (attached) {
                             exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
@@ -1649,6 +1655,13 @@ private class NuvioLibmpvView(
             mpv.setOptionString("vf", "format=yuv420p")
         }
         mpv.setOptionString("msg-level", "all=warn")
+        // Avix: render ASS/SSA exactly as authored (no style override), with fonts embedded
+        // in MKV attachments plus fonts the user imported into the app's fonts directory.
+        mpv.setOptionString("sub-ass-override", "no").logIfMpvError("sub-ass-override")
+        mpv.setOptionString("embeddedfonts", "yes").logIfMpvError("embeddedfonts")
+        mpv.setOptionString("sub-font-provider", "auto").logIfMpvError("sub-font-provider")
+        mpv.setOptionString("sub-fonts-dir", LibmpvSubtitleSupport.fontsDirectory(context).absolutePath)
+            .logIfMpvError("sub-fonts-dir")
         mpv.setOptionString("volume-max", "$LIBMPV_VOLUME_MAX").logIfMpvError("volume-max")
         mpv.setOptionString("tls-verify", "yes")
         mpv.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
@@ -2108,6 +2121,7 @@ private class NuvioLibmpvView(
                         language = track.language,
                         isSelected = track.isSelected,
                         isForced = track.isForced,
+                        codec = track.codec,
                     )
                 }
                 val tracksLog =
@@ -2155,7 +2169,12 @@ private class NuvioLibmpvView(
 
             override fun setSubtitleUri(url: String) {
                 InAppLogger.info("MPV/Android", "set external subtitle url=${InAppLogger.redactUrl(url)}")
-                executeMpv { mpv.command("sub-add", url, "select") }
+                if (released.get()) return
+                mpvScope.launch {
+                    val headers = currentExternalSubtitles.firstOrNull { it.url == url }?.headers.orEmpty()
+                    val source = LibmpvSubtitleSupport.prepareExternalSubtitle(context, url, headers)
+                    executeMpv { mpv.command("sub-add", source.toMpvSource(), "select") }
+                }
             }
 
             override fun clearExternalSubtitle() {
@@ -2296,6 +2315,7 @@ private class NuvioLibmpvView(
                     id = id,
                     label = label,
                     language = language,
+                    codec = node.nodeString("codec"),
                     isSelected = node.nodeBoolean("selected") ?: false,
                     isForced = inferForcedSubtitleTrack(
                         label = label,
@@ -2312,6 +2332,7 @@ private data class LibmpvTrack(
     val id: Int,
     val label: String,
     val language: String?,
+    val codec: String? = null,
     val isSelected: Boolean,
     val isForced: Boolean,
 )
@@ -3025,6 +3046,7 @@ private fun ExoPlayer.extractSubtitleTracks(context: Context): List<SubtitleTrac
                     trackId = format.id,
                     hasForcedSelectionFlag = hasForcedSelectionFlag,
                 ),
+                codec = listOfNotNull(format.sampleMimeType, format.codecs).joinToString(";").ifBlank { null },
             )
         )
         idx++

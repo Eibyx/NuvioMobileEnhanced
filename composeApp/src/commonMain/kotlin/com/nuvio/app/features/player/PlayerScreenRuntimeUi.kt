@@ -808,6 +808,10 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
     }
     val snapshotChapters by remember(this) { derivedStateOf { playbackSnapshot.chapters } }
     val snapshotMediaInfoJson by remember(this) { derivedStateOf { playbackSnapshot.mediaInfoJson } }
+    val localSubtitlePicker = rememberLocalSubtitlePicker(
+        onImported = { subtitle -> onLocalSubtitleImported(subtitle) },
+        onError = { error -> onLocalSubtitleImportFailed(error) },
+    )
     PlayerScreenModalHosts(
         pendingP2pSwitch = pendingP2pSwitch,
         onPendingP2pSwitchChanged = { pendingP2pSwitch = it },
@@ -870,6 +874,10 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
             }
         },
         onAddonSubtitleSelected = { addon ->
+            if (addon.isLocalImport()) {
+                selectLocalSubtitle(addon)
+                return@PlayerScreenModalHosts
+            }
             clearAutoSubtitleState()
             isUserExplicitSubtitleSelection = true
             selectedAddonSubtitleId = addon.selectionKey
@@ -881,6 +889,12 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
             if (hasBurnedInServerSubtitle) clearServerSubtitleTrack()
         },
         onFetchAddonSubtitles = { fetchAddonSubtitlesForActiveItem() },
+        importedSubtitles = importedSubtitles,
+        onImportLocalSubtitle = if (localSubtitlePicker.isSupported) {
+            { localSubtitlePicker.launch() }
+        } else {
+            null
+        },
         onSubtitleStyleChanged = PlayerSettingsRepository::setSubtitleStyle,
         onSubtitleDelayChanged = { delayMs -> setSubtitleDelay(delayMs) },
         onSubtitleDelayReset = { setSubtitleDelay(0) },

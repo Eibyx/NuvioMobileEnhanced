@@ -225,7 +225,14 @@ internal class PlayerScreenRuntime(
     var showUserRatingSheet by mutableStateOf(false)
     var showStreamInfo by mutableStateOf(false)
     var streamMediaInfo by mutableStateOf(PlayerMediaInfo())
-    var playbackEngineOverride by mutableStateOf<AndroidPlaybackEngine?>(null)
+    // Avix: start with the engine remembered for this title (manual choice), if any.
+    var playbackEngineOverride by mutableStateOf<AndroidPlaybackEngine?>(
+        AvixPlaybackEnginePreferences.engineForTitle(args.parentMetaId),
+    )
+    var pendingEngineSwitchRestore by mutableStateOf<EngineSwitchRestore?>(null)
+    // Avix: subtitles imported from device files during this player session.
+    var importedSubtitles by mutableStateOf<List<AddonSubtitle>>(emptyList())
+    var autoAssEngineSwitchItemKey: String? = null
     var audioTracks by mutableStateOf<List<AudioTrack>>(emptyList())
     var serverAudioTracks by mutableStateOf<List<AudioTrack>>(emptyList())
     var serverSubtitleTracks by mutableStateOf<List<SubtitleTrack>>(emptyList())

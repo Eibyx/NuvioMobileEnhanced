@@ -209,6 +209,16 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         playerController?.applySubtitleStyle(subtitleStyle)
     }
 
+    // Avix: restore speed/audio/subtitles after an in-player engine switch.
+    LaunchedEffect(playerController, playbackSnapshot.isLoading) {
+        applyPendingEngineSwitchRestore()
+    }
+
+    // Avix: Auto engine prefers libmpv once an ASS/SSA subtitle is selected.
+    LaunchedEffect(playerController, playbackSnapshot.isLoading, selectedSubtitleIndex, selectedAddonSubtitleId, subtitleTracks) {
+        maybeSwitchToLibmpvForAss()
+    }
+
     // iOS recognises hardware keys in the mpv view controller, because its UIKit view can hold
     // first responder at moments when the Compose surface does not. It only reports which
     // shortcut was pressed — the action itself still runs through the shared runtime dispatcher.

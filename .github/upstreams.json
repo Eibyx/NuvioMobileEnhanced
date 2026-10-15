@@ -1,0 +1,45 @@
+{
+  "sources": {
+    "luqman": {
+      "url": "https://github.com/luqmanfadlli/NuvioMobile-Enhanced",
+      "branch": "enhanced",
+      "mode": "merge",
+      "note": "Technical base of Nuvio Avix. New commits are proposed as a merge pull request into the base branch."
+    },
+    "upstream": {
+      "url": "https://github.com/NuvioMedia/NuvioMobile",
+      "branch": "cmp-rewrite",
+      "mode": "merge",
+      "note": "Original NuvioMedia/NuvioMobile (the fork parent). Merged when Luqman lags behind it."
+    },
+    "yesnt": {
+      "url": "https://github.com/yesnt10/NuvioMobile-Enhanced",
+      "branch": "enhanced",
+      "mode": "report-only",
+      "reviewed_through": "894499115fb1a69cd4bb34d6969a74832f0e5636",
+      "note": "Never merged (its history silently deletes upstream files). New commits are reported for manual porting; see docs/integration/YESNT_PORT_LEDGER.md."
+    }
+  },
+  "media": {
+    "mpvlib": {
+      "repo": "https://github.com/Riteshp2001/mpvlibAndroid",
+      "pinned": "1.1.3",
+      "note": "app.gyrolet.mpvlib:mpvlib (mpvRx engine). Update only after the MpvRx engine tests pass."
+    },
+    "mpvRx": {
+      "repo": "https://github.com/Riteshp2001/mpvRx",
+      "pinned": "",
+      "note": "Reference for libmpv options/behaviour only (AGPL-3.0). Never copy UI or shaders."
+    },
+    "ass-media": {
+      "repo": "https://github.com/peerless2012/libass-android",
+      "pinned": "0.5.1",
+      "note": "io.github.peerless2012:ass-media used by the ExoPlayer path."
+    },
+    "media3": {
+      "repo": "https://github.com/androidx/media",
+      "pinned": "1.8.0",
+      "note": "Forked AARs in composeApp/libs."
+    }
+  }
+}

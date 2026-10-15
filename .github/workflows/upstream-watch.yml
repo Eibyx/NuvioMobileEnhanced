@@ -1,0 +1,148 @@
+name: Upstream watch
+
+# Weekly check of the source repositories and media libraries (see .github/upstreams.json):
+# - luqman / upstream ("merge"): if new commits exist, try a merge on a sync/* branch.
+#   A clean merge is pushed and opened as a pull request (never merged automatically);
+#   CI is then started for it. Conflicts are reported in an issue instead.
+# - yesnt ("report-only"): new commits are listed in an issue for manual porting.
+# - media libraries: new release tags are reported in an issue (never bumped automatically).
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Branch that receives sync pull requests
+        default: integration/avix
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BASE_BRANCH: ${{ inputs.base || 'integration/avix' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.base || 'integration/avix' }}
+          fetch-depth: 0
+          submodules: false
+
+      - name: Fetch sources
+        shell: bash
+        run: |
+          git config user.name "avix-upstream-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for src in $(jq -r '.sources | keys[]' .github/upstreams.json); do
+            url=$(jq -r ".sources.${src}.url" .github/upstreams.json)
+            branch=$(jq -r ".sources.${src}.branch" .github/upstreams.json)
+            git remote add "${src}" "${url}" 2>/dev/null || true
+            git fetch --no-tags --quiet "${src}" "${branch}"
+          done
+
+      - name: Process sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          today=$(date -u +%Y%m%d)
+          report_issue() {
+            local title="$1" body_file="$2"
+            local existing
+            existing=$(gh issue list --state open --search "in:title \"${title}\"" --json number --jq '.[0].number // empty')
+            if [ -n "${existing}" ]; then
+              gh issue comment "${existing}" --body-file "${body_file}"
+            else
+              gh label create upstream --color 5319e7 --force >/dev/null 2>&1 || true
+              gh issue create --title "${title}" --body-file "${body_file}" --label upstream
+            fi
+          }
+          for src in $(jq -r '.sources | keys[]' .github/upstreams.json); do
+            branch=$(jq -r ".sources.${src}.branch" .github/upstreams.json)
+            mode=$(jq -r ".sources.${src}.mode" .github/upstreams.json)
+            ref="${src}/${branch}"
+            if [ "${mode}" = "report-only" ]; then
+              base=$(jq -r ".sources.${src}.reviewed_through" .github/upstreams.json)
+              range="${base}..${ref}"
+            else
+              range="HEAD..${ref}"
+            fi
+            count=$(git rev-list --count "${range}")
+            echo "${src}: ${count} new commit(s) in ${range}"
+            [ "${count}" -gt 0 ] || continue
+
+            body=$(mktemp)
+            {
+              echo "**${count}** new commit(s) on \`${ref}\` not yet integrated (\`${range}\`):"
+              echo
+              git log --no-merges --format='- `%h` %ad %an — %s' --date=short "${range}" | head -200
+              echo
+              echo "Files changed:"
+              echo
+              echo '```'
+              git diff --stat "$(git merge-base HEAD "${ref}")" "${ref}" | tail -40
+              echo '```'
+            } > "${body}"
+
+            if [ "${mode}" = "report-only" ]; then
+              echo -e "\nPort manually (never merge). Record each decision in docs/integration/YESNT_PORT_LEDGER.md and bump \`reviewed_through\` in .github/upstreams.json." >> "${body}"
+              report_issue "Upstream report: ${src} has new commits" "${body}"
+              continue
+            fi
+
+            sync_branch="sync/${src}-${today}"
+            git checkout --quiet -B "${sync_branch}" HEAD
+            if git merge --no-ff --no-edit "${ref}" -m "Merge ${ref} into ${BASE_BRANCH} (${today})"; then
+              git push --force-with-lease origin "${sync_branch}"
+              if ! gh pr view "${sync_branch}" >/dev/null 2>&1; then
+                gh pr create --base "${BASE_BRANCH}" --head "${sync_branch}" \
+                  --title "Sync ${src} (${today})" --body-file "${body}"
+              fi
+              gh workflow run ci.yml --ref "${sync_branch}" || true
+            else
+              conflicts=$(git diff --name-only --diff-filter=U)
+              git merge --abort
+              {
+                echo
+                echo "Automatic merge **failed** with conflicts in:"
+                echo
+                echo "${conflicts}" | sed 's/^/- /'
+                echo
+                echo "Resolve manually following docs/integration/DECISIONS.md."
+              } >> "${body}"
+              report_issue "Upstream sync conflict: ${src}" "${body}"
+            fi
+            git checkout --quiet "${BASE_BRANCH}"
+          done
+
+      - name: Media library releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(mktemp)
+          found=0
+          for lib in $(jq -r '.media | keys[]' .github/upstreams.json); do
+            repo=$(jq -r ".media[\"${lib}\"].repo" .github/upstreams.json)
+            pinned=$(jq -r ".media[\"${lib}\"].pinned" .github/upstreams.json)
+            latest=$(git ls-remote --tags --refs "${repo}" | sed 's#.*refs/tags/##' | sort -V | tail -1 || true)
+            echo "${lib}: pinned=${pinned:-none} latest=${latest:-unknown}"
+            if [ -n "${latest}" ] && [ "${latest#v}" != "${pinned#v}" ]; then
+              echo "- **${lib}** (${repo}): pinned \`${pinned:-none}\`, latest tag \`${latest}\`" >> "${body}"
+              found=1
+            fi
+          done
+          [ "${found}" = 1 ] || exit 0
+          echo -e "\nReview changelogs and licences, then bump manually and run the MpvRx engine tests (docs/MPVRX_INTEGRATION.md)." >> "${body}"
+          title="Media library updates available"
+          existing=$(gh issue list --state open --search "in:title \"${title}\"" --json number --jq '.[0].number // empty')
+          if [ -n "${existing}" ]; then gh issue comment "${existing}" --body-file "${body}"; else
+            gh label create upstream --color 5319e7 --force >/dev/null 2>&1 || true
+            gh issue create --title "${title}" --body-file "${body}" --label upstream; fi
