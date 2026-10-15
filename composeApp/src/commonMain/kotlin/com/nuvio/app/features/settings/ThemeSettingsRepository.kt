@@ -4,10 +4,10 @@ import com.nuvio.app.core.ui.AppTheme
 import com.nuvio.app.core.ui.CustomThemeColors
 import com.nuvio.app.core.ui.NativeTabBridge
 import com.nuvio.app.core.ui.ThemeColors
+import com.nuvio.app.core.ui.nativeAccentGradientHex
 import com.nuvio.app.features.membership.MemberAccessRepository
-import com.nuvio.app.features.membership.availableAppThemes
-import com.nuvio.app.features.membership.resolveAppTheme
 import com.nuvio.app.features.membership.resolveCustomThemeColors
+import com.nuvio.app.features.membership.resolveAppTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,14 +31,27 @@ object ThemeSettingsRepository {
     private val _amoledEnabled = MutableStateFlow(false)
     val amoledEnabled: StateFlow<Boolean> = _amoledEnabled.asStateFlow()
 
-    private val _liquidGlassNativeTabBarEnabled = MutableStateFlow(false)
+    private val _tabBarBehavior = MutableStateFlow(NuvioTabBarBehavior.Default)
+    val tabBarBehavior: StateFlow<NuvioTabBarBehavior> = _tabBarBehavior.asStateFlow()
+
+    /** Derived from [tabBarBehavior]; kept so existing call sites keep reading a single boolean. */
+    private val _liquidGlassNativeTabBarEnabled = MutableStateFlow(NuvioTabBarBehavior.Default.isEnabled)
     val liquidGlassNativeTabBarEnabled: StateFlow<Boolean> = _liquidGlassNativeTabBarEnabled.asStateFlow()
+
+    private val _dynamicArtworkBackgroundEnabled = MutableStateFlow(false)
+    val dynamicArtworkBackgroundEnabled: StateFlow<Boolean> = _dynamicArtworkBackgroundEnabled.asStateFlow()
+
+    private val _showCatalogAccentEnabled = MutableStateFlow(false)
+    val showCatalogAccentEnabled: StateFlow<Boolean> = _showCatalogAccentEnabled.asStateFlow()
 
     private val _selectedAppLanguage = MutableStateFlow(AppLanguage.DEVICE)
     val selectedAppLanguage: StateFlow<AppLanguage> = _selectedAppLanguage.asStateFlow()
 
     private val _navBarStyle = MutableStateFlow(NavBarStyle.ADAPTIVE)
     val navBarStyle: StateFlow<NavBarStyle> = _navBarStyle.asStateFlow()
+
+    private val _navBarPosition = MutableStateFlow(NavBarPosition.BOTTOM)
+    val navBarPosition: StateFlow<NavBarPosition> = _navBarPosition.asStateFlow()
 
     private val _navBarGlowEnabled = MutableStateFlow(true)
     val navBarGlowEnabled: StateFlow<Boolean> = _navBarGlowEnabled.asStateFlow()
@@ -63,12 +76,20 @@ object ThemeSettingsRepository {
         _customThemePreference.value = CustomThemeColors.Default
         _customThemeColors.value = CustomThemeColors.solid(CustomThemeColors.Default.second)
         _amoledEnabled.value = false
-        _liquidGlassNativeTabBarEnabled.value = false
-        NativeTabBridge.publishAccentColor(ThemeColors.White.nativeAccentHex)
-        NativeTabBridge.publishLiquidGlassEnabled(false)
+        _tabBarBehavior.value = NuvioTabBarBehavior.Default
+        _liquidGlassNativeTabBarEnabled.value = NuvioTabBarBehavior.Default.isEnabled
+        _dynamicArtworkBackgroundEnabled.value = false
+        _showCatalogAccentEnabled.value = false
+        NativeTabBridge.publishAccentColor(
+            hexColor = AppTheme.WHITE.nativeTabAccentHex(),
+            gradientHexColors = ThemeColors.getColorPalette(AppTheme.WHITE).nativeAccentGradientHex(),
+        )
+        NativeTabBridge.publishTabBarBehavior(NuvioTabBarBehavior.Default)
+        NativeTabBridge.publishLiquidGlassEnabled(NuvioTabBarBehavior.Default.isEnabled)
         _selectedAppLanguage.value = AppLanguage.DEVICE
         _navBarGlowEnabled.value = true
         _navBarStyle.value = NavBarStyle.ADAPTIVE
+        _navBarPosition.value = NavBarPosition.BOTTOM
     }
 
     private fun loadFromDisk() {
@@ -87,34 +108,42 @@ object ThemeSettingsRepository {
         _customThemePreference.value = CustomThemeColors.decode(ThemeSettingsStorage.loadCustomThemeColors())
         applyEffectiveTheme()
         _amoledEnabled.value = ThemeSettingsStorage.loadAmoledEnabled() ?: false
-        val liquidGlassEnabled = ThemeSettingsStorage.loadLiquidGlassNativeTabBarEnabled() ?: false
-        _liquidGlassNativeTabBarEnabled.value = liquidGlassEnabled
-        NativeTabBridge.publishLiquidGlassEnabled(liquidGlassEnabled)
+        // The four-way behavior replaced the old on/off toggle; fall back to it for existing profiles.
+        val behavior = NuvioTabBarBehavior.fromKey(ThemeSettingsStorage.loadTabBarBehavior())
+            ?: NuvioTabBarBehavior.fromLegacyEnabled(
+                ThemeSettingsStorage.loadLiquidGlassNativeTabBarEnabled(),
+            )
+        applyTabBarBehavior(behavior)
+        _dynamicArtworkBackgroundEnabled.value =
+            ThemeSettingsStorage.loadDynamicArtworkBackgroundEnabled() ?: false
+        _showCatalogAccentEnabled.value =
+            ThemeSettingsStorage.loadShowCatalogAccentEnabled() ?: false
         val appLanguage = AppLanguage.fromCode(ThemeSettingsStorage.loadSelectedAppLanguage())
         ThemeSettingsStorage.applySelectedAppLanguage(appLanguage.code)
         _selectedAppLanguage.value = appLanguage
         _navBarGlowEnabled.value = ThemeSettingsStorage.loadNavBarGlowEnabled() ?: true
         _navBarStyle.value = NavBarStyle.fromKey(ThemeSettingsStorage.loadNavBarStyle())
-    }
-
-    fun setTheme(theme: AppTheme) {
-        ensureLoaded()
-        val access = MemberAccessRepository.access.value
-        if (theme !in availableAppThemes(access.entitlements)) return
-        if (_selectedThemePreference.value == theme) return
-        _selectedThemePreference.value = theme
-        ThemeSettingsStorage.saveSelectedTheme(theme.name)
-        applyEffectiveTheme()
+        _navBarPosition.value = NavBarPosition.fromKey(ThemeSettingsStorage.loadNavBarPosition())
     }
 
     fun setCustomTheme(colors: CustomThemeColors) {
         ensureLoaded()
-        val access = MemberAccessRepository.access.value
-        val selectedColors = resolveCustomThemeColors(colors, access.tier)
+        val selectedColors = resolveCustomThemeColors(
+            colors,
+            MemberAccessRepository.access.value.tier,
+        )
         ThemeSettingsStorage.saveCustomThemeColors(selectedColors.encode())
         ThemeSettingsStorage.saveSelectedTheme(AppTheme.CUSTOM.name)
         _customThemePreference.value = selectedColors
         _selectedThemePreference.value = AppTheme.CUSTOM
+        applyEffectiveTheme()
+    }
+
+    fun setTheme(theme: AppTheme) {
+        ensureLoaded()
+        if (_selectedThemePreference.value == theme) return
+        _selectedThemePreference.value = theme
+        ThemeSettingsStorage.saveSelectedTheme(theme.name)
         applyEffectiveTheme()
     }
 
@@ -125,12 +154,35 @@ object ThemeSettingsRepository {
         ThemeSettingsStorage.saveAmoledEnabled(enabled)
     }
 
-    fun setLiquidGlassNativeTabBar(enabled: Boolean) {
+    fun setTabBarBehavior(behavior: NuvioTabBarBehavior) {
         ensureLoaded()
-        if (_liquidGlassNativeTabBarEnabled.value == enabled) return
-        _liquidGlassNativeTabBarEnabled.value = enabled
-        ThemeSettingsStorage.saveLiquidGlassNativeTabBarEnabled(enabled)
-        NativeTabBridge.publishLiquidGlassEnabled(enabled)
+        if (_tabBarBehavior.value == behavior) return
+        applyTabBarBehavior(behavior)
+        ThemeSettingsStorage.saveTabBarBehavior(behavior.key)
+        // Keep the legacy key in step so a downgrade, or an older device syncing this profile,
+        // still sees the right on/off state.
+        ThemeSettingsStorage.saveLiquidGlassNativeTabBarEnabled(behavior.isEnabled)
+    }
+
+    private fun applyTabBarBehavior(behavior: NuvioTabBarBehavior) {
+        _tabBarBehavior.value = behavior
+        _liquidGlassNativeTabBarEnabled.value = behavior.isEnabled
+        NativeTabBridge.publishTabBarBehavior(behavior)
+        NativeTabBridge.publishLiquidGlassEnabled(behavior.isEnabled)
+    }
+
+    fun setDynamicArtworkBackground(enabled: Boolean) {
+        ensureLoaded()
+        if (_dynamicArtworkBackgroundEnabled.value == enabled) return
+        _dynamicArtworkBackgroundEnabled.value = enabled
+        ThemeSettingsStorage.saveDynamicArtworkBackgroundEnabled(enabled)
+    }
+
+    fun setShowCatalogAccent(enabled: Boolean) {
+        ensureLoaded()
+        if (_showCatalogAccentEnabled.value == enabled) return
+        _showCatalogAccentEnabled.value = enabled
+        ThemeSettingsStorage.saveShowCatalogAccentEnabled(enabled)
     }
 
     fun setAppLanguage(language: AppLanguage) {
@@ -146,6 +198,13 @@ object ThemeSettingsRepository {
         if (_navBarStyle.value == style) return
         _navBarStyle.value = style
         ThemeSettingsStorage.saveNavBarStyle(style.key)
+    }
+
+    fun setNavBarPosition(position: NavBarPosition) {
+        ensureLoaded()
+        if (_navBarPosition.value == position) return
+        _navBarPosition.value = position
+        ThemeSettingsStorage.saveNavBarPosition(position.key)
     }
 
     fun setNavBarGlowEnabled(enabled: Boolean) {
@@ -174,8 +233,13 @@ object ThemeSettingsRepository {
         )
         _customThemeColors.value = resolveCustomThemeColors(_customThemePreference.value, access.tier)
         _selectedTheme.value = effective
+        val palette = ThemeColors.getColorPalette(effective, _customThemeColors.value)
         NativeTabBridge.publishAccentColor(
-            ThemeColors.getColorPalette(effective, _customThemeColors.value).nativeAccentHex,
+            hexColor = palette.nativeAccentHex,
+            gradientHexColors = palette.nativeAccentGradientHex(),
         )
     }
 }
+
+private fun AppTheme.nativeTabAccentHex(): String =
+    ThemeColors.getColorPalette(this).nativeAccentHex

@@ -42,6 +42,11 @@ data class PlayerSettingsUiState(
     val holdToSpeedEnabled: Boolean = true,
     val holdToSpeedValue: Float = 2f,
     val touchGesturesEnabled: Boolean = true,
+    val swipeToSeekEnabled: Boolean = true,
+    val seekPreviewEnabled: Boolean = true,
+    val movieRecommendationsEnabled: Boolean = true,
+    val autoShowSubtitlesOnRewindEnabled: Boolean = true,
+    val autoShowSubtitlesOnMuteEnabled: Boolean = true,
     val externalPlayerEnabled: Boolean = false,
     val externalPlayerForwardSubtitles: Boolean = false,
     val externalPlayerSendSkipSegments: Boolean = false,
@@ -60,17 +65,18 @@ data class PlayerSettingsUiState(
     val decoderPriority: Int = 1,
     val mapDV7ToHevc: Boolean = false,
     val tunnelingEnabled: Boolean = false,
+    val androidAudioPassthroughEnabled: Boolean = false,
     val exoNativeMemoryEnabled: Boolean = false,
-    val bufferEngineEnabled: Boolean = false,
-    val minBufferMs: Int = PlaybackBufferSettings.DEFAULT_MIN_BUFFER_MS,
-    val maxBufferMs: Int = PlaybackBufferSettings.DEFAULT_MAX_BUFFER_MS,
-    val bufferForPlaybackMs: Int = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-    val bufferForPlaybackAfterRebufferMs: Int = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-    val backBufferDurationMs: Int = PlaybackBufferSettings.DEFAULT_BACK_BUFFER_MS,
-    val targetBufferSizeMb: Int = PlaybackBufferSettings.DEFAULT_TARGET_BUFFER_MB,
-    val vodCacheEnabled: Boolean = false,
-    val vodCacheSizeMode: VodCacheSizeMode = VodCacheSizeMode.AUTO,
-    val vodCacheSizeMb: Int = VodCacheSizing.DEFAULT_SIZE_MB,
+    val customPlaybackBuffersEnabled: Boolean = false,
+    val vodDiskCacheEnabled: Boolean = false,
+    val vodDiskCacheAutoSize: Boolean = true,
+    val playbackMinBufferSeconds: Int = 50,
+    val playbackMaxBufferSeconds: Int = 50,
+    val playbackStartBufferSeconds: Int = 3,
+    val playbackRebufferSeconds: Int = 5,
+    val playbackBackBufferSeconds: Int = 10,
+    val playbackTargetBufferMb: Int = 256,
+    val vodDiskCacheSizeMb: Int = 2048,
     val streamAutoPlayMode: StreamAutoPlayMode = StreamAutoPlayMode.MANUAL,
     val streamAutoPlaySource: StreamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES,
     val streamAutoPlaySelectedAddons: Set<String> = emptySet(),
@@ -91,6 +97,8 @@ data class PlayerSettingsUiState(
     val nextEpisodeThresholdPercent: Float = 99f,
     val nextEpisodeThresholdMinutesBeforeEnd: Float = 2f,
     val preloadNextEpisodeSources: Boolean = false,
+    val miniPlayerEnabled: Boolean = false,
+    val privateViewingEnabled: Boolean = false,
     val useLibass: Boolean = false,
     val libassRenderType: String = "CUES",
     val iosVideoOutputPreset: IosVideoOutputPreset = IosVideoOutputPreset.NativeEdr,
@@ -124,6 +132,11 @@ object PlayerSettingsRepository {
     private var holdToSpeedEnabled = true
     private var holdToSpeedValue = 2f
     private var touchGesturesEnabled = true
+    private var swipeToSeekEnabled = true
+    private var seekPreviewEnabled = true
+    private var movieRecommendationsEnabled = true
+    private var autoShowSubtitlesOnRewindEnabled = true
+    private var autoShowSubtitlesOnMuteEnabled = true
     private var externalPlayerEnabled = false
     private var externalPlayerForwardSubtitles = false
     private var externalPlayerSendSkipSegments = false
@@ -142,17 +155,18 @@ object PlayerSettingsRepository {
     private var decoderPriority = 1
     private var mapDV7ToHevc = false
     private var tunnelingEnabled = false
+    private var androidAudioPassthroughEnabled = false
     private var exoNativeMemoryEnabled = false
-    private var bufferEngineEnabled = false
-    private var minBufferMs = PlaybackBufferSettings.DEFAULT_MIN_BUFFER_MS
-    private var maxBufferMs = PlaybackBufferSettings.DEFAULT_MAX_BUFFER_MS
-    private var bufferForPlaybackMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_MS
-    private var bufferForPlaybackAfterRebufferMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-    private var backBufferDurationMs = PlaybackBufferSettings.DEFAULT_BACK_BUFFER_MS
-    private var targetBufferSizeMb = PlaybackBufferSettings.DEFAULT_TARGET_BUFFER_MB
-    private var vodCacheEnabled = false
-    private var vodCacheSizeMode = VodCacheSizeMode.AUTO
-    private var vodCacheSizeMb = VodCacheSizing.DEFAULT_SIZE_MB
+    private var customPlaybackBuffersEnabled = false
+    private var vodDiskCacheEnabled = false
+    private var vodDiskCacheAutoSize = true
+    private var playbackMinBufferSeconds = 50
+    private var playbackMaxBufferSeconds = 50
+    private var playbackStartBufferSeconds = 3
+    private var playbackRebufferSeconds = 5
+    private var playbackBackBufferSeconds = 10
+    private var playbackTargetBufferMb = 256
+    private var vodDiskCacheSizeMb = 2048
     private var streamAutoPlayMode = StreamAutoPlayMode.MANUAL
     private var streamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES
     private var streamAutoPlaySelectedAddons: Set<String> = emptySet()
@@ -173,6 +187,8 @@ object PlayerSettingsRepository {
     private var nextEpisodeThresholdPercent = 99f
     private var nextEpisodeThresholdMinutesBeforeEnd = 2f
     private var preloadNextEpisodeSources = false
+    private var miniPlayerEnabled = false
+    private var privateViewingEnabled = false
     private var useLibass = false
     private var libassRenderType = "CUES"
     private var iosVideoOutputPreset = IosVideoOutputPreset.NativeEdr
@@ -211,6 +227,11 @@ object PlayerSettingsRepository {
         holdToSpeedEnabled = true
         holdToSpeedValue = 2f
         touchGesturesEnabled = true
+        swipeToSeekEnabled = true
+        seekPreviewEnabled = true
+        movieRecommendationsEnabled = true
+        autoShowSubtitlesOnRewindEnabled = true
+        autoShowSubtitlesOnMuteEnabled = true
         externalPlayerEnabled = false
         externalPlayerForwardSubtitles = false
         externalPlayerSendSkipSegments = false
@@ -229,18 +250,18 @@ object PlayerSettingsRepository {
         decoderPriority = 1
         mapDV7ToHevc = false
         tunnelingEnabled = false
+        androidAudioPassthroughEnabled = false
         exoNativeMemoryEnabled = false
-        bufferEngineEnabled = false
-        minBufferMs = PlaybackBufferSettings.DEFAULT_MIN_BUFFER_MS
-        maxBufferMs = PlaybackBufferSettings.DEFAULT_MAX_BUFFER_MS
-        bufferForPlaybackMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_MS
-        bufferForPlaybackAfterRebufferMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-        backBufferDurationMs = PlaybackBufferSettings.DEFAULT_BACK_BUFFER_MS
-        targetBufferSizeMb = PlaybackBufferSettings.DEFAULT_TARGET_BUFFER_MB
-        vodCacheEnabled = false
-        vodCacheSizeMode = VodCacheSizeMode.AUTO
-        vodCacheSizeMb = VodCacheSizing.DEFAULT_SIZE_MB
-        applyExoPlayerNativeMemory(false)
+        customPlaybackBuffersEnabled = false
+        vodDiskCacheEnabled = false
+        vodDiskCacheAutoSize = true
+        playbackMinBufferSeconds = 50
+        playbackMaxBufferSeconds = 50
+        playbackStartBufferSeconds = 3
+        playbackRebufferSeconds = 5
+        playbackBackBufferSeconds = 10
+        playbackTargetBufferMb = 256
+        vodDiskCacheSizeMb = 2048
         streamAutoPlayMode = StreamAutoPlayMode.MANUAL
         streamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES
         streamAutoPlaySelectedAddons = emptySet()
@@ -261,6 +282,8 @@ object PlayerSettingsRepository {
         nextEpisodeThresholdPercent = 99f
         nextEpisodeThresholdMinutesBeforeEnd = 2f
         preloadNextEpisodeSources = false
+        miniPlayerEnabled = false
+        privateViewingEnabled = false
         useLibass = false
         libassRenderType = "CUES"
         iosVideoOutputPreset = IosVideoOutputPreset.NativeEdr
@@ -294,6 +317,11 @@ object PlayerSettingsRepository {
         holdToSpeedEnabled = PlayerSettingsStorage.loadHoldToSpeedEnabled() ?: true
         holdToSpeedValue = PlayerSettingsStorage.loadHoldToSpeedValue() ?: 2f
         touchGesturesEnabled = PlayerSettingsStorage.loadTouchGesturesEnabled() ?: true
+        swipeToSeekEnabled = PlayerSettingsStorage.loadSwipeToSeekEnabled() ?: true
+        seekPreviewEnabled = PlayerSettingsStorage.loadSeekPreviewEnabled() ?: true
+        movieRecommendationsEnabled = PlayerSettingsStorage.loadMovieRecommendationsEnabled() ?: true
+        autoShowSubtitlesOnRewindEnabled = PlayerSettingsStorage.loadAutoShowSubtitlesOnRewindEnabled() ?: true
+        autoShowSubtitlesOnMuteEnabled = PlayerSettingsStorage.loadAutoShowSubtitlesOnMuteEnabled() ?: true
         externalPlayerEnabled = PlayerSettingsStorage.loadExternalPlayerEnabled() ?: false
         externalPlayerForwardSubtitles = PlayerSettingsStorage.loadExternalPlayerForwardSubtitles() ?: false
         externalPlayerSendSkipSegments = PlayerSettingsStorage.loadExternalPlayerSendSkipSegments() ?: false
@@ -346,27 +374,18 @@ object PlayerSettingsRepository {
         decoderPriority = PlayerSettingsStorage.loadDecoderPriority() ?: 1
         mapDV7ToHevc = PlayerSettingsStorage.loadMapDV7ToHevc() ?: false
         tunnelingEnabled = PlayerSettingsStorage.loadTunnelingEnabled() ?: false
-        exoNativeMemoryEnabled = (PlayerSettingsStorage.loadExoNativeMemoryEnabled() ?: false) &&
-            isExoNativeMemorySupported()
-        vodCacheEnabled = PlayerSettingsStorage.loadVodCacheEnabled() ?: false
-        vodCacheSizeMode = PlayerSettingsStorage.loadVodCacheSizeMode()
-            ?.let { runCatching { VodCacheSizeMode.valueOf(it) }.getOrNull() }
-            ?: VodCacheSizeMode.AUTO
-        vodCacheSizeMb = (PlayerSettingsStorage.loadVodCacheSizeMb() ?: VodCacheSizing.DEFAULT_SIZE_MB)
-            .coerceIn(VodCacheSizing.MIN_SIZE_MB, VodCacheSizing.MAX_SIZE_MB)
-        applyExoPlayerNativeMemory(exoNativeMemoryEnabled)
-        bufferEngineEnabled = PlayerSettingsStorage.loadBufferEngineEnabled() ?: false
-        minBufferMs = PlayerSettingsStorage.loadMinBufferMs() ?: PlaybackBufferSettings.DEFAULT_MIN_BUFFER_MS
-        maxBufferMs = (PlayerSettingsStorage.loadMaxBufferMs() ?: PlaybackBufferSettings.DEFAULT_MAX_BUFFER_MS)
-            .coerceAtLeast(minBufferMs)
-        bufferForPlaybackMs = PlayerSettingsStorage.loadBufferForPlaybackMs()
-            ?: PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_MS
-        bufferForPlaybackAfterRebufferMs = PlayerSettingsStorage.loadBufferForPlaybackAfterRebufferMs()
-            ?: PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-        backBufferDurationMs = PlayerSettingsStorage.loadBackBufferDurationMs()
-            ?: PlaybackBufferSettings.DEFAULT_BACK_BUFFER_MS
-        targetBufferSizeMb = PlayerSettingsStorage.loadTargetBufferSizeMb()
-            ?: PlaybackBufferSettings.DEFAULT_TARGET_BUFFER_MB
+        androidAudioPassthroughEnabled = PlayerSettingsStorage.loadAndroidAudioPassthroughEnabled() ?: false
+        exoNativeMemoryEnabled = PlayerSettingsStorage.loadExoNativeMemoryEnabled() ?: false
+        customPlaybackBuffersEnabled = PlayerSettingsStorage.loadCustomPlaybackBuffersEnabled() ?: false
+        vodDiskCacheEnabled = PlayerSettingsStorage.loadVodDiskCacheEnabled() ?: false
+        vodDiskCacheAutoSize = PlayerSettingsStorage.loadVodDiskCacheAutoSize() ?: true
+        playbackMinBufferSeconds = PlayerSettingsStorage.loadPlaybackMinBufferSeconds() ?: 50
+        playbackMaxBufferSeconds = PlayerSettingsStorage.loadPlaybackMaxBufferSeconds() ?: 50
+        playbackStartBufferSeconds = PlayerSettingsStorage.loadPlaybackStartBufferSeconds() ?: 3
+        playbackRebufferSeconds = PlayerSettingsStorage.loadPlaybackRebufferSeconds() ?: 5
+        playbackBackBufferSeconds = PlayerSettingsStorage.loadPlaybackBackBufferSeconds() ?: 10
+        playbackTargetBufferMb = PlayerSettingsStorage.loadPlaybackTargetBufferMb() ?: 256
+        vodDiskCacheSizeMb = PlayerSettingsStorage.loadVodDiskCacheSizeMb() ?: 2048
         streamAutoPlayMode = PlayerSettingsStorage.loadStreamAutoPlayMode()
             ?.let { runCatching { StreamAutoPlayMode.valueOf(it) }.getOrNull() }
             ?: StreamAutoPlayMode.MANUAL
@@ -415,6 +434,8 @@ object PlayerSettingsRepository {
         nextEpisodeThresholdPercent = PlayerSettingsStorage.loadNextEpisodeThresholdPercent() ?: 99f
         nextEpisodeThresholdMinutesBeforeEnd = PlayerSettingsStorage.loadNextEpisodeThresholdMinutesBeforeEnd() ?: 2f
         preloadNextEpisodeSources = PlayerSettingsStorage.loadPreloadNextEpisodeSources() ?: false
+        miniPlayerEnabled = PlayerSettingsStorage.loadMiniPlayerEnabled() ?: false
+        privateViewingEnabled = PlayerSettingsStorage.loadPrivateViewingEnabled() ?: false
         useLibass = PlayerSettingsStorage.loadUseLibass() ?: false
         libassRenderType = PlayerSettingsStorage.loadLibassRenderType() ?: "CUES"
         iosVideoOutputPreset = PlayerSettingsStorage.loadIosVideoOutputPreset()
@@ -516,6 +537,46 @@ object PlayerSettingsRepository {
         touchGesturesEnabled = enabled
         publish()
         PlayerSettingsStorage.saveTouchGesturesEnabled(enabled)
+    }
+
+    fun setSwipeToSeekEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (swipeToSeekEnabled == enabled) return
+        swipeToSeekEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveSwipeToSeekEnabled(enabled)
+    }
+
+    fun setSeekPreviewEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (seekPreviewEnabled == enabled) return
+        seekPreviewEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveSeekPreviewEnabled(enabled)
+    }
+
+    fun setMovieRecommendationsEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (movieRecommendationsEnabled == enabled) return
+        movieRecommendationsEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveMovieRecommendationsEnabled(enabled)
+    }
+
+    fun setAutoShowSubtitlesOnRewindEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (autoShowSubtitlesOnRewindEnabled == enabled) return
+        autoShowSubtitlesOnRewindEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveAutoShowSubtitlesOnRewindEnabled(enabled)
+    }
+
+    fun setAutoShowSubtitlesOnMuteEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (autoShowSubtitlesOnMuteEnabled == enabled) return
+        autoShowSubtitlesOnMuteEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveAutoShowSubtitlesOnMuteEnabled(enabled)
     }
 
     fun setExternalPlayerEnabled(enabled: Boolean) {
@@ -686,127 +747,100 @@ object PlayerSettingsRepository {
         PlayerSettingsStorage.saveTunnelingEnabled(enabled)
     }
 
-    fun setExoNativeMemoryEnabled(enabled: Boolean) {
+    fun setAndroidAudioPassthroughEnabled(enabled: Boolean) {
         ensureLoaded()
-        val supported = enabled && isExoNativeMemorySupported()
-        if (exoNativeMemoryEnabled == supported) return
-        exoNativeMemoryEnabled = supported
-        resetBufferSettingsToDefaults()
-        applyExoPlayerNativeMemory(supported)
+        if (androidAudioPassthroughEnabled == enabled) return
+        androidAudioPassthroughEnabled = enabled
         publish()
-        PlayerSettingsStorage.saveExoNativeMemoryEnabled(supported)
+        PlayerSettingsStorage.saveAndroidAudioPassthroughEnabled(enabled)
     }
 
-    private fun resetBufferSettingsToDefaults() {
-        minBufferMs = PlaybackBufferSettings.DEFAULT_MIN_BUFFER_MS
-        maxBufferMs = PlaybackBufferSettings.DEFAULT_MAX_BUFFER_MS
-        bufferForPlaybackMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_MS
-        bufferForPlaybackAfterRebufferMs = PlaybackBufferSettings.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-        backBufferDurationMs = PlaybackBufferSettings.DEFAULT_BACK_BUFFER_MS
-        targetBufferSizeMb = PlaybackBufferSettings.DEFAULT_TARGET_BUFFER_MB
-        PlayerSettingsStorage.saveMinBufferMs(minBufferMs)
-        PlayerSettingsStorage.saveMaxBufferMs(maxBufferMs)
-        PlayerSettingsStorage.saveBufferForPlaybackMs(bufferForPlaybackMs)
-        PlayerSettingsStorage.saveBufferForPlaybackAfterRebufferMs(bufferForPlaybackAfterRebufferMs)
-        PlayerSettingsStorage.saveBackBufferDurationMs(backBufferDurationMs)
-        PlayerSettingsStorage.saveTargetBufferSizeMb(targetBufferSizeMb)
+    fun setExoNativeMemoryEnabled(value: Boolean) {
+        ensureLoaded()
+        if (exoNativeMemoryEnabled == value) return
+        exoNativeMemoryEnabled = value
+        publish()
+        PlayerSettingsStorage.saveExoNativeMemoryEnabled(value)
     }
 
-    fun setBufferEngineEnabled(enabled: Boolean) {
+    fun setCustomPlaybackBuffersEnabled(value: Boolean) {
         ensureLoaded()
-        if (bufferEngineEnabled == enabled) return
-        bufferEngineEnabled = enabled
+        if (customPlaybackBuffersEnabled == value) return
+        customPlaybackBuffersEnabled = value
         publish()
-        PlayerSettingsStorage.saveBufferEngineEnabled(enabled)
+        PlayerSettingsStorage.saveCustomPlaybackBuffersEnabled(value)
     }
 
-    fun setMinBufferMs(value: Int) {
+    fun setVodDiskCacheEnabled(value: Boolean) {
         ensureLoaded()
-        val coerced = value.coerceAtLeast(PlaybackBufferSettings.MIN_DURATION_SEC * 1_000)
-        if (minBufferMs == coerced && maxBufferMs >= coerced) return
-        minBufferMs = coerced
-        if (maxBufferMs < coerced) {
-            maxBufferMs = coerced
-            PlayerSettingsStorage.saveMaxBufferMs(coerced)
-        }
+        if (vodDiskCacheEnabled == value) return
+        vodDiskCacheEnabled = value
         publish()
-        PlayerSettingsStorage.saveMinBufferMs(coerced)
+        PlayerSettingsStorage.saveVodDiskCacheEnabled(value)
     }
 
-    fun setMaxBufferMs(value: Int) {
+    fun setVodDiskCacheAutoSize(value: Boolean) {
         ensureLoaded()
-        val coerced = value.coerceAtLeast(minBufferMs)
-        if (maxBufferMs == coerced) return
-        maxBufferMs = coerced
+        if (vodDiskCacheAutoSize == value) return
+        vodDiskCacheAutoSize = value
         publish()
-        PlayerSettingsStorage.saveMaxBufferMs(coerced)
+        PlayerSettingsStorage.saveVodDiskCacheAutoSize(value)
     }
 
-    fun setBufferForPlaybackMs(value: Int) {
+    fun setPlaybackMinBufferSeconds(value: Int) {
         ensureLoaded()
-        val coerced = value.coerceIn(
-            PlaybackBufferSettings.MIN_START_SEC * 1_000,
-            PlaybackBufferSettings.MAX_START_SEC * 1_000,
-        )
-        if (bufferForPlaybackMs == coerced) return
-        bufferForPlaybackMs = coerced
+        if (playbackMinBufferSeconds == value) return
+        playbackMinBufferSeconds = value
         publish()
-        PlayerSettingsStorage.saveBufferForPlaybackMs(coerced)
+        PlayerSettingsStorage.savePlaybackMinBufferSeconds(value)
     }
 
-    fun setBufferForPlaybackAfterRebufferMs(value: Int) {
+    fun setPlaybackMaxBufferSeconds(value: Int) {
         ensureLoaded()
-        val coerced = value.coerceIn(
-            PlaybackBufferSettings.MIN_START_SEC * 1_000,
-            PlaybackBufferSettings.MAX_REBUFFER_SEC * 1_000,
-        )
-        if (bufferForPlaybackAfterRebufferMs == coerced) return
-        bufferForPlaybackAfterRebufferMs = coerced
+        if (playbackMaxBufferSeconds == value) return
+        playbackMaxBufferSeconds = value
         publish()
-        PlayerSettingsStorage.saveBufferForPlaybackAfterRebufferMs(coerced)
+        PlayerSettingsStorage.savePlaybackMaxBufferSeconds(value)
     }
 
-    fun setBackBufferDurationMs(value: Int) {
+    fun setPlaybackStartBufferSeconds(value: Int) {
         ensureLoaded()
-        val coerced = value.coerceIn(0, PlaybackBufferSettings.MAX_BACK_SEC * 1_000)
-        if (backBufferDurationMs == coerced) return
-        backBufferDurationMs = coerced
+        if (playbackStartBufferSeconds == value) return
+        playbackStartBufferSeconds = value
         publish()
-        PlayerSettingsStorage.saveBackBufferDurationMs(coerced)
+        PlayerSettingsStorage.savePlaybackStartBufferSeconds(value)
     }
 
-    fun setTargetBufferSizeMb(value: Int) {
+    fun setPlaybackRebufferSeconds(value: Int) {
         ensureLoaded()
-        val coerced = value.coerceAtLeast(PlaybackBufferSettings.MIN_TARGET_MB)
-        if (targetBufferSizeMb == coerced) return
-        targetBufferSizeMb = coerced
+        if (playbackRebufferSeconds == value) return
+        playbackRebufferSeconds = value
         publish()
-        PlayerSettingsStorage.saveTargetBufferSizeMb(coerced)
+        PlayerSettingsStorage.savePlaybackRebufferSeconds(value)
     }
 
-    fun setVodCacheEnabled(enabled: Boolean) {
+    fun setPlaybackBackBufferSeconds(value: Int) {
         ensureLoaded()
-        if (vodCacheEnabled == enabled) return
-        vodCacheEnabled = enabled
+        if (playbackBackBufferSeconds == value) return
+        playbackBackBufferSeconds = value
         publish()
-        PlayerSettingsStorage.saveVodCacheEnabled(enabled)
+        PlayerSettingsStorage.savePlaybackBackBufferSeconds(value)
     }
 
-    fun setVodCacheSizeMode(mode: VodCacheSizeMode) {
+    fun setPlaybackTargetBufferMb(value: Int) {
         ensureLoaded()
-        if (vodCacheSizeMode == mode) return
-        vodCacheSizeMode = mode
+        if (playbackTargetBufferMb == value) return
+        playbackTargetBufferMb = value
         publish()
-        PlayerSettingsStorage.saveVodCacheSizeMode(mode.name)
+        PlayerSettingsStorage.savePlaybackTargetBufferMb(value)
     }
 
-    fun setVodCacheSizeMb(sizeMb: Int) {
+    fun setVodDiskCacheSizeMb(value: Int) {
         ensureLoaded()
-        val coerced = sizeMb.coerceIn(VodCacheSizing.MIN_SIZE_MB, VodCacheSizing.MAX_SIZE_MB)
-        if (vodCacheSizeMb == coerced) return
-        vodCacheSizeMb = coerced
+        if (vodDiskCacheSizeMb == value) return
+        vodDiskCacheSizeMb = value
         publish()
-        PlayerSettingsStorage.saveVodCacheSizeMb(coerced)
+        PlayerSettingsStorage.saveVodDiskCacheSizeMb(value)
     }
 
     fun setStreamAutoPlayMode(mode: StreamAutoPlayMode) {
@@ -970,6 +1004,22 @@ object PlayerSettingsRepository {
         preloadNextEpisodeSources = enabled
         publish()
         PlayerSettingsStorage.savePreloadNextEpisodeSources(enabled)
+    }
+
+    fun setMiniPlayerEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (miniPlayerEnabled == enabled) return
+        miniPlayerEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveMiniPlayerEnabled(enabled)
+    }
+
+    fun setPrivateViewingEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (privateViewingEnabled == enabled) return
+        privateViewingEnabled = enabled
+        publish()
+        PlayerSettingsStorage.savePrivateViewingEnabled(enabled)
     }
 
     fun setUseLibass(enabled: Boolean) {
@@ -1164,6 +1214,11 @@ object PlayerSettingsRepository {
             holdToSpeedEnabled = holdToSpeedEnabled,
             holdToSpeedValue = holdToSpeedValue,
             touchGesturesEnabled = touchGesturesEnabled,
+            swipeToSeekEnabled = swipeToSeekEnabled,
+            seekPreviewEnabled = seekPreviewEnabled,
+            movieRecommendationsEnabled = movieRecommendationsEnabled,
+            autoShowSubtitlesOnRewindEnabled = autoShowSubtitlesOnRewindEnabled,
+            autoShowSubtitlesOnMuteEnabled = autoShowSubtitlesOnMuteEnabled,
             externalPlayerEnabled = externalPlayerEnabled,
             externalPlayerForwardSubtitles = externalPlayerForwardSubtitles,
             externalPlayerSendSkipSegments = externalPlayerSendSkipSegments,
@@ -1182,17 +1237,18 @@ object PlayerSettingsRepository {
             decoderPriority = decoderPriority,
             mapDV7ToHevc = mapDV7ToHevc,
             tunnelingEnabled = tunnelingEnabled,
+            androidAudioPassthroughEnabled = androidAudioPassthroughEnabled,
             exoNativeMemoryEnabled = exoNativeMemoryEnabled,
-            bufferEngineEnabled = bufferEngineEnabled,
-            minBufferMs = minBufferMs,
-            maxBufferMs = maxBufferMs,
-            bufferForPlaybackMs = bufferForPlaybackMs,
-            bufferForPlaybackAfterRebufferMs = bufferForPlaybackAfterRebufferMs,
-            backBufferDurationMs = backBufferDurationMs,
-            targetBufferSizeMb = targetBufferSizeMb,
-            vodCacheEnabled = vodCacheEnabled,
-            vodCacheSizeMode = vodCacheSizeMode,
-            vodCacheSizeMb = vodCacheSizeMb,
+            customPlaybackBuffersEnabled = customPlaybackBuffersEnabled,
+            vodDiskCacheEnabled = vodDiskCacheEnabled,
+            vodDiskCacheAutoSize = vodDiskCacheAutoSize,
+            playbackMinBufferSeconds = playbackMinBufferSeconds,
+            playbackMaxBufferSeconds = playbackMaxBufferSeconds,
+            playbackStartBufferSeconds = playbackStartBufferSeconds,
+            playbackRebufferSeconds = playbackRebufferSeconds,
+            playbackBackBufferSeconds = playbackBackBufferSeconds,
+            playbackTargetBufferMb = playbackTargetBufferMb,
+            vodDiskCacheSizeMb = vodDiskCacheSizeMb,
             streamAutoPlayMode = streamAutoPlayMode,
             streamAutoPlaySource = streamAutoPlaySource,
             streamAutoPlaySelectedAddons = streamAutoPlaySelectedAddons,
@@ -1213,6 +1269,8 @@ object PlayerSettingsRepository {
             nextEpisodeThresholdPercent = nextEpisodeThresholdPercent,
             nextEpisodeThresholdMinutesBeforeEnd = nextEpisodeThresholdMinutesBeforeEnd,
             preloadNextEpisodeSources = preloadNextEpisodeSources,
+            miniPlayerEnabled = miniPlayerEnabled,
+            privateViewingEnabled = privateViewingEnabled,
             useLibass = useLibass,
             libassRenderType = libassRenderType,
             iosVideoOutputPreset = iosVideoOutputPreset,

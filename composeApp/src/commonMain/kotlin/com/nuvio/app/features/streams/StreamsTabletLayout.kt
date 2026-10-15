@@ -41,7 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.nuvio.app.core.ui.platformPhysicalTopInset
 import com.nuvio.app.core.ui.shimmer
 import com.nuvio.app.isIos
 import dev.chrisbanes.haze.HazeInputScale
@@ -54,6 +53,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun TabletStreamsLayout(
     isEpisode: Boolean,
+    showSearchField: Boolean,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
     title: String,
     logo: String?,
     poster: String?,
@@ -167,7 +169,7 @@ internal fun TabletStreamsLayout(
                     .weight(0.6f)
                     .fillMaxHeight()
                     .padding(
-                        top = if (isIos) platformPhysicalTopInset() + 60.dp else 60.dp,
+                        top = if (isIos) 20.dp else 60.dp,
                         end = 12.dp,
                         bottom = 12.dp,
                     ),
@@ -207,8 +209,22 @@ internal fun TabletStreamsLayout(
                             modifier = Modifier.padding(bottom = 4.dp),
                         )
 
+                        if (showSearchField) {
+                            StreamSearchField(
+                                query = searchQuery,
+                                onQueryChange = onSearchQueryChange,
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        }
+
+                        val listUiState = rememberStreamSearchResult(uiState, searchQuery, showSearchField)
+                        if (listUiState.isEmptyBecauseOfSearch) {
+                            StreamSearchEmptyBlock(modifier = Modifier.weight(1f))
+                            return@Column
+                        }
+
                         StreamList(
-                            uiState = uiState,
+                            uiState = listUiState.uiState,
                             debridEnabled = debridEnabled,
                             appendInstantServiceToDefaultName = appendInstantServiceToDefaultName,
                             onStreamSelected = onStreamSelected,

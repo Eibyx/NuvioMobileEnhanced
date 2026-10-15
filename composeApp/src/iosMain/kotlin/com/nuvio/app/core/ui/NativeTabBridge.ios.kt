@@ -6,9 +6,11 @@ import platform.UIKit.UIDevice
 import platform.UIKit.UIUserInterfaceIdiomPhone
 
 private const val liquidGlassNativeTabBarEnabledKey = "NuvioLiquidGlassNativeTabBarEnabled"
+private const val nativeTabBarBehaviorKey = "NuvioNativeTabBarBehavior"
 private const val nativeTabBarVisibleKey = "NuvioNativeTabBarVisible"
 private const val nativeSelectedTabKey = "NuvioNativeSelectedTab"
 private const val nativeTabAccentColorKey = "NuvioNativeTabAccentColor"
+private const val nativeTabAccentGradientKey = "NuvioNativeTabAccentGradient"
 private const val nativeTabTitleHomeKey = "NuvioNativeTabTitleHome"
 private const val nativeTabTitleSearchKey = "NuvioNativeTabTitleSearch"
 private const val nativeTabTitleLibraryKey = "NuvioNativeTabTitleLibrary"
@@ -28,6 +30,11 @@ internal actual fun publishLiquidGlassNativeTabBarEnabled(enabled: Boolean) {
     publishBool(liquidGlassNativeTabBarEnabledKey, enabled)
 }
 
+internal actual fun publishNativeTabBarBehavior(behaviorKey: String) {
+    NSUserDefaults.standardUserDefaults.setObject(behaviorKey, forKey = nativeTabBarBehaviorKey)
+    notifyNativeTabChromeChanged()
+}
+
 internal actual fun publishNativeTabBarVisible(visible: Boolean) {
     publishBool(nativeTabBarVisibleKey, visible)
 }
@@ -37,8 +44,12 @@ internal actual fun publishNativeSelectedTab(tabName: String) {
     notifyNativeTabChromeChanged()
 }
 
-internal actual fun publishNativeTabAccentColor(hexColor: String) {
+internal actual fun publishNativeTabAccentColor(hexColor: String, gradientHexColors: List<String>) {
     NSUserDefaults.standardUserDefaults.setObject(hexColor, forKey = nativeTabAccentColorKey)
+    NSUserDefaults.standardUserDefaults.setObject(
+        gradientHexColors.joinToString(separator = ","),
+        forKey = nativeTabAccentGradientKey,
+    )
     notifyNativeTabChromeChanged()
 }
 

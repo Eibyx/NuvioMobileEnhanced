@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
+import com.nuvio.app.core.logging.InAppLogger
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -45,11 +46,13 @@ internal fun Modifier.playerSurfaceTapGestures(
 
 internal fun Modifier.playerSurfaceDragGestures(
     gestureController: PlayerGestureController?,
+    playerController: PlayerEngineController?,
     layoutSize: IntSize,
     playbackGesturesEnabled: Boolean,
     sideGestureSystemEdgeExclusionPx: Float,
     playerControlsLockedState: State<Boolean>,
     touchGesturesEnabledState: State<Boolean>,
+    swipeToSeekEnabledState: State<Boolean>,
     isHoldToSpeedGestureActiveState: State<Boolean>,
     currentPositionMsState: State<Long>,
     currentDurationMsState: State<Long>,
@@ -61,7 +64,13 @@ internal fun Modifier.playerSurfaceDragGestures(
     revealLockedOverlayState: State<() -> Unit>,
     commitHorizontalSeekState: State<(Long) -> Unit>,
 ): Modifier =
-    pointerInput(gestureController, layoutSize, sideGestureSystemEdgeExclusionPx, playbackGesturesEnabled) {
+    pointerInput(
+        gestureController,
+        playerController,
+        layoutSize,
+        sideGestureSystemEdgeExclusionPx,
+        playbackGesturesEnabled,
+    ) {
         if (!playbackGesturesEnabled) return@pointerInput
         awaitEachGesture {
             val down = awaitFirstDown()
@@ -98,7 +107,10 @@ internal fun Modifier.playerSurfaceDragGestures(
                 null
             }
             val initialVolume = if (region == PlayerSideGesture.Volume) {
-                controller?.currentVolume()
+                currentCombinedVolumeLevel(
+                    systemVolume = controller?.currentVolume(),
+                    softwareVolume = playerController?.currentPlayerVolume(),
+                )
             } else {
                 null
             }
@@ -109,6 +121,7 @@ internal fun Modifier.playerSurfaceDragGestures(
             var verticalGestureActivationDy = 0f
             val horizontalSeekBaselineMs = currentPositionMsState.value
             var horizontalSeekPreviewMs = horizontalSeekBaselineMs
+            var lastVolumeTarget: Float? = null
 
             while (true) {
                 val event = awaitPointerEvent()
@@ -125,10 +138,13 @@ internal fun Modifier.playerSurfaceDragGestures(
                         viewConfiguration.touchSlop * PlayerVerticalGestureTouchSlopMultiplier,
                         height * PlayerVerticalGestureMinHeightFraction,
                     )
+                    val horizontalGestureActivationSlop =
+                        viewConfiguration.touchSlop * PlayerHorizontalGestureTouchSlopMultiplier
                     val horizontalDominant =
                         !holdToSpeedActive &&
-                            abs(totalDx) > viewConfiguration.touchSlop &&
-                            abs(totalDx) > abs(totalDy)
+                            swipeToSeekEnabledState.value &&
+                            abs(totalDx) > horizontalGestureActivationSlop &&
+                            abs(totalDx) > abs(totalDy) * PlayerHorizontalGestureDominanceRatio
                     val verticalDominant =
                         !holdToSpeedActive &&
                             abs(totalDy) > verticalGestureActivationSlop &&
@@ -192,11 +208,27 @@ internal fun Modifier.playerSurfaceDragGestures(
                         val activeTotalDy = totalDy - verticalGestureActivationDy
                         val gestureDeltaFraction =
                             (-activeTotalDy / height) * PlayerVerticalGestureSensitivity
-                        controller?.setVolume((initialVolume?.fraction ?: 0f) + gestureDeltaFraction)
-                            ?.let(showVolumeFeedbackState.value)
+                        val target = ((initialVolume?.fraction ?: 0f) + gestureDeltaFraction)
+                            .coerceIn(0f, PlayerMaxVolumeBoost)
+                        lastVolumeTarget = target
+                        setCombinedVolumeLevel(
+                            target = target,
+                            systemController = controller,
+                            engineController = playerController,
+                        )?.let(showVolumeFeedbackState.value)
                     }
                 }
                 change.consume()
+            }
+
+            lastVolumeTarget?.let { target ->
+                val system = target.coerceAtMost(PlayerNormalVolumeCeiling)
+                val software = target.coerceAtLeast(PlayerNormalVolumeCeiling)
+                InAppLogger.debug(
+                    "Player/Gesture",
+                    "volume gesture end target=${formatVolumeFraction(target)} " +
+                        "system=${formatVolumeFraction(system)} software=${formatVolumeFraction(software)}",
+                )
             }
 
             if (gestureMode == PlayerGestureMode.HorizontalSeek && !isHoldToSpeedGestureActiveState.value) {
@@ -205,3 +237,8 @@ internal fun Modifier.playerSurfaceDragGestures(
             }
         }
     }
+
+private fun formatVolumeFraction(value: Float): String {
+    val hundredths = (value * 100f).roundToLong()
+    return "${hundredths / 100}.${(hundredths % 100).toString().padStart(2, '0')}"
+}

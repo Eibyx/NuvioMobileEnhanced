@@ -1,16 +1,18 @@
 package com.nuvio.app
 
+import androidx.compose.runtime.collectAsState
+import com.nuvio.app.core.ui.NativeTabBridge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,12 +26,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.ui.LocalNuvioBottomNavigationOverlayPadding
-import com.nuvio.app.core.ui.LocalNuvioNavBarScrollState
-import com.nuvio.app.core.ui.NuvioNavBarScrollState
-import com.nuvio.app.core.ui.NuvioClassicNavigationBar
 import com.nuvio.app.core.ui.FloatingNavigationBar
 import com.nuvio.app.core.ui.FloatingNavigationItem
+import com.nuvio.app.core.ui.LocalNuvioNavBarScrollState
+import com.nuvio.app.core.ui.NuvioClassicNavigationBar
 import com.nuvio.app.core.ui.PlatformBackHandler
+import com.nuvio.app.core.ui.LocalNuvioTabletNavLayout
+import com.nuvio.app.core.ui.floatingNavigationBarPadding
+import com.nuvio.app.features.settings.NavBarPosition
 import com.nuvio.app.core.ui.rememberNuvioNavBarScrollState
 import com.nuvio.app.features.profiles.NuvioProfile
 import com.nuvio.app.features.profiles.ProfileSwitcherTab
@@ -40,11 +44,18 @@ import dev.chrisbanes.haze.rememberHazeState
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_nav_home
 import nuvio.composeapp.generated.resources.compose_nav_library
+import nuvio.composeapp.generated.resources.compose_nav_live_tv
 import nuvio.composeapp.generated.resources.compose_nav_profile
 import nuvio.composeapp.generated.resources.compose_nav_search
 import nuvio.composeapp.generated.resources.sidebar_library
 import nuvio.composeapp.generated.resources.sidebar_search
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import dev.chrisbanes.haze.HazeState
 
 @Composable
 internal fun MainTabsDestination(
@@ -56,6 +67,7 @@ internal fun MainTabsDestination(
     useNativeTabBar: Boolean,
     liquidGlassNativeTabBarSupported: Boolean,
     liquidGlassNativeTabBarEnabled: Boolean,
+    showLiveTvInNavigation: Boolean,
     requests: AppTabRequests,
     state: AppTabState,
     actions: (isTabletLayout: Boolean) -> AppTabActions,
@@ -64,10 +76,12 @@ internal fun MainTabsDestination(
     onProfileSelected: (NuvioProfile) -> Unit,
     onAddProfileRequested: () -> Unit,
 ) {
-    PlatformBackHandler(enabled = rootRouteActive, onBack = onBack)
+    PlatformBackHandler(enabled = true, onBack = onBack)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isTabletLayout = useTabletFloatingTabBar || maxWidth >= 768.dp
+        val nativeActiveTab by NativeTabBridge.activeTab.collectAsState()
+        val highlightedTab = if (useNativeNavigation) nativeActiveTab.toAppScreenTab() else selectedTab
         val tabActions = remember(actions, isTabletLayout) { actions(isTabletLayout) }
         val useNativeBottomTabs = if (useNativeNavigation) {
             useNativeTabBar
@@ -79,40 +93,15 @@ internal fun MainTabsDestination(
         val navBarHazeState = rememberHazeState()
         val navBarStyleSetting by remember { ThemeSettingsRepository.navBarStyle }.collectAsStateWithLifecycle()
         val navBarGlowEnabled by ThemeSettingsRepository.navBarGlowEnabled.collectAsStateWithLifecycle()
-        val floatingNavigationItems = listOf(
-            FloatingNavigationItem(
-                selected = selectedTab == AppScreenTab.Home,
-                onClick = { onTabSelected(AppScreenTab.Home) },
-                icon = Icons.Filled.Home,
-                label = stringResource(Res.string.compose_nav_home),
-            ),
-            FloatingNavigationItem(
-                selected = selectedTab == AppScreenTab.Search,
-                onClick = { onTabSelected(AppScreenTab.Search) },
-                drawable = Res.drawable.sidebar_search,
-                label = stringResource(Res.string.compose_nav_search),
-            ),
-            FloatingNavigationItem(
-                selected = selectedTab == AppScreenTab.Library,
-                onClick = { onTabSelected(AppScreenTab.Library) },
-                drawable = Res.drawable.sidebar_library,
-                label = stringResource(Res.string.compose_nav_library),
-            ),
-            FloatingNavigationItem(
-                selected = selectedTab == AppScreenTab.Settings,
-                onClick = { onTabSelected(AppScreenTab.Settings) },
-                label = stringResource(Res.string.compose_nav_profile),
-                content = { onClick ->
-                    ProfileSwitcherTab(
-                        selected = selectedTab == AppScreenTab.Settings,
-                        onClick = onClick,
-                        onProfileSelected = onProfileSelected,
-                        onAddProfileRequested = onAddProfileRequested,
-                        hazeState = navBarHazeState,
-                        popupBelowAnchor = isTabletLayout,
-                    )
-                },
-            ),
+        val navBarPosition by ThemeSettingsRepository.navBarPosition.collectAsStateWithLifecycle()
+        val floatingBarOnTop = navBarStyleSetting != NavBarStyle.CLASSIC && navBarPosition == NavBarPosition.TOP
+        val floatingNavigationItems = mainFloatingNavigationItems(
+            highlightedTab = highlightedTab,
+            showLiveTv = showLiveTvInNavigation,
+            onTabSelected = onTabSelected,
+            onProfileSelected = onProfileSelected,
+            onAddProfileRequested = onAddProfileRequested,
+            hazeState = navBarHazeState,
         )
 
         Scaffold(
@@ -122,45 +111,28 @@ internal fun MainTabsDestination(
             containerColor = Color.Transparent,
             contentWindowInsets = WindowInsets(0),
             bottomBar = {
-                if (!isTabletLayout && !useNativeBottomTabs && navBarStyleSetting == NavBarStyle.CLASSIC) {
-                    NuvioClassicNavigationBar {
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Home,
-                            onClick = { onTabSelected(AppScreenTab.Home) },
-                            icon = Icons.Filled.Home,
-                            contentDescription = stringResource(Res.string.compose_nav_home),
-                        )
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Search,
-                            onClick = { onTabSelected(AppScreenTab.Search) },
-                            icon = Res.drawable.sidebar_search,
-                            contentDescription = stringResource(Res.string.compose_nav_search),
-                        )
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Library,
-                            onClick = { onTabSelected(AppScreenTab.Library) },
-                            icon = Res.drawable.sidebar_library,
-                            contentDescription = stringResource(Res.string.compose_nav_library),
-                        )
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Settings,
-                            onClick = { onTabSelected(AppScreenTab.Settings) },
-                        ) {
-                            ProfileSwitcherTab(
-                                selected = selectedTab == AppScreenTab.Settings,
-                                onClick = { onTabSelected(AppScreenTab.Settings) },
-                                onProfileSelected = onProfileSelected,
-                                onAddProfileRequested = onAddProfileRequested,
-                            )
-                        }
-                    }
+                if (tabsRouteActive && !isTabletLayout && !useNativeBottomTabs && navBarStyleSetting == NavBarStyle.CLASSIC) {
+                    MainClassicNavigationBar(
+                        highlightedTab = highlightedTab,
+                        showLiveTv = showLiveTvInNavigation,
+                        onTabSelected = onTabSelected,
+                        onProfileSelected = onProfileSelected,
+                        onAddProfileRequested = onAddProfileRequested,
+                    )
                 }
             },
         ) { innerPadding ->
             Box(modifier = Modifier.fillMaxSize()) {
                 CompositionLocalProvider(
-                    LocalNuvioBottomNavigationOverlayPadding provides if (useNativeBottomTabs) 49.dp else if (!isTabletLayout && navBarStyleSetting != NavBarStyle.CLASSIC) 72.dp else 0.dp,
+                    LocalNuvioBottomNavigationOverlayPadding provides when {
+                        tabsRouteActive && useNativeBottomTabs -> 49.dp
+                        // A top pill floats over the content like the tablet CLASSIC bar, so
+                        // nothing needs to be kept clear at the bottom.
+                        tabsRouteActive && navBarStyleSetting != NavBarStyle.CLASSIC && !floatingBarOnTop -> 72.dp
+                        else -> 0.dp
+                    },
                     LocalNuvioNavBarScrollState provides navBarScrollState,
+                    LocalNuvioTabletNavLayout provides isTabletLayout,
                 ) {
                     AppTabHost(
                         selectedTab = selectedTab,
@@ -169,43 +141,238 @@ internal fun MainTabsDestination(
                         actions = tabActions,
                         modifier = Modifier
                             .fillMaxSize()
-                            .then(if (isTabletLayout || navBarStyleSetting != NavBarStyle.CLASSIC) Modifier.hazeSource(state = navBarHazeState) else Modifier)
-                            .then(if (navBarStyleSetting == NavBarStyle.ADAPTIVE) Modifier.nestedScroll(navBarScrollState.nestedScrollConnection) else Modifier)
+                            .then(if (tabsRouteActive && navBarStyleSetting != NavBarStyle.CLASSIC) Modifier.hazeSource(state = navBarHazeState) else Modifier)
+                            .then(if (tabsRouteActive && navBarStyleSetting == NavBarStyle.ADAPTIVE) Modifier.nestedScroll(navBarScrollState.nestedScrollConnection) else Modifier)
                             .padding(innerPadding),
                     )
                 }
 
-                if (isTabletLayout && !useNativeBottomTabs) {
-                    val tabletNavBarScrollState = remember { NuvioNavBarScrollState().apply { collapse() } }
-                    FloatingNavigationBar(
-                        modifier = Modifier.align(Alignment.TopCenter).widthIn(max = 416.dp),
-                        scrollState = tabletNavBarScrollState,
-                        hazeState = navBarHazeState,
-                        contentPadding = PaddingValues(
-                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 10.dp,
-                            bottom = 8.dp,
-                        ),
-                        compactSize = true,
-                        items = floatingNavigationItems,
-                        glowEnabled = navBarGlowEnabled,
+                // CLASSIC keeps the previous per-form-factor chrome: a top rail on
+                // tablet/landscape and the solid bottom bar on phones. Every other
+                // style now uses the floating pill at the bottom on all sizes.
+                if (isTabletLayout && !useNativeBottomTabs && navBarStyleSetting == NavBarStyle.CLASSIC) {
+                    TabletFloatingTopBar(
+                        selectedTab = highlightedTab,
+                        showLiveTv = showLiveTvInNavigation,
+                        onTabSelected = onTabSelected,
+                        onProfileSelected = onProfileSelected,
+                        onAddProfileRequested = onAddProfileRequested,
                     )
                 }
 
-                if (!isTabletLayout && !useNativeBottomTabs && navBarStyleSetting != NavBarStyle.CLASSIC) {
+                if (tabsRouteActive && !useNativeBottomTabs && navBarStyleSetting != NavBarStyle.CLASSIC) {
                     when (navBarStyleSetting) {
                         NavBarStyle.EXPANDED -> navBarScrollState.expand()
                         NavBarStyle.COMPACT -> navBarScrollState.collapse()
                         else -> {}
                     }
                     FloatingNavigationBar(
-                        modifier = Modifier.align(Alignment.BottomCenter),
+                        modifier = Modifier.align(if (floatingBarOnTop) Alignment.TopCenter else Alignment.BottomCenter),
                         scrollState = navBarScrollState,
                         hazeState = navBarHazeState,
+                        contentPadding = if (floatingBarOnTop) {
+                            PaddingValues(
+                                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 10.dp,
+                                bottom = 8.dp,
+                            )
+                        } else {
+                            floatingNavigationBarPadding()
+                        },
                         items = floatingNavigationItems,
                         glowEnabled = navBarGlowEnabled,
+                        inlineLabels = isTabletLayout,
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+internal fun mainFloatingNavigationItems(
+    highlightedTab: AppScreenTab,
+    showLiveTv: Boolean,
+    onTabSelected: (AppScreenTab) -> Unit,
+    onProfileSelected: (NuvioProfile) -> Unit,
+    onAddProfileRequested: () -> Unit,
+    hazeState: HazeState?,
+): List<FloatingNavigationItem> = buildList {
+    add(
+        FloatingNavigationItem(
+            selected = highlightedTab == AppScreenTab.Home,
+            onClick = { onTabSelected(AppScreenTab.Home) },
+            icon = Icons.Filled.Home,
+            label = stringResource(Res.string.compose_nav_home),
+        ),
+    )
+    add(
+        FloatingNavigationItem(
+            selected = highlightedTab == AppScreenTab.Search,
+            onClick = { onTabSelected(AppScreenTab.Search) },
+            drawable = Res.drawable.sidebar_search,
+            label = stringResource(Res.string.compose_nav_search),
+        ),
+    )
+    add(
+        FloatingNavigationItem(
+            selected = highlightedTab == AppScreenTab.Library,
+            onClick = { onTabSelected(AppScreenTab.Library) },
+            drawable = Res.drawable.sidebar_library,
+            label = stringResource(Res.string.compose_nav_library),
+        ),
+    )
+    if (showLiveTv) {
+        add(
+            FloatingNavigationItem(
+                selected = highlightedTab == AppScreenTab.LiveTv,
+                onClick = { onTabSelected(AppScreenTab.LiveTv) },
+                icon = Icons.Filled.Tv,
+                label = stringResource(Res.string.compose_nav_live_tv),
+            ),
+        )
+    }
+    add(
+        FloatingNavigationItem(
+            selected = highlightedTab == AppScreenTab.Settings,
+            onClick = { onTabSelected(AppScreenTab.Settings) },
+            label = stringResource(Res.string.compose_nav_profile),
+            content = { onClick ->
+                ProfileSwitcherTab(
+                    selected = highlightedTab == AppScreenTab.Settings,
+                    onClick = onClick,
+                    onProfileSelected = onProfileSelected,
+                    onAddProfileRequested = onAddProfileRequested,
+                    hazeState = hazeState,
+                    popupBelowAnchor = false,
+                )
+            },
+        ),
+    )
+}
+
+@Composable
+internal fun MainClassicNavigationBar(
+    highlightedTab: AppScreenTab,
+    showLiveTv: Boolean,
+    onTabSelected: (AppScreenTab) -> Unit,
+    onProfileSelected: (NuvioProfile) -> Unit,
+    onAddProfileRequested: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    NuvioClassicNavigationBar(modifier) {
+        NavItem(
+            selected = highlightedTab == AppScreenTab.Home,
+            onClick = { onTabSelected(AppScreenTab.Home) },
+            icon = Icons.Filled.Home,
+            contentDescription = stringResource(Res.string.compose_nav_home),
+        )
+        NavItem(
+            selected = highlightedTab == AppScreenTab.Search,
+            onClick = { onTabSelected(AppScreenTab.Search) },
+            icon = Res.drawable.sidebar_search,
+            contentDescription = stringResource(Res.string.compose_nav_search),
+        )
+        NavItem(
+            selected = highlightedTab == AppScreenTab.Library,
+            onClick = { onTabSelected(AppScreenTab.Library) },
+            icon = Res.drawable.sidebar_library,
+            contentDescription = stringResource(Res.string.compose_nav_library),
+        )
+        if (showLiveTv) {
+            NavItem(
+                selected = highlightedTab == AppScreenTab.LiveTv,
+                onClick = { onTabSelected(AppScreenTab.LiveTv) },
+                icon = Icons.Filled.Tv,
+                contentDescription = stringResource(Res.string.compose_nav_live_tv),
+            )
+        }
+        NavItem(
+            selected = highlightedTab == AppScreenTab.Settings,
+            onClick = { onTabSelected(AppScreenTab.Settings) },
+        ) {
+            ProfileSwitcherTab(
+                selected = highlightedTab == AppScreenTab.Settings,
+                onClick = { onTabSelected(AppScreenTab.Settings) },
+                onProfileSelected = onProfileSelected,
+                onAddProfileRequested = onAddProfileRequested,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun BoxScope.SettingsRouteNavigationBar(
+    isTabletLayout: Boolean,
+    showLiveTv: Boolean,
+    hazeState: HazeState?,
+    onTabSelected: (AppScreenTab) -> Unit,
+    onProfileSelected: (NuvioProfile) -> Unit,
+    onAddProfileRequested: () -> Unit,
+    onBottomOverlayChanged: (Dp) -> Unit,
+) {
+    val style by remember { ThemeSettingsRepository.navBarStyle }.collectAsStateWithLifecycle()
+    val glowEnabled by ThemeSettingsRepository.navBarGlowEnabled.collectAsStateWithLifecycle()
+    val position by ThemeSettingsRepository.navBarPosition.collectAsStateWithLifecycle()
+    val density = LocalDensity.current
+    val highlightedTab = AppScreenTab.Settings
+
+    when {
+        style == NavBarStyle.CLASSIC && isTabletLayout -> {
+            SideEffect { onBottomOverlayChanged(0.dp) }
+            TabletFloatingTopBar(
+                selectedTab = highlightedTab,
+                showLiveTv = showLiveTv,
+                onTabSelected = onTabSelected,
+                onProfileSelected = onProfileSelected,
+                onAddProfileRequested = onAddProfileRequested,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
+        style == NavBarStyle.CLASSIC -> {
+            Box(
+                Modifier.align(Alignment.BottomCenter).onSizeChanged {
+                    onBottomOverlayChanged(with(density) { it.height.toDp() })
+                },
+            ) {
+                MainClassicNavigationBar(
+                    highlightedTab = highlightedTab,
+                    showLiveTv = showLiveTv,
+                    onTabSelected = onTabSelected,
+                    onProfileSelected = onProfileSelected,
+                    onAddProfileRequested = onAddProfileRequested,
+                )
+            }
+        }
+        else -> {
+            val onTop = position == NavBarPosition.TOP
+            SideEffect { onBottomOverlayChanged(if (onTop) 0.dp else 72.dp) }
+            FloatingNavigationBar(
+                items = mainFloatingNavigationItems(
+                    highlightedTab = highlightedTab,
+                    showLiveTv = showLiveTv,
+                    onTabSelected = onTabSelected,
+                    onProfileSelected = onProfileSelected,
+                    onAddProfileRequested = onAddProfileRequested,
+                    hazeState = hazeState,
+                ),
+                modifier = Modifier.align(if (onTop) Alignment.TopCenter else Alignment.BottomCenter),
+                scrollState = if (style == NavBarStyle.COMPACT) {
+                    remember { com.nuvio.app.core.ui.NuvioNavBarScrollState().apply { collapse() } }
+                } else {
+                    null
+                },
+                hazeState = hazeState,
+                contentPadding = if (onTop) {
+                    PaddingValues(
+                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 10.dp,
+                        bottom = 8.dp,
+                    )
+                } else {
+                    floatingNavigationBarPadding()
+                },
+                glowEnabled = glowEnabled,
+                inlineLabels = isTabletLayout,
+            )
         }
     }
 }
