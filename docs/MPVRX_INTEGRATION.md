@@ -21,6 +21,13 @@ Solo el **motor**: la biblioteca `app.gyrolet.mpvlib:mpvlib:1.1.3` (Riteshp2001/
 - `:composeApp:verifyMpvlibChecksum` calcula el SHA-256 del AAR resuelto y **detiene la compilación** si no es `1b2161c1b424017a333032fb9644dab53c7ff2c0e1295d62300598382cf4fd7b`. Todas las tareas de compilación Kotlin dependen de ella.
 - No conviven los dos AAR: ambos traen `libmpv.so`, `libplayer.so`, `libavcodec.so`, `libavformat.so`, `libavutil.so`, `libavfilter.so`, `libavdevice.so`, `libswresample.so`, `libswscale.so` y `libc++_shared.so`. No se usa `pickFirst`.
 
+## Runtime C++ (`libc++_shared.so`)
+
+`ass-kt 0.5.1` (ruta ExoPlayer/libass) y `mpvlib 1.1.3` incluyen su propio `libc++_shared.so`, compilados con NDK distintos. La regla heredada `pickFirsts` empaquetaba el de `ass-kt` (más antiguo) y `libmpv.so` no cargaba: `UnsatisfiedLinkError: cannot locate symbol "_ZNSt6__ndk113__hash_memoryEPKvm"` (detectado por `MpvRxEngineSmokeTest` en el emulador, run 38819658331). libc++_shared es compatible hacia atrás, así que:
+
+- `extractAvixCxxRuntime` extrae el `libc++_shared.so` de mpvlib a `androidApp/build/generated/avixCxxRuntime/<abi>/`, que se añade como `jniLibs` propio de la app (prioritario frente a dependencias);
+- `verifyAvixCxxRuntime<Variant>` (dependencia de `assemble<Variant>`) comprueba que cada `lib/<abi>/libc++_shared.so` de cada APK es idéntico al de mpvlib y **falla la compilación** si no.
+
 ## Volver al motor anterior (validación)
 
 ```bash

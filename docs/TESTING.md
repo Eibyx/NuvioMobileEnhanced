@@ -32,6 +32,15 @@ Estados: **PASS** (ejecutada y superada) · **FAIL** (ejecutada y fallida) · **
 Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 `PluginSyncTest`, `AvatarPickerTest`, `RootTabHostTest` (2), `ExternalPlaybackProgressTest`, `BackendRateLimitTest`, `WatchProgressIdentityTest`, `HomeHeroSectionTest` (3), `DownloadSubtitlesTest`, `RatingsVisibilityTest`, `WhatsNewSnapshotBuilderTest` (3), `PlayerGestureOverlayTest` (5), `AndroidDownloadLifecycleTest` (2), `HomeHeroPagerTest` (2).
 
+### 2026-10-15 — GitHub Actions
+
+| Prueba | Resultado | Evidencia |
+|---|---|---|
+| CI run #2 (`a44828db`): APK debug | PASS (compila) | Artefacto `Nuvio-Avix-Debug-2` |
+| `MpvRxEngineSmokeTest` API 34 / API 35 16 KB (`a44828db`) | **FAIL 7/7** | run 38819658331: `libmpv.so` no carga, la APK llevaba el `libc++_shared.so` antiguo de `ass-kt` |
+| Corrección local: `libc++_shared.so` de mpvlib en las 4 ABI + `verifyAvixCxxRuntimeFullDebug` | PASS | hashes idénticos; símbolo `__hash_memory` presente |
+| `MpvRxEngineSmokeTest` tras la corrección | NOT RUN (pendiente del siguiente CI) | — |
+
 ### Motor mpvRx — pruebas 1–20
 
 Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas no pueden ejecutarse en este contenedor (no hay `/dev/kvm`); se ejecutan en GitHub Actions (`mpvrx-tests.yml`), que requiere tener Actions habilitado en el fork.

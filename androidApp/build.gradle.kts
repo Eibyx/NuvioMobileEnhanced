@@ -1,4 +1,8 @@
+import com.android.build.api.artifact.SingleArtifact
+import java.security.MessageDigest
 import java.util.Properties
+import java.util.zip.ZipFile
+import javax.inject.Inject
 
 fun readXcconfigValue(file: File, key: String): String? {
     if (!file.exists()) return null
@@ -51,6 +55,85 @@ val buildsReleaseApks = requestedTaskNames.any {
     it.startsWith("assemble", ignoreCase = true) && it.endsWith("Release", ignoreCase = true)
 }
 
+
+// Avix: several AARs ship lib/<abi>/libc++_shared.so (ass-kt 0.5.1 with an older NDK, mpvlib 1.1.3
+// with a newer one). The inherited pickFirsts rule let the older copy win, and libmpv.so then fails
+// to load (missing std::__ndk1::__hash_memory). libc++_shared is backward compatible, so the newest
+// copy (mpvlib's) is packaged from the app's own jniLibs, and verifyAvixCxxRuntime fails the build
+// if any APK ends up with a different one.
+val avixLegacyLibmpv = providers.gradleProperty("avix.legacyLibmpv").orNull?.toBoolean() == true
+val avixCxxRuntimeDir = layout.buildDirectory.dir("generated/avixCxxRuntime")
+
+abstract class ExtractCxxRuntimeTask @Inject constructor(
+    private val archives: ArchiveOperations,
+    private val files: FileSystemOperations,
+) : DefaultTask() {
+    @get:InputFiles
+    abstract val aar: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun extract() {
+        files.sync {
+            from(archives.zipTree(aar.singleFile)) {
+                include("jni/*/libc++_shared.so")
+                eachFile { relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray()) }
+                includeEmptyDirs = false
+            }
+            into(outputDir)
+        }
+    }
+}
+
+abstract class VerifyCxxRuntimeTask : DefaultTask() {
+    @get:InputFiles
+    abstract val apkDir: DirectoryProperty
+
+    @get:InputFiles
+    abstract val expectedDir: DirectoryProperty
+
+    @TaskAction
+    fun verify() {
+        fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val apks = apkDir.get().asFile.walk().filter { it.isFile && it.extension == "apk" }.toList()
+        check(apks.isNotEmpty()) { "No APK found in ${apkDir.get().asFile}" }
+        var checked = 0
+        apks.forEach { apk ->
+            ZipFile(apk).use { zip ->
+                zip.entries().asSequence().filter { it.name.matches(Regex("lib/[^/]+/libc\\+\\+_shared\\.so")) }.forEach { entry ->
+                    val abi = entry.name.split('/')[1]
+                    val expected = expectedDir.get().file("$abi/libc++_shared.so").asFile
+                    check(expected.exists()) { "No reference libc++_shared.so for $abi" }
+                    val actual = zip.getInputStream(entry).use { it.readBytes() }
+                    check(sha(actual) == sha(expected.readBytes())) {
+                        "${apk.name}: ${entry.name} is not mpvlib's libc++_shared.so; libmpv.so would fail to load."
+                    }
+                    checked++
+                }
+            }
+        }
+        check(checked > 0) { "No libc++_shared.so found in ${apks.map { it.name }}" }
+        logger.lifecycle("verifyAvixCxxRuntime: $checked libc++_shared.so entries match mpvlib")
+    }
+}
+
+val extractAvixCxxRuntime = tasks.register<ExtractCxxRuntimeTask>("extractAvixCxxRuntime") {
+    aar.from(
+        configurations.detachedConfiguration(
+            dependencies.create("app.gyrolet.mpvlib:mpvlib:${libs.versions.mpvlib.get()}@aar")
+        )
+    )
+    outputDir.set(avixCxxRuntimeDir)
+}
+
+if (!avixLegacyLibmpv) {
+    tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
+        dependsOn(extractAvixCxxRuntime)
+    }
+}
+
 android {
     namespace = "com.nuvio.android"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -89,6 +172,13 @@ android {
     sourceSets.getByName("full") {
         manifest.srcFile("src/full/AndroidManifest.xml")
         jniLibs.directories.add("../composeApp/src/full/jniLibs")
+    }
+
+    // Avix: mpvlib's libc++_shared.so must win over older copies (see avixCxxRuntime below).
+    if (!avixLegacyLibmpv) {
+        sourceSets.getByName("main") {
+            jniLibs.directories.add(avixCxxRuntimeDir.get().asFile.path)
+        }
     }
 
     packaging {
@@ -148,6 +238,19 @@ android {
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
         variant.applicationId.set("com.avix.nuvio.debug")
+    }
+}
+
+if (!avixLegacyLibmpv) {
+    androidComponents {
+        onVariants { variant ->
+            val cap = variant.name.replaceFirstChar { it.uppercase() }
+            val verify = tasks.register<VerifyCxxRuntimeTask>("verifyAvixCxxRuntime$cap") {
+                apkDir.set(variant.artifacts.get(SingleArtifact.APK))
+                expectedDir.set(extractAvixCxxRuntime.flatMap { it.outputDir })
+            }
+            tasks.matching { it.name == "assemble$cap" }.configureEach { dependsOn(verify) }
+        }
     }
 }
 
