@@ -193,14 +193,16 @@ fun MiniPlayerHost(
             MiniPlayerController.close()
         }
     }
-    key(route.launchId) {
-        MiniPlayerFrame(
-            route = route,
-            mini = mini,
-            onExpand = onExpand,
-            modifier = modifier,
-            content = content,
-        )
+    com.nuvio.app.core.ui.NuvioForceDarkTheme {
+        key(route.launchId) {
+            MiniPlayerFrame(
+                route = route,
+                mini = mini,
+                onExpand = onExpand,
+                modifier = modifier,
+                content = content,
+            )
+        }
     }
 }
 

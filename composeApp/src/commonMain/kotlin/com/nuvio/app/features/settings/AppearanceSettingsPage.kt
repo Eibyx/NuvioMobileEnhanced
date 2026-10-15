@@ -114,6 +114,8 @@ internal fun LazyListScope.appearanceSettingsContent(
                     selectedTheme = selectedTheme,
                     onThemeSelected = onThemeSelected,
                 )
+                SettingsGroupDivider(isTablet = isTablet)
+                AvixThemeModeRow(isTablet = isTablet)
             }
         }
     }
@@ -138,6 +140,8 @@ internal fun LazyListScope.appearanceSettingsContent(
                     title = stringResource(Res.string.settings_appearance_amoled_black),
                     description = stringResource(Res.string.settings_appearance_amoled_description),
                     checked = amoledEnabled,
+                    // Avix: pure black only applies to the dark theme.
+                    enabled = com.nuvio.app.core.ui.LocalNuvioIsDark.current,
                     isTablet = isTablet,
                     onCheckedChange = onAmoledToggle,
                 )

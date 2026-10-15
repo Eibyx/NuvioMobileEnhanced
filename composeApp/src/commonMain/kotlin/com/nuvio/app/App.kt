@@ -1,5 +1,7 @@
 package com.nuvio.app
 
+import com.nuvio.app.core.ui.isDark
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -99,7 +101,19 @@ internal fun AppEnvironment(content: @Composable () -> Unit) {
 
     val customThemeColors by ThemeSettingsRepository.customThemeColors.collectAsStateWithLifecycle()
 
-    NuvioTheme(appTheme = selectedTheme, amoled = amoledEnabled, customThemeColors = customThemeColors) {
+    val themeMode by remember {
+        com.nuvio.app.core.ui.ThemeModeRepository.ensureLoaded()
+        com.nuvio.app.core.ui.ThemeModeRepository.mode
+    }.collectAsStateWithLifecycle()
+    val darkTheme = themeMode.isDark()
+    com.nuvio.app.core.ui.PlatformSystemBarsAppearance(darkTheme = darkTheme)
+
+    NuvioTheme(
+        darkTheme = darkTheme,
+        appTheme = selectedTheme,
+        amoled = amoledEnabled,
+        customThemeColors = customThemeColors,
+    ) {
         content()
     }
 }

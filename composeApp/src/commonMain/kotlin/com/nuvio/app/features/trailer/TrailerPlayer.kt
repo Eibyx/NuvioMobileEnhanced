@@ -43,6 +43,23 @@ internal fun TrailerPlayer(
     title: String = "",
     onExitFullscreen: (() -> Unit)? = null,
 ) {
+    // Avix: video surfaces stay dark in light mode.
+    com.nuvio.app.core.ui.NuvioForceDarkTheme {
+        TrailerPlayerContent(source, state, isLoading, errorMessage, onRetry, modifier, title, onExitFullscreen)
+    }
+}
+
+@Composable
+private fun TrailerPlayerContent(
+    source: TrailerPlaybackSource?,
+    state: TrailerPlaybackState,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onRetry: (() -> Unit)?,
+    modifier: Modifier,
+    title: String,
+    onExitFullscreen: (() -> Unit)?,
+) {
     val error = errorMessage ?: state.error
     EnterImmersivePlayerMode(keepScreenAwake = error == null && state.playWhenReady && !state.snapshot.isEnded)
     Box(modifier = modifier.background(Color.Black), contentAlignment = Alignment.Center) {

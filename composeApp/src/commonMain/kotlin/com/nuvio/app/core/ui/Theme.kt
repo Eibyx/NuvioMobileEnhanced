@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
@@ -26,6 +27,19 @@ import nuvio.composeapp.generated.resources.jetbrains_sans_semibold
 import org.jetbrains.compose.resources.Font
 
 val LocalAppTheme = staticCompositionLocalOf { AppTheme.WHITE }
+
+/** Avix: true while the current theme scope is dark (always true inside [NuvioForceDarkTheme]). */
+val LocalNuvioIsDark = staticCompositionLocalOf { true }
+
+private data class NuvioThemeConfig(
+    val appTheme: AppTheme,
+    val amoled: Boolean,
+    val customThemeColors: CustomThemeColors,
+)
+
+private val LocalNuvioThemeConfig = staticCompositionLocalOf {
+    NuvioThemeConfig(AppTheme.WHITE, amoled = false, customThemeColors = CustomThemeColors.Default)
+}
 val LocalThemePalette = staticCompositionLocalOf { ThemeColors.White }
 
 val MaterialTheme.themePalette: ThemeColorPalette
@@ -40,6 +54,24 @@ val MaterialTheme.appTheme: AppTheme
 
 private fun contentColorFor(background: Color): Color =
     if (background.luminance() > 0.5f) Color(0xFF111111) else Color(0xFFF5F7F8)
+
+private fun buildLightColorScheme(palette: ThemeColorPalette) = lightColorScheme(
+    primary = palette.secondary,
+    onPrimary = palette.onSecondary,
+    primaryContainer = palette.focusBackground,
+    onPrimaryContainer = contentColorFor(palette.focusBackground),
+    secondary = palette.secondaryVariant,
+    onSecondary = palette.onSecondaryVariant,
+    background = palette.background,
+    onBackground = LightPalette.textPrimary,
+    surface = palette.backgroundElevated,
+    onSurface = LightPalette.textPrimary,
+    surfaceVariant = palette.backgroundCard,
+    onSurfaceVariant = LightPalette.textMuted,
+    outline = LightPalette.borderDefault,
+    error = Color(0xFFB3261E),
+    onError = Color.White,
+)
 
 private fun buildColorScheme(palette: ThemeColorPalette, amoled: Boolean = false) = darkColorScheme(
     primary = palette.secondary,
@@ -194,17 +226,18 @@ private val NuvioRippleConfiguration = RippleConfiguration(
 
 @Composable
 fun NuvioTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     appTheme: AppTheme = AppTheme.WHITE,
     amoled: Boolean = false,
     customThemeColors: CustomThemeColors = CustomThemeColors.Default,
     content: @Composable () -> Unit,
 ) {
-    val palette = remember(appTheme, customThemeColors) {
+    val palette = remember(appTheme, customThemeColors, darkTheme) {
         ThemeColors.getColorPalette(appTheme, customThemeColors)
+            .let { if (darkTheme) it else LightPalette.of(it) }
     }
-    val colorScheme = buildColorScheme(palette, amoled = amoled)
-    val tokens = defaultNuvioThemeTokens(palette, amoled = amoled, colorScheme = colorScheme)
+    val colorScheme = if (darkTheme) buildColorScheme(palette, amoled = amoled) else buildLightColorScheme(palette)
+    val tokens = defaultNuvioThemeTokens(palette, amoled = amoled, colorScheme = colorScheme, dark = darkTheme)
 
     val density = LocalDensity.current
     CompositionLocalProvider(
@@ -217,6 +250,8 @@ fun NuvioTheme(
         LocalRippleConfiguration provides NuvioRippleConfiguration,
         LocalAppTheme provides appTheme,
         LocalThemePalette provides palette,
+        LocalNuvioIsDark provides darkTheme,
+        LocalNuvioThemeConfig provides NuvioThemeConfig(appTheme, amoled, customThemeColors),
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -225,4 +260,32 @@ fun NuvioTheme(
             SkeletonAnimationProvider(content = content)
         }
     }
+}
+
+/**
+ * Avix: keeps [content] dark regardless of the light/dark mode (video player, trailers and other
+ * full-screen media), with the same theme, accents and AMOLED setting as the rest of the app.
+ */
+@Composable
+fun NuvioForceDarkTheme(content: @Composable () -> Unit) {
+    if (LocalNuvioIsDark.current) {
+        content()
+        return
+    }
+    val config = LocalNuvioThemeConfig.current
+    NuvioTheme(
+        darkTheme = true,
+        appTheme = config.appTheme,
+        amoled = config.amoled,
+        customThemeColors = config.customThemeColors,
+        content = content,
+    )
+}
+
+/** Resolves [ThemeMode] to dark/light for the current system setting. */
+@Composable
+fun ThemeMode.isDark(): Boolean = when (this) {
+    ThemeMode.DARK -> true
+    ThemeMode.LIGHT -> false
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
 }

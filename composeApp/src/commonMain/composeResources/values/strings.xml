@@ -2830,4 +2830,9 @@
     <string name="player_engine_option_libmpv_desc">mpvRx engine with libass: ASS/SSA rendered as authored</string>
     <string name="player_engine_option_in_use">in use</string>
     <string name="player_engine_switch_failed_message">%1$s failed. Back to %2$s</string>
+    <string name="settings_appearance_theme_mode">Appearance</string>
+    <string name="settings_appearance_theme_mode_description">Light, dark or follow the system. The player always stays dark. Stored on this device only.</string>
+    <string name="settings_appearance_theme_mode_system">System</string>
+    <string name="settings_appearance_theme_mode_dark">Dark</string>
+    <string name="settings_appearance_theme_mode_light">Light</string>
 </resources>

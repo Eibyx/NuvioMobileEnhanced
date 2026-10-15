@@ -2,6 +2,7 @@ package com.nuvio.app.features.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.nuvio.app.core.ui.NuvioForceDarkTheme
 
 @Composable
 fun PlayerScreen(
@@ -44,6 +45,8 @@ fun PlayerScreen(
     contentLanguage: String? = null,
     launchId: Long? = null,
 ) {
+    // Avix: the player stays dark in light mode (video, controls and panels over the picture).
+    NuvioForceDarkTheme {
     PlayerScreenContent(
         PlayerScreenArgs(
             profileId = profileId,
@@ -86,4 +89,5 @@ fun PlayerScreen(
             launchId = launchId,
         )
     )
+    }
 }
