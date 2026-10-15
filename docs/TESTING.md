@@ -39,7 +39,7 @@ Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 | CI run #2 (`a44828db`): APK debug | PASS (compila) | Artefacto `Nuvio-Avix-Debug-2` |
 | `MpvRxEngineSmokeTest` API 34 / API 35 16 KB (`a44828db`) | **FAIL 7/7** | run 38819658331: `libmpv.so` no carga, la APK llevaba el `libc++_shared.so` antiguo de `ass-kt` |
 | Corrección local: `libc++_shared.so` de mpvlib en las 4 ABI + `verifyAvixCxxRuntimeFullDebug` | PASS | hashes idénticos; símbolo `__hash_memory` presente |
-| `MpvRxEngineSmokeTest` tras la corrección | NOT RUN (pendiente del siguiente CI) | — |
+| `MpvRxEngineSmokeTest` tras la corrección (`643b58c6`) | **PASS 7/7 en API 34 y 7/7 en API 35 (16 KB)** | run 38824203030; logcat: `mpv v0.41.0-dev-gc3ac7f395-dirty`, `ffmpeg n9.0.2`, `pageSize=16384` en API 35 |
 
 ### 2026-10-15 — tema claro (local)
 
@@ -52,30 +52,30 @@ Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 
 ### Motor mpvRx — pruebas 1–20
 
-Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas no pueden ejecutarse en este contenedor (no hay `/dev/kvm`); se ejecutan en GitHub Actions (`mpvrx-tests.yml`), que requiere tener Actions habilitado en el fork.
+Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas se ejecutan en GitHub Actions (`mpvrx-tests.yml`); el contenedor de desarrollo no tiene `/dev/kvm`.
 
 | # | Prueba | Nivel | Resultado |
 |---|---|---|---|
-| 1 | Inicialización / JNI | Instrumentada (`t01`) | NOT RUN |
-| 2 | MKV | Instrumentada (`t02`, decodificación sin salida) | NOT RUN |
-| 3 | Audio | Instrumentada (`t02`, pista AAC detectada y decodificada con `ao=null`) | NOT RUN |
-| 4 | ASS/SSA | Instrumentada (`t02`/`t03`: eventos vía `sub-text`); render → ASS_SSA_TESTS.md | NOT RUN |
+| 1 | Inicialización / JNI | Instrumentada (`t01`) | **PASS** (API 34, API 35 16 KB) |
+| 2 | MKV | Instrumentada (`t02`, decodificación sin salida) | **PASS** (headless) |
+| 3 | Audio | Instrumentada (`t02`, pista AAC detectada y decodificada con `ao=null`) | **PASS** (headless; sonido real: NOT RUN) |
+| 4 | ASS/SSA | Instrumentada (`t02`/`t03`: eventos vía `sub-text`); render → ASS_SSA_TESTS.md | **PASS** eventos; render: NOT RUN |
 | 5 | Fuentes incrustadas | Manual (ASS_SSA_TESTS.md) | NOT RUN |
-| 6 | Subtítulos externos | Instrumentada (`t04`, SRT Windows-1252 + `sub-add`) | NOT RUN |
-| 7 | Cambio de pistas | Instrumentada (`t04`: segunda pista seleccionada) + manual | NOT RUN |
-| 8 | Búsqueda (seek) | Instrumentada (`t03`) | NOT RUN |
+| 6 | Subtítulos externos | Instrumentada (`t04`, SRT Windows-1252 + `sub-add`) | **PASS** (texto decodificado por iconv/uchardet) |
+| 7 | Cambio de pistas | Instrumentada (`t04`: segunda pista seleccionada) + manual | **PASS** (instrumentada); manual: NOT RUN |
+| 8 | Búsqueda (seek) | Instrumentada (`t03`) | **PASS** |
 | 9 | Cambio de calidad | Manual en dispositivo | NOT RUN |
 | 10 | Addons | Manual en dispositivo | NOT RUN |
-| 11 | Cabeceras HTTP | Instrumentada (`t05`, servidor local) | NOT RUN |
+| 11 | Cabeceras HTTP | Instrumentada (`t05`, servidor local) | **PASS** (`User-Agent` y `X-Avix-Test` recibidas) |
 | 12 | Progreso / historial | Manual | NOT RUN |
 | 13 | PiP | Manual | NOT RUN |
-| 14 | Abrir/cerrar repetidamente | Instrumentada (`t06`, 5 ciclos) + manual en la app | NOT RUN |
+| 14 | Abrir/cerrar repetidamente | Instrumentada (`t06`, 5 ciclos) + manual en la app | **PASS** (instrumentada); en la app: NOT RUN |
 | 15 | Cambio de motor | Manual (selector en el reproductor) | NOT RUN |
 | 16 | Rotación / segundo plano | Manual | NOT RUN |
-| 17 | Memoria | Instrumentada (`t06`, heap nativo < 64 MB tras 5 ciclos) | NOT RUN |
-| 18 | ABI | Instrumentada (`t07`) en x86_64; ARM64 → dispositivo real | NOT RUN |
+| 17 | Memoria | Instrumentada (`t06`, heap nativo < 64 MB tras 5 ciclos) | **PASS** (crecimiento ≈ 0 MB) |
+| 18 | ABI | Instrumentada (`t07`) en x86_64; ARM64 → dispositivo real | **PASS** x86_64; ARM64: NOT RUN |
 | 19 | Rendimiento | Manual | NOT RUN |
-| 20 | Páginas de 16 KB | Estática: segmentos `LOAD` de las 40 `.so` de 64 bits de la APK (arm64-v8a, x86_64) ≥ `0x4000` | **PASS (estática)** — en ejecución (emulador `google_apis_ps16k`): NOT RUN |
+| 20 | Páginas de 16 KB | Estática (40 `.so` de 64 bits ≥ `0x4000`) + emulador API 35 `google_apis_ps16k` | **PASS** (estática y en ejecución, `pageSize=16384`) |
 
 Prueba 20, evidencia estática (`readelf -lW`): todas las `.so` de `arm64-v8a` y `x86_64` de `mpvlib-1.1.3.aar` y de la APK final (40 bibliotecas, incluidas las de Media3, ass-media y nuvio-engine) tienen alineación ≥ `0x4000`. Las `.so` se guardan comprimidas en la APK (se extraen al instalar), así que la alineación de zip no aplica. En `armeabi-v7a`/`x86` (`libc++_shared.so`, `libplayer.so`) es `0x1000`, irrelevante porque las páginas de 16 KB solo existen en ABIs de 64 bits.
 
