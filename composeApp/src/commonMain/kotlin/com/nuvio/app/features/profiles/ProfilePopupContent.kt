@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.core.ui.glass.glassSurfaceColor
 import com.nuvio.app.core.ui.nuvio
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
@@ -94,6 +95,7 @@ internal fun ProfilePopupContent(
         val width = (24.dp + 80.dp * columns).coerceAtMost(availableWidth)
         val panelWidth = if (profiles.any { it.pinEnabled }) 264.dp.coerceAtMost(availableWidth) else width
         val popupHeight = (maxHeight * 0.65f).coerceAtMost(420.dp).coerceAtMost(availableHeight ?: maxHeight)
+        val glassColor = glassSurfaceColor()
         Box(
             Modifier.width(panelWidth).height(popupHeight).pointerInput(Unit) {
                 detectTapGestures { position ->
@@ -112,9 +114,9 @@ internal fun ProfilePopupContent(
                         if (hazeState != null) {
                             Modifier.hazeEffect(hazeState) {
                                 blurRadius = 24.dp
-                                backgroundColor = Color(0xFF1C1C1E)
-                                tints = listOf(HazeTint(Color(0xFF1C1C1E).copy(alpha = 0.55f)))
-                                fallbackTint = HazeTint(Color(0xFF1C1C1E).copy(alpha = 0.94f))
+                                backgroundColor = glassColor
+                                tints = listOf(HazeTint(glassColor.copy(alpha = 0.55f)))
+                                fallbackTint = HazeTint(glassColor.copy(alpha = 0.94f))
                                 noiseFactor = 0f
                             }
                         } else {

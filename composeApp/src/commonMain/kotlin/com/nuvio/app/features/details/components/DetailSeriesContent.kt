@@ -589,7 +589,7 @@ private fun SeasonViewModeToggle(
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.2f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(8.dp),
             )
             .clickable(onClick = onClick)
@@ -775,7 +775,7 @@ private fun SeasonPosterButton(
                     color = if (isSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        Color.White.copy(alpha = 0.1f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                     },
                     shape = RoundedCornerShape(sizing.seasonPosterRadius),
                 ),
@@ -1412,7 +1412,7 @@ private fun EpisodeListCard(
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                 shape = cardShape,
             )
             .combinedClickable(

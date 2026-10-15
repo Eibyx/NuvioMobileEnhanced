@@ -463,14 +463,14 @@ private fun CardStylePreview() {
                     .width(28.dp)
                     .height(5.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.55f)),
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)),
             )
             Box(
                 modifier = Modifier
                     .width(58.dp)
                     .height(7.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.75f)),
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)),
             )
         }
         NuvioProgressBar(
@@ -820,7 +820,7 @@ private fun ContinueWatchingCard(
                     fontSize = cardMetrics.badgeTextSize,
                     fontWeight = FontWeight.SemiBold,
                 ),
-                color = Color.White,
+                color = continueWatchingBadgeContentColor(item),
                 maxLines = 1,
             )
         }
@@ -903,7 +903,7 @@ private fun ContinueWatchingWideCard(
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
             .border(
                 width = 1.5.dp,
-                color = Color.White.copy(alpha = 0.15f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(cornerRadius),
             )
             .combinedClickable(
@@ -999,7 +999,7 @@ private fun ContinueWatchingWideCard(
                         progress = item.progressFraction,
                         modifier = Modifier.fillMaxWidth(),
                         height = layout.progressHeight,
-                        trackColor = Color.White.copy(alpha = 0.10f),
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
                     )
                     Text(
                         text = stringResource(
@@ -1194,6 +1194,10 @@ private fun continueWatchingBadgeBackground(item: ContinueWatchingItem): Color =
 }
 
 @Composable
+private fun continueWatchingBadgeContentColor(item: ContinueWatchingItem): Color =
+    if (item.isNewSeasonRelease || item.isReleaseAlert) Color.White else MaterialTheme.colorScheme.onBackground
+
+@Composable
 private fun UpNextBadge(
     item: ContinueWatchingItem,
     text: String,
@@ -1215,7 +1219,7 @@ private fun UpNextBadge(
                 fontSize = textSize,
                 fontWeight = FontWeight.Bold,
             ),
-            color = Color.White,
+            color = continueWatchingBadgeContentColor(item),
             maxLines = 1,
         )
     }

@@ -75,7 +75,7 @@ internal fun StreamCard(
                 if (isCurrent) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                 } else {
-                    Color.White.copy(alpha = 0.05f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                 },
             )
             .then(
@@ -175,7 +175,7 @@ internal fun StreamCardSkeleton(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .heightIn(min = 68.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.05f))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
     ) {

@@ -41,6 +41,15 @@ Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 | Corrección local: `libc++_shared.so` de mpvlib en las 4 ABI + `verifyAvixCxxRuntimeFullDebug` | PASS | hashes idénticos; símbolo `__hash_memory` presente |
 | `MpvRxEngineSmokeTest` tras la corrección | NOT RUN (pendiente del siguiente CI) | — |
 
+### 2026-10-15 — tema claro (local)
+
+| Prueba | Resultado | Evidencia |
+|---|---|---|
+| `LightPaletteContrastTest` (13 paletas: texto ≥ 7:1, secundario/atenuado ≥ 4,5:1, acento y texto sobre acento ≥ 3:1) | PASS 3/3 | `TEST-…LightPaletteContrastTest.xml` |
+| Suite `testAndroidHostTest` con tema claro | FAIL (24 de 1692) | **Mismo conjunto exacto** que la línea base |
+| APK + `verifyAvixCxxRuntimeFullDebug` | PASS | APK 190 MB |
+| Revisión visual en modo claro (todas las pantallas) | NOT RUN | requiere dispositivo |
+
 ### Motor mpvRx — pruebas 1–20
 
 Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas no pueden ejecutarse en este contenedor (no hay `/dev/kvm`); se ejecutan en GitHub Actions (`mpvrx-tests.yml`), que requiere tener Actions habilitado en el fork.

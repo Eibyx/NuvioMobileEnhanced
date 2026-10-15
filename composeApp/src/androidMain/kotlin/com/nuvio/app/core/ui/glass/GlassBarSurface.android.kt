@@ -28,6 +28,7 @@ internal actual fun GlassBarSurface(hazeState: HazeState?, modifier: Modifier, g
 @Composable
 private fun RefractedGlassBar(hazeState: HazeState, modifier: Modifier, glowStrength: Float) {
     val shader = remember { RuntimeShader(GlassBarShader) }
+    val surfaceColor = glassSurfaceColor()
     Box(
         modifier
             .layout { measurable, constraints ->
@@ -44,6 +45,6 @@ private fun RefractedGlassBar(hazeState: HazeState, modifier: Modifier, glowStre
                 shader.setFloatUniform("glowStrength", glowStrength)
                 renderEffect = RenderEffect.createRuntimeShaderEffect(shader, "backdrop").asComposeRenderEffect()
             }
-            .barBackdrop(hazeState),
+            .barBackdrop(hazeState, surfaceColor),
     )
 }

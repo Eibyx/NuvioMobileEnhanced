@@ -52,6 +52,7 @@ import com.nuvio.app.core.ui.NuvioStatusModal
 import com.nuvio.app.core.ui.NuvioSurfaceCard
 import com.nuvio.app.core.ui.NuvioAsyncImage
 import com.nuvio.app.core.ui.platformPhysicalTopInset
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.membership.CosmeticEntitlement
 import com.nuvio.app.features.membership.MemberAccessRepository
 import com.nuvio.app.features.membership.ProfileBackgroundRepository
@@ -462,21 +463,21 @@ fun ProfileEditScreen(
                 .padding(top = platformPhysicalTopInset() + 4.dp, end = 18.dp)
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = if (saveEnabled) 1f else 0.35f))
+                .background(MaterialTheme.nuvio.colors.textPrimary.copy(alpha = if (saveEnabled) 1f else 0.35f))
                 .then(if (saveEnabled) Modifier.clickable(onClick = handleSave) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             if (isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
-                    color = Color.Black,
+                    color = MaterialTheme.nuvio.colors.textInverse,
                     strokeWidth = 2.dp,
                 )
             } else {
                 Icon(
                     imageVector = Icons.Rounded.Save,
                     contentDescription = saveContentDescription,
-                    tint = Color.Black,
+                    tint = MaterialTheme.nuvio.colors.textInverse,
                     modifier = Modifier.size(20.dp),
                 )
             }

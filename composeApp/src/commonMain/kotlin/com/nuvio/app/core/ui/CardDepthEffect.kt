@@ -1,6 +1,7 @@
 package com.nuvio.app.core.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,7 +33,7 @@ fun Modifier.nuvioCardDepth(
         return if (fallbackBorderAlpha > 0f) {
             border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = fallbackBorderAlpha),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = fallbackBorderAlpha),
                 shape = shape,
             )
         } else {

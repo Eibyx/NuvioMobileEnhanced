@@ -14,6 +14,10 @@
 - Workflows: `ci.yml` (APK `Nuvio-Avix-Debug.apk`), `mpvrx-tests.yml`, `android-release.yml` (`Nuvio-Avix-Release.apk` + SHA-256), `upstream-watch.yml` (incluye bibliotecas multimedia). Se retiran los heredados.
 - Tests heredados de Luqman que no compilaban (`AndroidDownloadTransferTest`, `NextEpisodeCardTest`, `PlayerGestureOverlayTest`, `PlayerSurfaceGesturesTest`) actualizados a las firmas actuales.
 
+### Apariencia
+- Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.
+- Revisión de colores fijos en 16 archivos para el modo claro (bordes, tarjetas, separadores, barra de navegación, panel de streams…); los colores sobre imágenes y los de marca se mantienen.
+
 ### Reproductor
 - Selector de motor en el reproductor: Automático (motor por defecto de Ajustes; olvida el motor recordado del título), ExoPlayer o libmpv (mpvRx). Si el motor elegido falla antes de reproducir, se vuelve al anterior en la misma posición y no se recuerda para el título.
 - Motor libmpv sustituido por el de mpvRx (`mpvlib 1.1.3`, SHA-256 verificado); el anterior sigue disponible con `-Pavix.legacyLibmpv=true`.

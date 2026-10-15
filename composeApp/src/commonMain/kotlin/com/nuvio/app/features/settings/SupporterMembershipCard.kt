@@ -32,7 +32,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.core.ui.LocalNuvioIsDark
 import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.membership.MemberTier
 import com.nuvio.app.features.membership.MembershipOverview
 import com.nuvio.app.features.membership.MembershipOverviewState
@@ -53,10 +55,14 @@ import nuvio.composeapp.generated.resources.community_membership_you_are
 import nuvio.composeapp.generated.resources.community_view_supporter_membership
 import org.jetbrains.compose.resources.stringResource
 
-private val CardColor = Color(0xFF07080B)
-private val PrimaryTextColor = Color(0xFFF6F7F9)
-private val SecondaryTextColor = Color.White.copy(alpha = 0.65f)
-private val TertiaryTextColor = Color.White.copy(alpha = 0.52f)
+private val CardColor: Color
+    @Composable get() = if (LocalNuvioIsDark.current) Color(0xFF07080B) else MaterialTheme.nuvio.colors.surfaceCard
+private val PrimaryTextColor: Color
+    @Composable get() = if (LocalNuvioIsDark.current) Color(0xFFF6F7F9) else MaterialTheme.nuvio.colors.textPrimary
+private val SecondaryTextColor: Color
+    @Composable get() = if (LocalNuvioIsDark.current) Color.White.copy(alpha = 0.65f) else MaterialTheme.nuvio.colors.textSecondary
+private val TertiaryTextColor: Color
+    @Composable get() = if (LocalNuvioIsDark.current) Color.White.copy(alpha = 0.52f) else MaterialTheme.nuvio.colors.textMuted
 
 @Composable
 internal fun SupporterMembershipCard(
@@ -300,7 +306,7 @@ private fun GrantMembershipContent(
         }
         MembershipStatusError(visible = hasError)
     }
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     MembershipFooterActions(
         showAction = showAction,
         actionEnabled = actionEnabled,
@@ -318,7 +324,7 @@ private fun ActiveMembershipFooter(
     onAction: () -> Unit,
     onRefresh: () -> Unit,
 ) {
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -482,7 +488,7 @@ private fun MembershipStatusError(visible: Boolean) {
     Text(
         text = stringResource(Res.string.community_membership_unable_load),
         style = MaterialTheme.typography.bodySmall,
-        color = Color(0xFFFF9E9E),
+        color = if (LocalNuvioIsDark.current) Color(0xFFFF9E9E) else MaterialTheme.colorScheme.error,
     )
 }
 

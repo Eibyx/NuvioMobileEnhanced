@@ -56,7 +56,7 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 | Característica | Estado |
 |---|---|
 | Ports de Yesnt10 | PENDIENTE (docs/integration/YESNT_PORT_LEDGER.md) |
-| Tema Claro / Oscuro / Sistema | PENDIENTE |
+| Tema Claro / Oscuro / Sistema | COMPILADA — `ThemeMode.kt`, `LightPalette.kt`, `AvixThemeModeRow.kt`; contraste WCAG `LightPaletteContrastTest` 3/3 PASS; revisión visual en dispositivo: NOT RUN |
 | Valoraciones IMDb de episodios junto a OMDb | PENDIENTE |
 | Revisión de `ProviderCredentialSync` y de tokens en logs | PENDIENTE |
 | CloudStream | BLOQUEADA (procedencia y seguridad del runtime) |

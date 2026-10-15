@@ -1,6 +1,7 @@
 package com.nuvio.app.core.ui.glass
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -11,11 +12,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.core.ui.LocalNuvioIsDark
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 
 internal val GlassSurfaceColor = Color(0xFF1C1C1E)
+
+/** [GlassSurfaceColor] in dark scopes, the light surface in light mode. */
+@Composable
+internal fun glassSurfaceColor(): Color =
+    if (LocalNuvioIsDark.current) GlassSurfaceColor else MaterialTheme.colorScheme.surface
 
 /**
  * The backdrop of the floating navigation pill. Android 13+ adds a refraction shader on top of
@@ -31,13 +38,15 @@ internal expect fun GlassBarSurface(
 /** Haze blur, a dark fill and a thin top-lit edge: the glass bar without the refraction shader. */
 @Composable
 internal fun FrostedGlassBar(hazeState: HazeState?, modifier: Modifier, glowStrength: Float) {
+    val surfaceColor = glassSurfaceColor()
+    val edgeColor = if (LocalNuvioIsDark.current) Color.White else MaterialTheme.colorScheme.onSurface
     Box(
         modifier
-            .then(if (hazeState != null) Modifier.barBackdrop(hazeState) else Modifier)
+            .then(if (hazeState != null) Modifier.barBackdrop(hazeState, surfaceColor) else Modifier)
             .drawWithCache {
-                val fill = GlassSurfaceColor.copy(alpha = if (hazeState != null) 0.55f else 0.82f)
+                val fill = surfaceColor.copy(alpha = if (hazeState != null) 0.55f else 0.82f)
                 val edge = Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.27f), Color.White.copy(alpha = 0.02f)),
+                    listOf(edgeColor.copy(alpha = 0.27f), edgeColor.copy(alpha = 0.02f)),
                 )
                 val width = 0.75.dp.toPx()
                 onDrawBehind {
@@ -55,9 +64,12 @@ internal fun FrostedGlassBar(hazeState: HazeState?, modifier: Modifier, glowStre
     )
 }
 
-internal fun Modifier.barBackdrop(hazeState: HazeState): Modifier = hazeEffect(state = hazeState) {
+internal fun Modifier.barBackdrop(
+    hazeState: HazeState,
+    surfaceColor: Color = GlassSurfaceColor,
+): Modifier = hazeEffect(state = hazeState) {
     blurRadius = 24.dp
-    backgroundColor = GlassSurfaceColor
+    backgroundColor = surfaceColor
     tints = listOf(HazeTint(Color.Transparent))
     noiseFactor = 0f
 }

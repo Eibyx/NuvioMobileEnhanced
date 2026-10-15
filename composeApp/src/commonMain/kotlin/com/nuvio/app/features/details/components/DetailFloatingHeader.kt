@@ -166,7 +166,7 @@ fun DetailFloatingHeader(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .height(0.5.dp)
-                        .background(Color.White.copy(alpha = 0.15f)),
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)),
                 )
             }
         }

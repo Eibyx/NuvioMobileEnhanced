@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.build.AppFeaturePolicy
 import coil3.compose.AsyncImage
+import com.nuvio.app.core.ui.LocalNuvioIsDark
 import com.nuvio.app.core.ui.NuvioIconActionButton
 import com.nuvio.app.core.ui.NuvioInfoBadge
 import com.nuvio.app.core.ui.NuvioInputField
@@ -55,6 +56,7 @@ import com.nuvio.app.core.ui.NuvioScreenHeader
 import com.nuvio.app.core.ui.NuvioSectionLabel
 import com.nuvio.app.core.ui.NuvioStatusModal
 import com.nuvio.app.core.ui.NuvioSurfaceCard
+import com.nuvio.app.core.ui.nuvio
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -427,7 +429,13 @@ private fun InstalledAddonCard(
             AddonIconBadge(
                 imageUrl = manifest?.logoUrl,
                 icon = Icons.Rounded.Extension,
-                tint = if (manifest != null) Color(0xFF71BDE8) else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (manifest == null) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else if (LocalNuvioIsDark.current) {
+                    Color(0xFF71BDE8)
+                } else {
+                    MaterialTheme.nuvio.colors.info
+                },
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {

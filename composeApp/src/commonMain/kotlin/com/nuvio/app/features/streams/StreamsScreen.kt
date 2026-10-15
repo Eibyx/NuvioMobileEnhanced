@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.nuvio.app.core.build.AppFeaturePolicy
+import com.nuvio.app.core.ui.LocalNuvioIsDark
 import com.nuvio.app.core.ui.NuvioBackButton
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.NuvioInputField
@@ -467,7 +468,10 @@ private fun MobileStreamsLayout(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = if (isEpisode) 0.9f else 0.82f)),
+                    .background(
+                        (if (LocalNuvioIsDark.current) Color.Black else MaterialTheme.colorScheme.background)
+                            .copy(alpha = if (isEpisode) 0.9f else 0.82f),
+                    ),
             )
         }
 

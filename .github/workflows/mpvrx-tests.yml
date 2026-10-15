@@ -11,8 +11,10 @@ on:
     branches: ["integration/**", "experiment/**"]
     paths:
       - "composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/**"
+      - "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/**"
       - "composeApp/src/androidLibmpv*/**"
       - "androidApp/src/androidTest/**"
+      - "androidApp/build.gradle.kts"
       - "gradle/libs.versions.toml"
       - "settings.gradle.kts"
       - "composeApp/build.gradle.kts"
@@ -20,14 +22,19 @@ on:
   pull_request:
     paths:
       - "composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/**"
+      - "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/**"
       - "composeApp/src/androidLibmpv*/**"
       - "androidApp/src/androidTest/**"
+      - "androidApp/build.gradle.kts"
       - "gradle/libs.versions.toml"
+      - "settings.gradle.kts"
+      - "composeApp/build.gradle.kts"
   workflow_dispatch:
 
 concurrency:
   group: mpvrx-tests-${{ github.ref }}
-  cancel-in-progress: true
+  # Emulator results are evidence (docs/TESTING.md): let a started run finish.
+  cancel-in-progress: false
 
 permissions:
   contents: read

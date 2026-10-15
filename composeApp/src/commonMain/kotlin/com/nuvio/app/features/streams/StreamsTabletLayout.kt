@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.nuvio.app.core.ui.LocalNuvioIsDark
 import com.nuvio.app.core.ui.shimmer
 import com.nuvio.app.isIos
 import dev.chrisbanes.haze.HazeInputScale
@@ -148,19 +149,22 @@ internal fun TabletStreamsLayout(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                if (isEpisode && seasonNumber != null && episodeNumber != null) {
-                    TabletEpisodeInfoPanel(
-                        logo = logo,
-                        seasonNumber = seasonNumber,
-                        episodeNumber = episodeNumber,
-                        episodeTitle = episodeTitle,
-                        showTitle = title,
-                    )
-                } else {
-                    TabletMovieInfoPanel(
-                        title = title,
-                        logo = logo,
-                    )
+                // Avix: this panel sits on the darkened backdrop, so it keeps dark-theme text in light mode.
+                com.nuvio.app.core.ui.NuvioForceDarkTheme {
+                    if (isEpisode && seasonNumber != null && episodeNumber != null) {
+                        TabletEpisodeInfoPanel(
+                            logo = logo,
+                            seasonNumber = seasonNumber,
+                            episodeNumber = episodeNumber,
+                            episodeTitle = episodeTitle,
+                            showTitle = title,
+                        )
+                    } else {
+                        TabletMovieInfoPanel(
+                            title = title,
+                            logo = logo,
+                        )
+                    }
                 }
             }
 
@@ -182,7 +186,13 @@ internal fun TabletStreamsLayout(
                             inputScale = HazeInputScale.Fixed(0.66f)
                             blurRadius = 56.dp
                         }
-                        .background(Color.Black.copy(alpha = 0.36f)),
+                        .background(
+                            if (LocalNuvioIsDark.current) {
+                                Color.Black.copy(alpha = 0.36f)
+                            } else {
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.72f)
+                            },
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
