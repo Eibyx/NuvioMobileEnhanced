@@ -72,6 +72,8 @@ Regla: ningún test se desactiva, elimina ni debilita. Cada fallo se clasificó 
 | `RatingsVisibilityTest` | El merge dejó de usar las valoraciones obtenidas y las del addon en dos diseños de episodio | Código: los tres diseños usan las mismas reglas |
 | Entorno de CI | `AndroidDownloadLifecycleTest` usa `@Config(sdk = [34, 36])`; Robolectric necesita Java 21 para SDK 36 y CI usaba JDK 17 (`UnsupportedOperationException` en `DefaultSdkProvider`) | CI pasa a JDK 21 (el mismo con el que la suite completa pasa en local) |
 
+Resultado: suite local completa 1781 tests, 0 fallos (JDK 21). GitHub Actions en `e35e81d5`: CI #24 «Unit tests» PASS y «Debug APK» PASS; «mpvRx engine tests» #15 PASS en API 34 y API 35 (16 KB). La ejecución manual #14 en `0f911389` falló en el emulador API 35 antes de ejecutar ningún test (`DELETE_FAILED_INTERNAL_ERROR` al instalar, 0 tests): fallo de infraestructura, no del código.
+
 ### Motor mpvRx — pruebas 1–20
 
 Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas se ejecutan en GitHub Actions (`mpvrx-tests.yml`); el contenedor de desarrollo no tiene `/dev/kvm`.

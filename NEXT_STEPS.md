@@ -13,7 +13,7 @@ Actualizado en cada sesión de trabajo. Estado detallado: [FEATURES.md](FEATURES
 
 ## Pendiente
 1. **Fase 1 — ports de Yesnt10: completada.** Todas las funciones Android compatibles están portadas o documentadas como duplicadas, retiradas en origen, excluidas por el propietario o bloqueadas (docs/integration/YESNT_PORT_LEDGER.md). MyAnimeList portado desde AKRusso.
-2. **Fase 2 (en curso)** — corregir los 23 fallos heredados de tests unitarios (y el test intermitente `ExternalPlaybackProgressTest`) hasta que «CI / Unit tests», «CI / Debug APK» y «mpvRx engine tests» estén en verde en el mismo commit.
+2. **Fase 2: completada.** Los 23 fallos heredados y el intermitente `ExternalPlaybackProgressTest` corregidos sin desactivar tests (tabla en docs/TESTING.md); CI en JDK 21. «CI / Unit tests», «CI / Debug APK» y «mpvRx engine tests» en verde en el mismo commit `e35e81d5`.
 3. **Fase 3 (reservada, no iniciada)** — rediseño del reproductor; no abrir mini reproductor/PiP automáticamente al volver; fuente del sistema en toda la app; contraste de texto sobre imágenes.
 4. Pruebas en dispositivo real (motor, subtítulos ASS, tema claro, ports, cuenta). Nada se marca PASS sin ejecución.
 5. Valoraciones IMDb de episodios junto a OMDb (DECISIONS D-4).
