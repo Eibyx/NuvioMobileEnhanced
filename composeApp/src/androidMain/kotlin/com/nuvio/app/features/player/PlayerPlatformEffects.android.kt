@@ -83,6 +83,7 @@ actual fun EnterImmersivePlayerMode(keepScreenAwake: Boolean) = Unit
 
 @Composable
 actual fun ManagePlayerPictureInPicture(
+    isActive: Boolean,
     isPlaying: Boolean,
     videoSize: IntSize,
 ) {
@@ -97,11 +98,15 @@ actual fun ManagePlayerPictureInPicture(
     SideEffect {
         PlayerPictureInPictureManager.updateSession(
             activity = activity,
-            isActive = true,
+            isActive = isActive,
             isPlaying = isPlaying,
             videoSize = videoSize,
         )
     }
+}
+
+actual fun disablePlayerPictureInPictureAutoEnter() {
+    PlayerPictureInPictureManager.disableAutoEnter()
 }
 
 @Composable

@@ -149,10 +149,19 @@ internal fun PlayerScreenRuntime.BindMiniPlayerEffects(presentation: Boolean?) {
             onDispose { MiniPlayerController.detach(runtime) }
         }
     }
-    PlatformBackHandler(enabled = presentation == false) {
-        if (!handOffToMiniPlayer()) flushWatchProgress()
-        args.onBack()
+    // Back always leaves the player for the previous screen: it never starts PiP or the mini
+    // player (both stay available manually: Home for PiP, the PiP button for the mini player).
+    PlatformBackHandler(enabled = presentation != true) {
+        exitPlayer()
     }
+}
+
+/** Leaves the player for the previous screen, saving progress and without PiP or mini player. */
+internal fun PlayerScreenRuntime.exitPlayer() {
+    isExitingPlayer = true
+    disablePlayerPictureInPictureAutoEnter()
+    flushWatchProgress()
+    args.onBack()
 }
 
 @Composable

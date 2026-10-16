@@ -165,6 +165,8 @@ internal class PlayerScreenRuntime(
     var accumulatedSeekState by mutableStateOf<PlayerAccumulatedSeekState?>(null)
     var initialLoadCompleted by mutableStateOf(false)
     var isMiniPresentation by mutableStateOf(false)
+    /** Set when the user leaves the player (Back, close, error): no PiP or mini player may start. */
+    var isExitingPlayer by mutableStateOf(false)
     var speedBoostRestoreSpeed by mutableStateOf<Float?>(null)
     var isHoldToSpeedGestureActive by mutableStateOf(false)
     var initialSeekApplied by mutableStateOf(

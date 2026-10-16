@@ -72,9 +72,12 @@ actual fun EnterImmersivePlayerMode(keepScreenAwake: Boolean) {
 
 @Composable
 actual fun ManagePlayerPictureInPicture(
+    isActive: Boolean,
     isPlaying: Boolean,
     videoSize: IntSize,
 ) = Unit
+
+actual fun disablePlayerPictureInPictureAutoEnter() = Unit
 
 @Composable
 actual fun rememberIsInPictureInPicture(): Boolean = false

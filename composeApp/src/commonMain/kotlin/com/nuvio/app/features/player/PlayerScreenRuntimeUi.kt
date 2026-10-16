@@ -493,10 +493,7 @@ private fun PlayerScreenRuntime.RenderPlayerControls(isEpisode: Boolean) {
             onLockToggle = {
                 if (playerControlsLocked) unlockPlayerControls() else lockPlayerControls()
             },
-            onBack = {
-                flushWatchProgress()
-                args.onBack()
-            },
+            onBack = { exitPlayer() },
             onTogglePlayback = { togglePlayback() },
             onSeekBack = { seekBy(-10_000L) },
             onSeekForward = { seekBy(10_000L) },
@@ -703,10 +700,7 @@ private fun BoxScope.RenderPlaybackOverlays(
         backdropArtwork = if (isLiveTvPlayback) activeLogo?.takeIf(String::isNotBlank) ?: background ?: poster else background ?: poster,
         logo = if (isLiveTvPlayback) activeLogo else logo,
         title = if (isLiveTvPlayback) activeStreamTitle else title,
-        onBackWithProgress = {
-            flushWatchProgress()
-            args.onBack()
-        },
+        onBackWithProgress = { exitPlayer() },
         openingLoadingMessage = if (playerSettingsUiState.showPlayerLoadingStatus) {
             p2pInitialLoadingMessage ?: playerLoadingStatusMessage(
                 showStatus = true,
@@ -789,10 +783,7 @@ private fun BoxScope.RenderPlaybackOverlays(
             showMovieRecommendationCard = false
         },
         errorMessage = errorMessage,
-            onDismissError = {
-                flushWatchProgress()
-                args.onBack()
-            },
+            onDismissError = { exitPlayer() },
         )
     }
 }

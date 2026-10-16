@@ -11,6 +11,7 @@ import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.Lifecycle
+import java.lang.ref.WeakReference
 
 internal object PlayerPictureInPictureManager {
     private data class SessionState(
@@ -25,6 +26,7 @@ internal object PlayerPictureInPictureManager {
     private var wasInPictureInPictureMode = false
     private var pendingPictureInPictureExitCheck: Runnable? = null
     private var pausePlaybackCallback: (() -> Unit)? = null
+    private var sessionActivity: WeakReference<Activity>? = null
 
     fun updateSession(
         activity: Activity,
@@ -32,6 +34,7 @@ internal object PlayerPictureInPictureManager {
         isPlaying: Boolean,
         videoSize: IntSize,
     ) {
+        sessionActivity = WeakReference(activity)
         sessionState = SessionState(
             isActive = isActive,
             isPlaying = isPlaying,
@@ -40,7 +43,15 @@ internal object PlayerPictureInPictureManager {
         applyPictureInPictureParams(activity)
     }
 
+    /** Leaving the player: stop auto-enter immediately instead of waiting for the screen to be disposed. */
+    fun disableAutoEnter() {
+        if (!sessionState.isActive) return
+        sessionState = sessionState.copy(isActive = false)
+        sessionActivity?.get()?.let(::applyPictureInPictureParams)
+    }
+
     fun clearSession(activity: Activity) {
+        sessionActivity = null
         sessionState = SessionState()
         wasInPictureInPictureMode = false
         clearPendingPictureInPictureExitCheck()
@@ -93,7 +104,7 @@ internal object PlayerPictureInPictureManager {
 
     private fun enterIfEligible(activity: Activity): Boolean {
         if (!activity.canUsePictureInPicture()) return false
-        if (!sessionState.isActive || !sessionState.isPlaying) return false
+        if (!isPictureInPictureAutoEnterAllowed(sessionState.isActive, sessionState.isPlaying, isExiting = false)) return false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity.isInPictureInPictureMode) return false
         return runCatching { activity.enterPictureInPictureMode(buildParams()) }.getOrDefault(false)
     }
@@ -102,7 +113,9 @@ internal object PlayerPictureInPictureManager {
         val builder = PictureInPictureParams.Builder()
         buildAspectRatio(sessionState.videoSize)?.let(builder::setAspectRatio)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            builder.setAutoEnterEnabled(sessionState.isActive && sessionState.isPlaying)
+            builder.setAutoEnterEnabled(
+                isPictureInPictureAutoEnterAllowed(sessionState.isActive, sessionState.isPlaying, isExiting = false),
+            )
             builder.setSeamlessResizeEnabled(true)
         }
         return builder.build()

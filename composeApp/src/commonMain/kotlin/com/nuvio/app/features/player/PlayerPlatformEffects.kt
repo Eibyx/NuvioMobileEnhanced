@@ -34,9 +34,23 @@ expect fun EnterImmersivePlayerMode(keepScreenAwake: Boolean)
 
 @Composable
 expect fun ManagePlayerPictureInPicture(
+    isActive: Boolean,
     isPlaying: Boolean,
     videoSize: IntSize,
 )
+
+/**
+ * Turns off automatic picture-in-picture right away, before the player screen is removed, so that
+ * leaving the player with Back never starts PiP (Android 12+ auto-enter) during the exit.
+ */
+expect fun disablePlayerPictureInPictureAutoEnter()
+
+/** PiP may only start on its own (Home / recents) while an active player is playing and not exiting. */
+internal fun isPictureInPictureAutoEnterAllowed(
+    isActive: Boolean,
+    isPlaying: Boolean,
+    isExiting: Boolean,
+): Boolean = isActive && isPlaying && !isExiting
 
 @Composable
 expect fun rememberIsInPictureInPicture(): Boolean

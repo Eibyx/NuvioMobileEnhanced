@@ -205,10 +205,7 @@ internal fun PlayerScreenRuntime.handleKeyboardShortcut(shortcut: PlayerKeyboard
         PlayerKeyboardShortcut.TogglePlayback -> togglePlayback()
         PlayerKeyboardShortcut.SeekBackward -> seekBy(-PlayerDoubleTapSeekStepMs)
         PlayerKeyboardShortcut.SeekForward -> seekBy(PlayerDoubleTapSeekStepMs)
-        PlayerKeyboardShortcut.Exit -> {
-            flushWatchProgress()
-            args.onBack()
-        }
+        PlayerKeyboardShortcut.Exit -> exitPlayer()
     }
 }
 

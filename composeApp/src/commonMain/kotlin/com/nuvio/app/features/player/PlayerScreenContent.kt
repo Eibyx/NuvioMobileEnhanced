@@ -174,6 +174,7 @@ internal fun PlayerScreenContent(args: PlayerScreenArgs) {
         if (!runtime.isMiniPresentation) {
             EnterImmersivePlayerMode(keepScreenAwake = keepScreenAwake)
             ManagePlayerPictureInPicture(
+                isActive = !runtime.isExitingPlayer,
                 isPlaying = pipIsPlaying,
                 videoSize = pipVideoSize,
             )
