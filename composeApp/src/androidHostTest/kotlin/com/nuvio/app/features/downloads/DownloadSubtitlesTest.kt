@@ -42,7 +42,7 @@ class DownloadSubtitlesTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @Test
-    fun backgroundDownloadSavesAddonAndStreamSubtitlesBeforeVideo(): Unit = runBlocking {
+    fun backgroundDownloadSavesAddonAndStreamSubtitlesBeforeCompleting(): Unit = runBlocking {
         val context = RuntimeEnvironment.getApplication()
         val paths = Collections.synchronizedList(mutableListOf<String>())
         val playerSubtitles = SubtitleRepository.addonSubtitles.value
@@ -90,7 +90,11 @@ class DownloadSubtitlesTest {
         val tracks = DownloadSubtitles.localSubtitles(uri)
         assertEquals(DownloadStatus.Completed, restored.status)
         assertEquals(setOf("en", "fr"), tracks.map { it.language }.toSet())
-        assertEquals("/video", paths.last())
+        // The video transfer deliberately starts without waiting for subtitles (54ae5bdc), so the
+        // request order is not part of the contract. What is: the video is fetched exactly once and
+        // every subtitle is already saved when execute() marks the download Completed (it joins the
+        // subtitle job before finalizing), which the track assertions on `restored` check below.
+        assertEquals(1, paths.count { it == "/video" })
         assertEquals(1, paths.count { it == "/english" })
         assertEquals(1, paths.count { it == "/french" })
         assertTrue(tracks.single { it.language == "en" }.name.orEmpty().contains("OpenSubtitles"))

@@ -334,8 +334,8 @@ fun DetailSeriesContent(
                                     userRating = rememberUserRating(userRatingTarget),
                                     fallbackImage = meta.background ?: meta.poster,
                                     progressEntry = progressByVideoId[episodeVideoId],
-                                    tmdbRating = episode.tmdbRating,
-                                    imdbRating = episode.imdbRating,
+                                    tmdbRating = episode.displayTmdbRating(episodeRatings),
+                                    imdbRating = episode.displayImdbRating(episodeRatings),
                                     isWatched = progressByVideoId[episodeVideoId]?.isEffectivelyCompleted == true ||
                                         WatchingState.isEpisodeWatched(
                                             watchedKeys = watchedKeys,
@@ -439,8 +439,8 @@ internal fun DetailSeriesListEpisode(
             userRating = rememberUserRating(userRatingTarget),
             fallbackImage = meta.background ?: meta.poster,
             progressEntry = progressByVideoId[episodeVideoId],
-            tmdbRating = episode.tmdbRating ?: episode.rating,
-            imdbRating = episode.seasonEpisodeKey()?.let { episodeRatings[it] } ?: episode.imdbRating,
+            tmdbRating = episode.displayTmdbRating(episodeRatings),
+            imdbRating = episode.displayImdbRating(episodeRatings),
             isWatched = progressByVideoId[episodeVideoId]?.isEffectivelyCompleted == true ||
                 WatchingState.isEpisodeWatched(
                     watchedKeys = watchedKeys,
@@ -896,8 +896,8 @@ private fun EpisodeHorizontalRow(
                 userRating = rememberUserRating(userRatingTarget),
                 fallbackImage = fallbackImage,
                 progressEntry = progressByVideoId[episodeVideoId],
-                tmdbRating = episode.tmdbRating,
-                imdbRating = episode.imdbRating,
+                tmdbRating = episode.displayTmdbRating(episodeRatings),
+                imdbRating = episode.displayImdbRating(episodeRatings),
                 isWatched = progressByVideoId[episodeVideoId]?.isEffectivelyCompleted == true ||
                     WatchingState.isEpisodeWatched(
                         watchedKeys = watchedKeys,
@@ -1722,6 +1722,20 @@ private fun MetaVideo.seasonEpisodeKey(): Pair<Int, Int>? {
     val episodeNumber = episode ?: return null
     return seasonNumber to episodeNumber
 }
+
+/**
+ * Every episode layout resolves its ratings the same way: a fetched episode rating takes precedence
+ * over the addon-provided [MetaVideo.rating] (which is only a fallback, shown on the TMDB badge when no
+ * TMDB enrichment exists), and the IMDb badge shows the fetched rating or the enriched IMDb value.
+ */
+private fun MetaVideo.fetchedEpisodeRating(episodeRatings: Map<Pair<Int, Int>, Double>): Double? =
+    seasonEpisodeKey()?.let { episodeRatings[it] }
+
+private fun MetaVideo.displayImdbRating(episodeRatings: Map<Pair<Int, Int>, Double>): Double? =
+    fetchedEpisodeRating(episodeRatings) ?: imdbRating
+
+private fun MetaVideo.displayTmdbRating(episodeRatings: Map<Pair<Int, Int>, Double>): Double? =
+    tmdbRating ?: rating.takeIf { fetchedEpisodeRating(episodeRatings) == null }
 
 private fun formatEpisodeRating(rating: Double): String {
     val roundedTenths = (rating * 10.0).roundToInt()

@@ -38,11 +38,13 @@ class ExternalPlaybackProgressTest {
     @Before
     fun initialize() {
         val context = RuntimeEnvironment.getApplication()
-        clearPreferences()
         WatchProgressStorage.initialize(context)
         PlayerSettingsStorage.initialize(context)
         ExternalPlayerPlatform.initialize(context)
+        // Settle any watch-progress write queued by an earlier test class before wiping storage,
+        // so a late background flush cannot land in this test's freshly cleared preferences.
         WatchProgressRepository.clearLocalState()
+        clearPreferences()
     }
 
     @After

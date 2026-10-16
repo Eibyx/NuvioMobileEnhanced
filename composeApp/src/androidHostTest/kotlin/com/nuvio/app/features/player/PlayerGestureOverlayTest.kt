@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -97,10 +98,7 @@ class PlayerGestureOverlayTest {
     fun swipingRightShowsTheSeekTargetWhileTheFingerIsDown() {
         setPlayerContent()
         // A twelfth of the width is 5 s: swipes on titles under 30 minutes span 60 s.
-        compose.onNodeWithTag("surface").performTouchInput {
-            down(center)
-            moveBy(Offset(width / 12f, 0f))
-        }
+        compose.onNodeWithTag("surface").performTouchInput { swipeRightFromCenterBy(width / 12f) }
 
         val target = compose.onNodeWithText("01:05").assertIsDisplayed().getUnclippedBoundsInRoot()
         val delta = compose.onNodeWithText("+5s").assertIsDisplayed().getUnclippedBoundsInRoot()
@@ -130,10 +128,7 @@ class PlayerGestureOverlayTest {
         // Titles of an hour or more span 120 s across the width.
         runtime.playbackSnapshot = runtime.playbackSnapshot.copy(positionMs = 3_600_000L, durationMs = 7_200_000L)
         setPlayerContent()
-        compose.onNodeWithTag("surface").performTouchInput {
-            down(center)
-            moveBy(Offset(width / 12f, 0f))
-        }
+        compose.onNodeWithTag("surface").performTouchInput { swipeRightFromCenterBy(width / 12f) }
 
         compose.onNodeWithText("1:00:10").assertIsDisplayed()
         compose.onNodeWithText("+10s").assertIsDisplayed()
@@ -187,10 +182,7 @@ class PlayerGestureOverlayTest {
     fun releasingSeeksToThePreviewedTargetAndHidesThePreview() {
         setPlayerContent()
         val surface = compose.onNodeWithTag("surface")
-        surface.performTouchInput {
-            down(center)
-            moveBy(Offset(width / 12f, 0f))
-        }
+        surface.performTouchInput { swipeRightFromCenterBy(width / 12f) }
         compose.onNodeWithText("+5s").assertIsDisplayed()
 
         surface.performTouchInput { up() }
@@ -207,10 +199,7 @@ class PlayerGestureOverlayTest {
     fun legacyLayoutStillShowsTheSeekTarget() {
         useLegacyLayout.value = true
         setPlayerContent()
-        compose.onNodeWithTag("surface").performTouchInput {
-            down(center)
-            moveBy(Offset(width / 12f, 0f))
-        }
+        compose.onNodeWithTag("surface").performTouchInput { swipeRightFromCenterBy(width / 12f) }
 
         compose.onNodeWithText("01:05").assertIsDisplayed()
         compose.onNodeWithText("+5s").assertIsDisplayed()
@@ -241,8 +230,22 @@ class PlayerGestureOverlayTest {
             runtime.liveGestureFeedback = null
             runtime.showBrightnessFeedback(0.4f)
         }
-        compose.onNodeWithText("40").assertIsDisplayed()
+        // The new layout shows the gesture's own reading (messageArgs, "40%") above the bar.
+        compose.onNodeWithText("40%").assertIsDisplayed()
         compose.onNodeWithText("2x").assertDoesNotExist()
+    }
+
+    /**
+     * Swipe-to-seek only starts once the finger has travelled
+     * [PlayerHorizontalGestureTouchSlopMultiplier] touch slops horizontally, so a short swipe first
+     * crosses that threshold and then comes back: the preview follows the total distance from
+     * [center], which ends at [dx].
+     */
+    private fun TouchInjectionScope.swipeRightFromCenterBy(dx: Float) {
+        val activation = maxOf(dx, viewConfiguration.touchSlop * PlayerHorizontalGestureTouchSlopMultiplier + 1f)
+        down(center)
+        moveBy(Offset(activation, 0f))
+        if (activation > dx) moveBy(Offset(dx - activation, 0f))
     }
 
     private class RecordingController(private val seeks: MutableList<Long>) : PlayerEngineController {

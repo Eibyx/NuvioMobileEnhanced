@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -61,11 +62,22 @@ class AndroidDownloadLifecycleTest {
     }
 
     @Test
-    fun missingSystemJobIsPausedInsteadOfSilentlyRescheduling() {
+    fun missingSystemJobIsRescheduledInsteadOfPaused() {
         val scheduler = AndroidDownloadScheduler(RuntimeEnvironment.getApplication())
         val transfer = scheduler.store.begin(downloadItem().copy(fileName = "stopped.mkv"))
 
-        assertEquals(DownloadStatus.Paused, scheduler.restore(transfer.item).status)
+        val restored = scheduler.restore(transfer.item)
+
+        // Since 8591da78 (#167, "stop downloads re-pausing") a Downloading transfer whose
+        // user-initiated job is gone is handed back to JobScheduler and is only paused when
+        // scheduling fails. It must stay the same transfer (same generation, no error) so the
+        // re-delivered job is still accepted by execute().
+        assertEquals(DownloadStatus.Downloading, restored.status)
+        assertNull(restored.errorMessage)
+        val stored = assertNotNull(scheduler.store.get(transfer.item.fileName))
+        assertEquals(transfer.generation, stored.generation)
+        assertEquals(transfer.jobId, stored.jobId)
+        assertTrue(scheduler.isActive(transfer))
     }
 
     @Test

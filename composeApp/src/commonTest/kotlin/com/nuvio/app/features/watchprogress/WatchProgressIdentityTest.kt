@@ -89,16 +89,18 @@ class WatchProgressIdentityTest {
                 "title": "Show",
                 "seasonNumber": 1,
                 "episodeNumber": 2,
-                "lastPositionMs": 940,
-                "durationMs": 1000,
+                "lastPositionMs": 2256000,
+                "durationMs": 2400000,
                 "lastUpdatedEpochMs": 100
               }]
             }
             """.trimIndent(),
         )
 
+        // 94% of a real-length (40 min) episode. Durations under 121 s are treated as
+        // placeholder/error clips and can never complete (see isShortPlaceholderDuration).
         assertEquals("show_s1e2", decoded.single().progressKey)
-        assertEquals(940L, decoded.single().lastPositionMs)
+        assertEquals(2_256_000L, decoded.single().lastPositionMs)
         assertTrue(decoded.single().isCompleted)
     }
 

@@ -133,8 +133,10 @@ class RatingsVisibilityTest {
                     title = meta.name,
                     seasonNumber = 1,
                     episodeNumber = 1,
-                    lastPositionMs = 950,
-                    durationMs = 1000,
+                    // 95% of a 40-minute episode: durations under ~2 minutes are treated as
+                    // placeholder clips that never complete (upstream 80860602).
+                    lastPositionMs = 2_280_000,
+                    durationMs = 2_400_000,
                     lastUpdatedEpochMs = 1,
                 ))
             }

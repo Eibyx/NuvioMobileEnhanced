@@ -50,6 +50,27 @@ Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 | APK + `verifyAvixCxxRuntimeFullDebug` | PASS | APK 190 MB |
 | Revisión visual en modo claro (todas las pantallas) | NOT RUN | requiere dispositivo |
 
+### 2026-10-16 — Fase 2: los 23 fallos heredados de tests unitarios
+
+Regla: ningún test se desactiva, elimina ni debilita. Cada fallo se clasificó como **regresión del código** (se corrige el código, preferentemente al comportamiento del Nuvio original) o **test desactualizado por un cambio deliberado** (se actualiza el test para comprobar el comportamiento nuevo con la misma fuerza).
+
+| Test | Causa | Decisión |
+|---|---|---|
+| `RootTabHostTest` ×2 | Luqman añadió la pestaña `LiveTv`; el test recorría solo 4 pestañas pero esperaba todas | Test: recorre también Live TV |
+| `BackendRateLimitTest` | Luqman limitó a 30 s también el `Retry-After` del servidor | Código: se respeta el `Retry-After` completo, como el original |
+| `WhatsNewSnapshotBuilderTest` ×2 (IMDb) | El código normaliza a «IMDb» a propósito (patrón propio) | Test: espera «IMDb» |
+| `WhatsNewSnapshotBuilderTest` (mes) | `periodUntil` cuenta 31 ene → 28 feb como 0 meses | Código: un mes natural (con fin de mes) cuenta como 1 mes |
+| `PluginSyncTest` | Los merges de Luqman reintrodujeron una subida automática `sync_push_addons` cuando el servidor está vacío, que upstream retiró (1854dfc3) | Código: igual que el original (no se sube nada automáticamente; D-6) |
+| `AndroidDownloadLifecycleTest` ×2 | Cambio deliberado (8591da78): un trabajo de descarga perdido se reprograma en lugar de pausarse | Test: comprueba la reprogramación (estado, sin error, mismo job) |
+| `DownloadSubtitlesTest` | Los subtítulos se descargan en paralelo al vídeo (54ae5bdc) | Test: comprueba que todo existe al completar, no el orden |
+| `WatchProgressIdentityTest`, `RatingsVisibilityTest` (2.ª parte) | Duraciones de 1 s: upstream (80860602) trata < 2 min como clip de relleno que nunca se completa | Test: mismo 94–95 % sobre un episodio de 40 min |
+| `ExternalPlaybackProgressTest` (intermitente) | `clearLocalState()` descartaba el guardado en segundo plano pendiente (4bd6c3b8) | Código: se escribe lo pendiente antes de limpiar; preparación del test ordenada |
+| `PlayerGestureOverlayTest` ×5 | Umbral de deslizamiento ×3 deliberado (c30367ac) y lectura «40%» deliberada (19fe73ce) | Test: supera el nuevo umbral; espera «40%» |
+| `HomeHeroPagerTest` ×2 | El hero mantiene compuestas las páginas vecinas ocultas (rendimiento) y seguían en el árbol de semántica/TalkBack | Código: páginas fuera de pantalla sin semántica |
+| `HomeHeroSectionTest` ×3 | Hero vertical de Luqman (ancho × 1,5) ignoraba el espacio para «Continuar viendo» y pantallas cortas | Código: se mantiene el tamaño de Luqman pero limitado por el espacio de «Continuar viendo»; tests actualizados al tamaño vertical y uno nuevo para pantalla corta |
+| `AvatarPickerTest` | Avatares sin imagen perdieron su etiqueta de accesibilidad en un merge | Código: etiqueta restaurada |
+| `RatingsVisibilityTest` | El merge dejó de usar las valoraciones obtenidas y las del addon en dos diseños de episodio | Código: los tres diseños usan las mismas reglas |
+
 ### Motor mpvRx — pruebas 1–20
 
 Detalle y procedimiento en [MPVRX_INTEGRATION.md](MPVRX_INTEGRATION.md). Las pruebas instrumentadas se ejecutan en GitHub Actions (`mpvrx-tests.yml`); el contenedor de desarrollo no tiene `/dev/kvm`.

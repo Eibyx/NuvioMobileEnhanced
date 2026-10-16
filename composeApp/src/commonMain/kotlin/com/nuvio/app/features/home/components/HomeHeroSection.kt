@@ -62,6 +62,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -586,13 +587,23 @@ internal fun HomeHeroSection(
                                 visiblePages.forEach { layer ->
                                     val layerItem = items[layer.itemIndex]
                                     key(layerItem.type, layerItem.id) {
+                                    // Neighbour pages stay composed for smooth swipes, but while they are
+                                    // fully off-screen they must not expose their titles to semantics
+                                    // (tests, TalkBack) — only pages that are actually on screen do.
+                                    val isLayerOnScreen by remember(pagerState, layer.page) {
+                                        derivedStateOf { abs(heroPageOffset(pagerState, layer.page)) < 1f }
+                                    }
                                     Box(
-                                        modifier = Modifier.graphicsLayer {
-                                            val offset = heroPageOffset(pagerState, layer.page)
-                                            val visibility = (1f - abs(offset)).coerceIn(0f, 1f)
-                                            alpha = ((visibility - 0.5f) * 2f).coerceIn(0f, 1f)
-                                            translationX = -offset * heroWidthPx * HERO_CONTENT_PARALLAX
-                                        },
+                                        modifier = Modifier
+                                            .graphicsLayer {
+                                                val offset = heroPageOffset(pagerState, layer.page)
+                                                val visibility = (1f - abs(offset)).coerceIn(0f, 1f)
+                                                alpha = ((visibility - 0.5f) * 2f).coerceIn(0f, 1f)
+                                                translationX = -offset * heroWidthPx * HERO_CONTENT_PARALLAX
+                                            }
+                                            .then(
+                                                if (isLayerOnScreen) Modifier else Modifier.clearAndSetSemantics { },
+                                            ),
                                     ) {
                                         HeroContentBlock(
                                             item = layerItem,
@@ -1024,19 +1035,23 @@ private fun mobileHeroHeight(
 ): Dp {
     val isPortraitViewport = viewportHeightDp?.let { it >= maxWidthDp } != false
 
+    val maxAllowedFromViewportDp = if (viewportHeightDp != null && mobileBelowSectionHeightHintDp != null) {
+        viewportHeightDp - mobileBelowSectionHeightHintDp
+    } else {
+        null
+    }
+
     if (isPortraitViewport) {
-        return (maxWidthDp * MOBILE_PORTRAIT_HERO_WIDTH_RATIO).dp
+        // Luqman's portrait hero (width-driven), still capped so the section below
+        // (continue watching) keeps its room on short screens, as upstream intends.
+        val portraitHeight = maxWidthDp * MOBILE_PORTRAIT_HERO_WIDTH_RATIO
+        return (maxAllowedFromViewportDp?.let { portraitHeight.coerceAtMost(it.coerceAtLeast(0f)) } ?: portraitHeight).dp
     }
 
     val viewportDrivenHeight = viewportHeightDp?.let { (it * MOBILE_HERO_VIEWPORT_RATIO).dp }
     val widthFallbackHeight = (maxWidthDp * 1.16f).dp
     val baseHeight = viewportDrivenHeight ?: widthFallbackHeight
 
-    val maxAllowedFromViewportDp = if (viewportHeightDp != null && mobileBelowSectionHeightHintDp != null) {
-        viewportHeightDp - mobileBelowSectionHeightHintDp
-    } else {
-        null
-    }
     val cappedHeight = if (maxAllowedFromViewportDp != null) {
         val maxAllowedFromViewport = maxAllowedFromViewportDp.dp
         baseHeight.coerceAtMost(maxAllowedFromViewport)

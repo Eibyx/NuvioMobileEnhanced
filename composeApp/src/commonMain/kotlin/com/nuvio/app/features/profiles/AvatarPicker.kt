@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.NuvioAsyncImage
 
@@ -87,6 +89,13 @@ private fun AvatarChoiceItem(
                 modifier = Modifier.fillMaxSize().clip(CircleShape),
                 contentScale = ContentScale.Crop,
                 animateIfPossible = true,
+            )
+        } else {
+            // No artwork to load: keep the avatar's name as its accessible label, as the image would.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .semantics { contentDescription = avatar.displayName },
             )
         }
     }

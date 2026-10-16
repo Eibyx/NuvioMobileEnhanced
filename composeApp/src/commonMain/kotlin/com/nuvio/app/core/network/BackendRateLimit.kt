@@ -99,8 +99,9 @@ internal fun retryAfterDelayMillis(
     } else {
         null
     }
-    return (secondsDelay ?: dateDelay ?: fallbackDelayMs.coerceAtLeast(0L))
-        .coerceAtMost(MaximumFallbackDelayMs)
+    // A delay the server asks for (Retry-After) is honoured in full, as in the original Nuvio;
+    // only the client-side fallback is bounded (by the caller's exponential backoff).
+    return secondsDelay ?: dateDelay ?: fallbackDelayMs.coerceAtLeast(0L)
 }
 
 internal fun backendRetryDelayMillis(

@@ -66,3 +66,7 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - Una clave ilegible (p. ej. tras restaurar el dispositivo) se descarta y el usuario la vuelve a introducir.
 - Los datos enviados al proveedor se limitan a la pregunta y los datos públicos del título; solo al proveedor elegido.
 
+## D-12 Sincronización de addons igual que el original
+- Con la lista de addons del servidor vacía, Avix ya no sube automáticamente los addons locales (`sync_push_addons`) ni los conserva: sigue al servidor, como Nuvio original desde 1854dfc3 («prevent automatic pulls from restoring deleted data»). La rama de migración la habían reintroducido merges de Luqman.
+- El estilo y la posición de la barra de navegación siguen siendo locales (decisión de Luqman, b8c793b9), sin sincronizar.
+

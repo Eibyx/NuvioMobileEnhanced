@@ -3,6 +3,7 @@ package com.nuvio.app.features.home.components
 import com.nuvio.app.features.watchprogress.ContinueWatchingSectionStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class HomeHeroSectionTest {
 
@@ -24,14 +25,15 @@ class HomeHeroSectionTest {
     }
 
     @Test
-    fun `mobile hero height stays compact without continue watching`() {
+    fun `mobile portrait hero height is width driven without continue watching`() {
+        // Luqman's portrait hero design: width x 1.5 (upstream used 53.6% of the viewport).
         val layout = homeHeroLayout(
             maxWidthDp = 390f,
             viewportHeightDp = 844f,
         )
 
         assertEquals(false, layout.isTablet)
-        assertEquals(452.4f, layout.heroHeight.value, 0.001f)
+        assertEquals(585f, layout.heroHeight.value, 0.001f)
     }
 
     @Test
@@ -65,6 +67,33 @@ class HomeHeroSectionTest {
             mobileBelowSectionHeightHintDp = reserveHeight.value,
         )
 
+        // The portrait hero keeps its width-driven height when the continue watching section
+        // still fits in the first screen with at least the 24 dp gap upstream reserves.
+        assertEquals(585f, layout.heroHeight.value, 0.001f)
+        assertTrue(viewportHeight - layout.heroHeight.value - continueWatchingHeight.value >= 24f)
+    }
+
+    @Test
+    fun `mobile portrait hero shrinks to keep continue watching on screen`() {
+        val viewportHeight = 700f
+        val continueWatchingLayout = rememberContinueWatchingLayout(maxWidthDp = 390f)
+        val continueWatchingHeight = continueWatchingSectionHeightEstimate(
+            style = ContinueWatchingSectionStyle.Card,
+            layout = continueWatchingLayout,
+            basePosterWidthDp = 110,
+        )
+        val reserveHeight = continueWatchingHeroViewportReserveHeight(
+            style = ContinueWatchingSectionStyle.Card,
+            layout = continueWatchingLayout,
+            basePosterWidthDp = 110,
+        )
+        val layout = homeHeroLayout(
+            maxWidthDp = 390f,
+            viewportHeightDp = viewportHeight,
+            mobileBelowSectionHeightHintDp = reserveHeight.value,
+        )
+
+        assertEquals(viewportHeight - reserveHeight.value, layout.heroHeight.value, 0.001f)
         assertEquals(24f, viewportHeight - layout.heroHeight.value - continueWatchingHeight.value, 0.001f)
     }
 

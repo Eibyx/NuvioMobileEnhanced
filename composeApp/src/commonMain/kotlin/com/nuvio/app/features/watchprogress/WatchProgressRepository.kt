@@ -315,9 +315,11 @@ object WatchProgressRepository {
     }
 
     fun clearLocalState() {
-        synchronized(persistWriteLock) {
-            synchronized(persistLock) { pendingPersist = null }
-        }
+        // persist() only queues the snapshot for a background write. Write anything still
+        // queued before dropping in-memory state, as the synchronous persist() did before:
+        // discarding the queue lost progress that callers had already recorded whenever the
+        // background flush had not run yet. Account wipes clear storage after this call.
+        flushPendingPersist()
         val previousAccountJob = synchronized(accountScopeLock) {
             accountScopeJob.also {
                 accountScopeJob = SupervisorJob()
