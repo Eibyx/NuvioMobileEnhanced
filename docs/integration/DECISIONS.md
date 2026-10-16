@@ -43,6 +43,7 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 
 ## D-7 Credenciales de aplicación de terceros
 - `ANILIST_CLIENT_ID` y `WETRAKR_CLIENT_ID` pasan a configuración de compilación (en Luqman estaban fijos en el código). Por defecto vacíos: la integración aparece como no disponible hasta configurar un cliente propio registrado con `avixnuvio://`.
+- `MAL_CLIENT_ID` (MyAnimeList, portado desde AKRusso/NuvioMobile-Enhanced) sigue la misma regla: configuración de compilación, vacío por defecto, cliente propio de tipo «Other» registrado con `avixnuvio://auth/mal`; sin él la integración aparece como no configurada.
 - `SIMKL_APP_NAME` por defecto `avixnuvio`.
 
 ## D-8 Workflows

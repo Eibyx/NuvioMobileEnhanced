@@ -23,6 +23,7 @@ internal actual object PlatformLocalAccountDataCleaner {
         "nuvio_mdblist_sync",
         "nuvio_anilist_auth",
         "nuvio_anilist_sync",
+        "avix_mal_auth",
         "nuvio_wetrakr_auth",
         "nuvio_wetrakr_sync",
         "nuvio_auth",

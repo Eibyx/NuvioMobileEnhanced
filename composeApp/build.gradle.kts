@@ -140,6 +140,19 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
             )
         }
 
+        outDir.resolve("com/nuvio/app/features/mal").apply {
+            mkdirs()
+            resolve("MalBuildConfig.kt").writeText(
+                """
+                |package com.nuvio.app.features.mal
+                |
+                |object MalBuildConfig {
+                |    const val CLIENT_ID = "${props.getProperty("MAL_CLIENT_ID", "")}"
+                |}
+                """.trimMargin()
+            )
+        }
+
         outDir.resolve("com/nuvio/app/features/wetrakr").apply {
             mkdirs()
             resolve("WeTrakrBuildConfig.kt").writeText(

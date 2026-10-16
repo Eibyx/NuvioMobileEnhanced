@@ -2960,4 +2960,21 @@
         <item quantity="one">%1$d Episode</item>
         <item quantity="other">%1$d Episodes</item>
     </plurals>
+    <string name="mal_connect">Connect MyAnimeList</string>
+    <string name="mal_connected_as">Connected as %1$s</string>
+    <string name="mal_account_fallback">MyAnimeList user</string>
+    <string name="mal_connected_description">Episodes you finish are added to your MyAnimeList progress automatically. Progress only moves forward.</string>
+    <string name="mal_sign_in_description">Connect MyAnimeList to update your anime episode progress automatically when you finish an episode.</string>
+    <string name="mal_finish_sign_in">Finish sign-in</string>
+    <string name="mal_approval_description">Approve the app in your browser within 10 minutes. You will be sent back to the app automatically.</string>
+    <string name="mal_open_login">Open sign-in page</string>
+    <string name="mal_disconnect">Disconnect MyAnimeList</string>
+    <string name="mal_missing_credentials">MyAnimeList connection is not configured in this build.</string>
+    <string name="mal_visit">Visit MyAnimeList</string>
+    <string name="mal_disconnect_description">Stop sending episode progress from this profile. Your MyAnimeList list is kept.</string>
+    <string name="mal_auth_denied">Connection was declined. Try again to connect your account.</string>
+    <string name="mal_auth_invalid">MyAnimeList returned an invalid sign-in response. Please try again.</string>
+    <string name="mal_auth_expired">The sign-in request expired. Please connect again.</string>
+    <string name="mal_auth_revoked">Your MyAnimeList connection has expired or been revoked. Connect again to resume tracking.</string>
+    <string name="mal_sign_in_failed">Could not finish signing in to MyAnimeList. Please try again.</string>
 </resources>

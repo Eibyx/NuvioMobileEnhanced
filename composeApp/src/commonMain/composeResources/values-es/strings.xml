@@ -2508,4 +2508,21 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
         <item quantity="one">%1$d temporada</item>
         <item quantity="other">%1$d temporadas</item>
     </plurals>
+    <string name="mal_connect">Conectar MyAnimeList</string>
+    <string name="mal_connected_as">Conectado como %1$s</string>
+    <string name="mal_account_fallback">Usuario de MyAnimeList</string>
+    <string name="mal_connected_description">Los episodios que terminas se suman automáticamente a tu progreso en MyAnimeList. El progreso solo avanza.</string>
+    <string name="mal_sign_in_description">Conecta MyAnimeList para actualizar automáticamente tu progreso de episodios de anime al terminar cada episodio.</string>
+    <string name="mal_finish_sign_in">Terminar el inicio de sesión</string>
+    <string name="mal_approval_description">Aprueba la app en tu navegador en menos de 10 minutos. Volverás a la app automáticamente.</string>
+    <string name="mal_open_login">Abrir la página de inicio de sesión</string>
+    <string name="mal_disconnect">Desconectar MyAnimeList</string>
+    <string name="mal_missing_credentials">La conexión con MyAnimeList no está configurada en esta compilación.</string>
+    <string name="mal_visit">Visitar MyAnimeList</string>
+    <string name="mal_disconnect_description">Deja de enviar el progreso de episodios desde este perfil. Tu lista de MyAnimeList se conserva.</string>
+    <string name="mal_auth_denied">Se rechazó la conexión. Vuelve a intentarlo para conectar tu cuenta.</string>
+    <string name="mal_auth_invalid">MyAnimeList devolvió una respuesta de inicio de sesión no válida. Inténtalo de nuevo.</string>
+    <string name="mal_auth_expired">La solicitud de inicio de sesión caducó. Vuelve a conectar.</string>
+    <string name="mal_auth_revoked">Tu conexión con MyAnimeList caducó o se revocó. Vuelve a conectar para reanudar el seguimiento.</string>
+    <string name="mal_sign_in_failed">No se pudo completar el inicio de sesión en MyAnimeList. Inténtalo de nuevo.</string>
 </resources>

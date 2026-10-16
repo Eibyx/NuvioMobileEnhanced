@@ -31,6 +31,7 @@ Todas las claves son **opcionales para compilar**. Si falta una, solo se desacti
 | `TRAKT_CLIENT_ID`, `TRAKT_CLIENT_SECRET`, `TRAKT_REDIRECT_URI` | Trakt. Redirect por defecto: `avixnuvio://auth/trakt` | App OAuth propia en trakt.tv |
 | `SIMKL_CLIENT_ID`, `SIMKL_REDIRECT_URI`, `SIMKL_APP_NAME` | Simkl. Redirect por defecto: `avixnuvio://auth/simkl` | App propia en simkl.com |
 | `ANILIST_CLIENT_ID` | AniList. Redirect a registrar: `avixnuvio://auth/anilist` | Cliente propio en anilist.co |
+| `MAL_CLIENT_ID` | MyAnimeList (seguimiento automático de episodios). Registrar un cliente de tipo «Other» con redirect `avixnuvio://auth/mal` | Cliente propio en myanimelist.net |
 | `WETRAKR_CLIENT_ID` | WeTrakr (código de dispositivo) | Cliente propio |
 | `MDBLIST_CLIENT_ID` | MDBList (código de dispositivo) | Cliente propio |
 | `PREMIUMIZE_CLIENT_ID` | Premiumize | Cliente propio |
@@ -40,6 +41,7 @@ Todas las claves son **opcionales para compilar**. Si falta una, solo se desacti
 Avix **no reutiliza** las credenciales de aplicación de Nuvio ni de los forks:
 
 - los `CLIENT_ID` de AniList y WeTrakr, que en Luqman estaban fijos en el código, ahora salen de esta configuración;
+- el `MAL_CLIENT_ID` de MyAnimeList (portado desde AKRusso) tampoco viene incluido: vacío por defecto;
 - sin un cliente propio, esas integraciones aparecen como no disponibles.
 
 ## Secretos de GitHub Actions
