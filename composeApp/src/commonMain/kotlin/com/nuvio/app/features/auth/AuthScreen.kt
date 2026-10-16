@@ -1,5 +1,7 @@
 package com.nuvio.app.features.auth
 
+import nuvio.composeapp.generated.resources.auth_error_not_configured
+import com.nuvio.app.core.auth.isUsable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -729,9 +731,27 @@ private fun AuthForm(
         autofillManager?.commit()
         onSubmit()
     }
+    val serverConfiguration by com.nuvio.app.core.network.ServerConfigurationRepository.active.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        // Avix: say up front when this build cannot reach the Nuvio account server at all.
+        if (!serverConfiguration.isUsable) {
+            Text(
+                text = stringResource(Res.string.auth_error_not_configured),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = (13f * scale).sp,
+                    lineHeight = (18f * scale).sp,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f))
+                    .padding(12.dp),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         AuthTextField(
             value = email,
             onValueChange = onEmailChange,

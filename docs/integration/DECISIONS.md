@@ -37,6 +37,9 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 ## D-6 Autenticación y sincronización intactas
 - No se modifican `core/auth/*`, `core/sync/*`, `core/network/Supabase*`, los adaptadores `Supabase*SyncAdapter` ni nombres o parámetros de RPC. Sin servidor propio, sin Mellon, sin cuentas nuevas.
 - La identificación ante el servidor (`User-Agent: NuvioMobile/…`, `CLIENT_NAME`) es la misma que en Luqman.
+- Configuración del backend oficial: `NUVIO_SUPABASE_URL=https://api.nuvio.tv` y `NUVIO_SUPABASE_ANON_KEY` = `publishable_key` publicado por el propio servidor en `https://api.nuvio.tv/.well-known/nuvio` (documento de descubrimiento para clientes, el mismo formato que usa Nuvio para servidores autoalojados). Se guarda como secreto del repositorio, nunca en el código ni en los logs. Nuvio no documenta una autorización expresa para apps derivadas; los forks Enhanced (Luqman, Yesnt10) usan el mismo backend con su propio secreto privado `NUVIO_LOCAL_PROPERTIES_BASE64`.
+- Sin configuración, la app lo indica en la pantalla de inicio de sesión y distingue «sin configurar», «sin conexión» y «credenciales incorrectas» (`core/auth/AuthFailure.kt`).
+- Logs: `NuvioLogging.install()` redacta tokens, `apikey`, `Authorization` y JWT de todos los logs y de Sentry (las excepciones de supabase-kt incluyen las cabeceras de la petición).
 
 ## D-7 Credenciales de aplicación de terceros
 - `ANILIST_CLIENT_ID` y `WETRAKR_CLIENT_ID` pasan a configuración de compilación (en Luqman estaban fijos en el código). Por defecto vacíos: la integración aparece como no disponible hasta configurar un cliente propio registrado con `avixnuvio://`.

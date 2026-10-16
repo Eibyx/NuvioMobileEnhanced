@@ -1,6 +1,14 @@
 package com.nuvio.app.core.auth
 
 import co.touchlab.kermit.Logger
+import com.nuvio.app.core.logging.SecretRedactor
+import com.nuvio.app.core.network.ServerConfigurationRepository
+import nuvio.composeapp.generated.resources.auth_error_email_not_confirmed
+import nuvio.composeapp.generated.resources.auth_error_invalid_credentials
+import nuvio.composeapp.generated.resources.auth_error_network
+import nuvio.composeapp.generated.resources.auth_error_not_configured
+import nuvio.composeapp.generated.resources.auth_error_rate_limited
+import nuvio.composeapp.generated.resources.auth_error_server
 import com.nuvio.app.core.network.SupabaseProvider
 import com.nuvio.app.core.storage.LocalAccountDataCleaner
 import io.github.jan.supabase.auth.auth
@@ -119,6 +127,7 @@ object AuthRepository {
 
     suspend fun signUpWithEmail(email: String, password: String): Result<Unit> = runCatching {
         _error.value = null
+        requireUsableServerConfiguration()
         SupabaseProvider.client.auth.signUpWith(Email) {
             this.email = email
             this.password = password
@@ -126,22 +135,21 @@ object AuthRepository {
         trustNextSessionWithoutValidation = true
         Unit
     }.onFailure { e ->
-        log.e(e) { "Email sign-up failed" }
-        _error.value = e.safeAuthErrorDescription()
-            ?: getString(Res.string.auth_sign_up_failed)
+        log.e(e) { "Email sign-up failed: ${classifyAuthFailure(e)}" }
+        _error.value = e.userFacingAuthError() ?: getString(Res.string.auth_sign_up_failed)
     }
 
     suspend fun signInWithEmail(email: String, password: String): Result<Unit> = runCatching {
         _error.value = null
+        requireUsableServerConfiguration()
         SupabaseProvider.client.auth.signInWith(Email) {
             this.email = email
             this.password = password
         }
         trustNextSessionWithoutValidation = true
     }.onFailure { e ->
-        log.e(e) { "Email sign-in failed" }
-        _error.value = e.safeAuthErrorDescription()
-            ?: getString(Res.string.auth_sign_in_failed)
+        log.e(e) { "Email sign-in failed: ${classifyAuthFailure(e)}" }
+        _error.value = e.userFacingAuthError() ?: getString(Res.string.auth_sign_in_failed)
     }
 
     suspend fun signOut(): Result<Unit> {
@@ -286,6 +294,28 @@ object AuthRepository {
         return null
     }
 
+    private fun requireUsableServerConfiguration() {
+        if (!ServerConfigurationRepository.active.value.isUsable) {
+            throw ServerNotConfiguredException()
+        }
+    }
+
+    /** Avix: distinguishes missing configuration, connectivity and wrong credentials. */
+    private suspend fun Throwable.userFacingAuthError(): String? =
+        if (this is ServerNotConfiguredException) {
+            getString(Res.string.auth_error_not_configured)
+        } else {
+            when (classifyAuthFailure(this)) {
+                AuthFailureKind.NotConfigured -> getString(Res.string.auth_error_not_configured)
+                AuthFailureKind.Network -> getString(Res.string.auth_error_network)
+                AuthFailureKind.InvalidCredentials -> getString(Res.string.auth_error_invalid_credentials)
+                AuthFailureKind.EmailNotConfirmed -> getString(Res.string.auth_error_email_not_confirmed)
+                AuthFailureKind.RateLimited -> getString(Res.string.auth_error_rate_limited)
+                AuthFailureKind.Server -> getString(Res.string.auth_error_server)
+                AuthFailureKind.Unknown -> safeAuthErrorDescription()?.let(SecretRedactor::redact)
+            }
+        }
+
     private fun Throwable.safeAuthErrorDescription(): String? =
         findCause<AuthRestException>()
             ?.errorDescription
@@ -296,3 +326,6 @@ object AuthRepository {
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
 }
+
+/** Avix: the build has no Nuvio backend URL / publishable key. */
+class ServerNotConfiguredException : IllegalStateException("Nuvio backend is not configured in this build")

@@ -35,6 +35,10 @@ jobs:
       KEY_ALIAS: ${{ secrets.AVIX_RELEASE_KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.AVIX_RELEASE_KEY_PASSWORD }}
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      # Nuvio account backend (DECISIONS D-6). The URL is public; the publishable key is a secret
+      # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -79,6 +83,27 @@ jobs:
             printf 'NUVIO_RELEASE_KEY_ALIAS=%s\n' "${KEY_ALIAS}"
             printf 'NUVIO_RELEASE_KEY_PASSWORD=%s\n' "${KEY_PASSWORD}"
           } >> local.properties
+
+      - name: Nuvio backend configuration
+        id: backend
+        shell: bash
+        run: |
+          # Values are never printed: only whether they are present (and the key length).
+          url="${NUVIO_SUPABASE_URL}"
+          key="${NUVIO_SUPABASE_ANON_KEY}"
+          if [ -f local.properties ]; then
+            grep -q '^NUVIO_SUPABASE_URL=..*' local.properties && url="(local.properties)"
+            grep -q '^NUVIO_SUPABASE_ANON_KEY=..*' local.properties && key="(local.properties)"
+          fi
+          if [ -n "${url}" ] && [ -n "${key}" ]; then
+            echo "Nuvio backend: configured (URL ${url%%/rest*}, publishable key ${#key} chars)"
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Nuvio account login disabled::Set the repository secret NUVIO_SUPABASE_ANON_KEY (Settings > Secrets and variables > Actions). This APK can only be used without an account."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Refusing to publish a release without the Nuvio backend configuration."
+            exit 1
+          fi
 
       - name: Resolve version
         id: version

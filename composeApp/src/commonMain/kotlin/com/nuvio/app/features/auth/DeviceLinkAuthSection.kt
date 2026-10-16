@@ -1,5 +1,7 @@
 package com.nuvio.app.features.auth
 
+import nuvio.composeapp.generated.resources.auth_error_network
+import nuvio.composeapp.generated.resources.auth_error_not_configured
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -172,6 +174,8 @@ internal fun DeviceLinkAuthSection(
                         DeviceLinkAuthFailure.Start,
                         DeviceLinkAuthFailure.Complete,
                         -> stringResource(Res.string.compose_auth_link_failed)
+                        DeviceLinkAuthFailure.NotConfigured -> stringResource(Res.string.auth_error_not_configured)
+                        DeviceLinkAuthFailure.Network -> stringResource(Res.string.auth_error_network)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium.copy(

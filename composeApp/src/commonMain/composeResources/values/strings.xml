@@ -2835,4 +2835,10 @@
     <string name="settings_appearance_theme_mode_system">System</string>
     <string name="settings_appearance_theme_mode_dark">Dark</string>
     <string name="settings_appearance_theme_mode_light">Light</string>
+    <string name="auth_error_not_configured">This build of Nuvio Avix has no connection to the Nuvio account server configured (NUVIO_SUPABASE_URL / NUVIO_SUPABASE_ANON_KEY were missing when it was built). Install an APK built with the configuration, or continue without an account.</string>
+    <string name="auth_error_network">Couldn\'t reach the Nuvio server. Check your internet connection and try again.</string>
+    <string name="auth_error_invalid_credentials">Incorrect email or password.</string>
+    <string name="auth_error_email_not_confirmed">Confirm your email address before signing in.</string>
+    <string name="auth_error_rate_limited">Too many attempts. Wait a moment and try again.</string>
+    <string name="auth_error_server">The Nuvio server is having problems. Try again later.</string>
 </resources>

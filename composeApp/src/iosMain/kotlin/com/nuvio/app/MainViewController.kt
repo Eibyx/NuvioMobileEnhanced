@@ -13,6 +13,7 @@ private val nuvioBackgroundColor = UIColor(red = 0.051, green = 0.051, blue = 0.
 
 @Suppress("unused")
 fun MainViewController(): UIViewController = nuvioComposeViewController {
+    com.nuvio.app.core.logging.NuvioLogging.install()
     App()
 }
 

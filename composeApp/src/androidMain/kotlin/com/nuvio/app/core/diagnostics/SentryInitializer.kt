@@ -72,6 +72,14 @@ object SentryInitializer {
             options.beforeSend = SentryOptions.BeforeSendCallback { event, _ ->
                 event.request = null
                 event.user = null
+                // Avix: supabase-kt exception messages embed request headers (apikey, bearer token).
+                event.exceptions?.forEach { exception ->
+                    exception.value = com.nuvio.app.core.logging.SecretRedactor.redact(exception.value)
+                }
+                event.message?.let { message ->
+                    message.formatted = com.nuvio.app.core.logging.SecretRedactor.redact(message.formatted)
+                    message.message = com.nuvio.app.core.logging.SecretRedactor.redact(message.message)
+                }
                 if (shouldDrop(event)) null else event
             }
         }

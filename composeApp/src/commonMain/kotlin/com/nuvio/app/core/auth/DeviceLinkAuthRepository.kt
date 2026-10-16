@@ -47,6 +47,10 @@ enum class DeviceLinkAuthFailure {
     Start,
     Expired,
     Complete,
+    /** Avix: no Nuvio backend URL / publishable key in this build. */
+    NotConfigured,
+    /** Avix: the server could not be reached. */
+    Network,
 }
 
 object DeviceLinkAuthRepository {
@@ -69,6 +73,11 @@ object DeviceLinkAuthRepository {
             _state.value = DeviceLinkAuthState.Starting
             val configuration = ServerConfigurationRepository.active.value
             val nonce = Uuid.random().toString()
+            if (!configuration.isUsable) {
+                log.w { "Device link sign-in unavailable: Nuvio backend not configured in this build" }
+                _state.value = DeviceLinkAuthState.Failed(DeviceLinkAuthFailure.NotConfigured)
+                return@launch
+            }
             try {
                 val session = startSession(
                     configuration = configuration,
@@ -86,8 +95,15 @@ object DeviceLinkAuthRepository {
                 log.w(error) { "Device link sign-in stopped" }
                 _state.value = DeviceLinkAuthState.Failed(error.reason)
             } catch (error: Throwable) {
-                log.w(error) { "Device link sign-in failed" }
-                _state.value = DeviceLinkAuthState.Failed(DeviceLinkAuthFailure.Start)
+                val kind = classifyAuthFailure(error)
+                log.w(error) { "Device link sign-in failed: $kind" }
+                _state.value = DeviceLinkAuthState.Failed(
+                    when (kind) {
+                        AuthFailureKind.NotConfigured -> DeviceLinkAuthFailure.NotConfigured
+                        AuthFailureKind.Network -> DeviceLinkAuthFailure.Network
+                        else -> DeviceLinkAuthFailure.Start
+                    },
+                )
             }
         }
     }

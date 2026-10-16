@@ -28,6 +28,10 @@ jobs:
       # See BUILDING.md. Missing values only disable the features that need them.
       LOCAL_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      # Nuvio account backend (DECISIONS D-6). The URL is public; the publishable key is a secret
+      # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -53,7 +57,7 @@ jobs:
             echo "local.properties written from secret ($(grep -c '=' local.properties) entries; values not printed)."
           else
             : > local.properties
-            echo "::notice::NUVIO_LOCAL_PROPERTIES_BASE64 is not set. The APK builds, but account sync and keyed integrations stay disabled."
+            echo "NUVIO_LOCAL_PROPERTIES_BASE64 is not set (optional: TMDB/Trakt/... keys)."
           fi
 
       - name: Unit tests
@@ -83,6 +87,10 @@ jobs:
       # See BUILDING.md. Missing values only disable the features that need them.
       LOCAL_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      # Nuvio account backend (DECISIONS D-6). The URL is public; the publishable key is a secret
+      # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -108,7 +116,26 @@ jobs:
             echo "local.properties written from secret ($(grep -c '=' local.properties) entries; values not printed)."
           else
             : > local.properties
-            echo "::notice::NUVIO_LOCAL_PROPERTIES_BASE64 is not set. The APK builds, but account sync and keyed integrations stay disabled."
+            echo "NUVIO_LOCAL_PROPERTIES_BASE64 is not set (optional: TMDB/Trakt/... keys)."
+          fi
+
+      - name: Nuvio backend configuration
+        id: backend
+        shell: bash
+        run: |
+          # Values are never printed: only whether they are present (and the key length).
+          url="${NUVIO_SUPABASE_URL}"
+          key="${NUVIO_SUPABASE_ANON_KEY}"
+          if [ -f local.properties ]; then
+            grep -q '^NUVIO_SUPABASE_URL=..*' local.properties && url="(local.properties)"
+            grep -q '^NUVIO_SUPABASE_ANON_KEY=..*' local.properties && key="(local.properties)"
+          fi
+          if [ -n "${url}" ] && [ -n "${key}" ]; then
+            echo "Nuvio backend: configured (URL ${url%%/rest*}, publishable key ${#key} chars)"
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Nuvio account login disabled::Set the repository secret NUVIO_SUPABASE_ANON_KEY (Settings > Secrets and variables > Actions). This APK can only be used without an account."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build debug APK
@@ -130,7 +157,7 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: Nuvio-Avix-Debug-${{ github.run_number }}
+          name: Nuvio-Avix-Debug-${{ github.run_number }}${{ steps.backend.outputs.configured == 'true' && '' || '-sin-cuenta' }}
           path: dist/
           if-no-files-found: error
           retention-days: 14

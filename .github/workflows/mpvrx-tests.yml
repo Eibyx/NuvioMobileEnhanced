@@ -54,6 +54,10 @@ jobs:
             target: google_apis_ps16k
     env:
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      # Nuvio account backend (DECISIONS D-6). The URL is public; the publishable key is a secret
+      # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5

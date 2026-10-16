@@ -44,11 +44,30 @@ Avix **no reutiliza** las credenciales de aplicación de Nuvio ni de los forks:
 
 ## Secretos de GitHub Actions
 
+### Cuenta de Nuvio (iniciar sesión)
+
+Sin `NUVIO_SUPABASE_ANON_KEY` la APK se compila igual, pero **no puede iniciar sesión** (correo ni enlace): la pantalla de inicio de sesión lo indica y el artefacto de CI se llama `Nuvio-Avix-Debug-N-sin-cuenta`. Origen de los valores:
+
+- `NUVIO_SUPABASE_URL`: `https://api.nuvio.tv` (público; ya figura en el código, `ServerDiscovery.kt`).
+- `NUVIO_SUPABASE_ANON_KEY`: la clave **publicable** que el propio servidor de Nuvio publica para clientes en su documento de descubrimiento `https://api.nuvio.tv/.well-known/nuvio` (campo `publishable_key`). Es una clave pública de cliente (rol `anon` de Supabase), no una clave privada. No se extrae de ninguna APK.
+
+Se usa la autenticación y la sincronización de Nuvio sin cambios (misma cuenta; sin servidor propio). El uso desde una app derivada no está autorizado expresamente por Nuvio (ver `docs/integration/DECISIONS.md` D-6).
+
+Configurarlo desde el móvil (navegador):
+1. Abrir `https://api.nuvio.tv/.well-known/nuvio` y copiar el valor de `publishable_key` (sin comillas).
+2. Abrir `https://github.com/Eibyx/NuvioMobileEnhanced/settings/secrets/actions` → **New repository secret**.
+3. **Name:** `NUVIO_SUPABASE_ANON_KEY` · **Secret:** pegar el valor → **Add secret**.
+4. **Actions** → **CI** → **Run workflow** → rama `integration/avix` → **Run workflow**.
+
+Desde Termux (con `gh` autenticado): `curl -s https://api.nuvio.tv/.well-known/nuvio | jq -r .publishable_key | gh secret set NUVIO_SUPABASE_ANON_KEY -R Eibyx/NuvioMobileEnhanced` (el valor no se muestra en pantalla).
+
 En **Settings → Secrets and variables → Actions** del repositorio:
 
 | Secreto | Contenido | Necesario para |
 |---|---|---|
-| `NUVIO_LOCAL_PROPERTIES_BASE64` | `base64 -w0 local.properties` con las claves de la tabla anterior **sin** `sdk.dir` | Cuenta de Nuvio e integraciones en las APK de CI |
+| `NUVIO_SUPABASE_ANON_KEY` | Clave **publicable** del servidor oficial (`publishable_key` de https://api.nuvio.tv/.well-known/nuvio) | **Iniciar sesión con la cuenta de Nuvio** (correo y enlace) |
+| `NUVIO_SUPABASE_URL` | Opcional. Por defecto `https://api.nuvio.tv` | Cuenta de Nuvio |
+| `NUVIO_LOCAL_PROPERTIES_BASE64` | Opcional. `base64 -w0 local.properties` con el resto de claves de la tabla anterior **sin** `sdk.dir` | Integraciones con clave (TMDB, Trakt, …) |
 | `AVIX_RELEASE_KEYSTORE_BASE64` | `base64 -w0 avix-release.jks` | Workflow **Release** |
 | `AVIX_RELEASE_STORE_PASSWORD` | Contraseña del keystore | Release |
 | `AVIX_RELEASE_KEY_ALIAS` | Alias de la clave | Release |
