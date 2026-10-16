@@ -1,0 +1,3 @@
+# Changing this file on integration/** runs the Release workflow (android-release.yml),
+# which builds, verifies, signs and publishes Nuvio-Eibyx-Release-arm64-v8a.apk.
+2026-10-16: first arm64-v8a release (R8) from 6d7e09fc.

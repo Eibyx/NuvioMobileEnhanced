@@ -2,7 +2,8 @@ name: Release
 
 # Signed release APK(s) published as a GitHub Release. By default only the arm64-v8a APK
 # (Nuvio-Eibyx-Release-arm64-v8a.apk); the "abis" input "all" builds every ABI + universal.
-# Run manually from the Actions tab, or push a tag named v<version>-avix.<n>.
+# Run manually from the Actions tab, push a tag named v<version>-avix.<n>, or change
+# .github/release-request on an integration branch (the workflow then names the tag itself).
 # Versions are semver prereleases (X.Y.Z-avix.N) so the in-app updater (Beta channel,
 # Eibyx/NuvioMobileEnhanced releases) offers them in order.
 # Refuses to run without a release keystore: release APKs are never signed with the debug key.
@@ -21,6 +22,11 @@ on:
   push:
     tags:
       - "v*-avix.*"
+    # Also when .github/release-request changes on an integration branch (for sessions that can
+    # push commits but not tags). Path filters do not apply to tag pushes.
+    branches: ["integration/**"]
+    paths:
+      - ".github/release-request"
 
 concurrency:
   group: release

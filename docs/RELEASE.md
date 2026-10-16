@@ -21,6 +21,7 @@
 
 - **Por tag (forma habitual):** `git tag v0.5.10-avix.200001 && git push origin v0.5.10-avix.200001`.
 - **Manual:** Actions → *Release* → *Run workflow*. GitHub solo lo ofrece cuando el workflow existe en la rama por defecto del repositorio (`cmp-rewrite`); desde `integration/avix` se usa el tag.
+- **Sin tags (p. ej. desde una sesión que solo puede subir commits):** modificar `.github/release-request` en `integration/avix` y subir el commit; el workflow crea el tag `vX.Y.Z-avix.<versionCode>`.
 
 El workflow ejecuta los tests, compila con R8 (minificación de código y reducción de recursos), comprueba el paquete `com.eibyx.nuvio`, las ABI, que las bibliotecas nativas de reproducción (mpvRx/libmpv, FFmpeg, libass) están presentes con alineación de 16 KB y que R8 no renombró ningún enlace JNI (`.github/scripts/verify-release-apk.py`), **rechaza** APK sin firmar o firmadas con certificado de depuración, genera `SHA256SUMS.txt` y crea la GitHub Release.
 
