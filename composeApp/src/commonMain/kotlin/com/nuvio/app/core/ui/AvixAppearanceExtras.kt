@@ -25,15 +25,20 @@ import kotlinx.coroutines.flow.asStateFlow
  * - animatedAccent: the accent gradient of primary buttons and the selected navigation item
  *   slowly flows (Yesnt10 "animated gradient themes"; off by default; only with gradient themes).
  * - statusBarHidden: hide the Android status bar across the app (swipe to reveal it).
+ * - systemFont: Settings → Appearance → Typography. false = original Nuvio font (default),
+ *   true = the device's system font, following the system text size (accessibility).
  */
 object AvixAppearancePreferences {
     private const val KEY_ANIMATED_ACCENT = "ui.animated_accent"
     private const val KEY_STATUS_BAR_HIDDEN = "ui.status_bar_hidden"
+    private const val KEY_SYSTEM_FONT = "ui.system_font"
 
     private val _animatedAccent = MutableStateFlow(false)
     val animatedAccent: StateFlow<Boolean> = _animatedAccent.asStateFlow()
     private val _statusBarHidden = MutableStateFlow(false)
     val statusBarHidden: StateFlow<Boolean> = _statusBarHidden.asStateFlow()
+    private val _systemFont = MutableStateFlow(false)
+    val systemFont: StateFlow<Boolean> = _systemFont.asStateFlow()
     private var loaded = false
 
     init {
@@ -49,6 +54,13 @@ object AvixAppearancePreferences {
         loaded = true
         _animatedAccent.value = AvixLocalStore.getBoolean(KEY_ANIMATED_ACCENT) ?: false
         _statusBarHidden.value = AvixLocalStore.getBoolean(KEY_STATUS_BAR_HIDDEN) ?: false
+        _systemFont.value = AvixLocalStore.getBoolean(KEY_SYSTEM_FONT) ?: false
+    }
+
+    fun setSystemFont(value: Boolean) {
+        ensureLoaded()
+        _systemFont.value = value
+        AvixLocalStore.putBoolean(KEY_SYSTEM_FONT, value)
     }
 
     fun setAnimatedAccent(value: Boolean) {
@@ -103,3 +115,14 @@ internal fun animatedAccentBrush(colors: List<androidx.compose.ui.graphics.Color
 }
 
 private const val ACCENT_SPAN = 420f
+
+/**
+ * Font scale applied by the theme. The original Nuvio font keeps the fixed scale of upstream
+ * (1x); the system font follows the system text size, bounded so the fixed-size layouts (poster
+ * rows, player controls, navigation bar) keep fitting.
+ */
+internal fun avixFontScale(useSystemFont: Boolean, deviceFontScale: Float): Float =
+    if (useSystemFont) deviceFontScale.coerceIn(MinSystemFontScale, MaxSystemFontScale) else 1f
+
+internal const val MinSystemFontScale = 0.85f
+internal const val MaxSystemFontScale = 1.3f

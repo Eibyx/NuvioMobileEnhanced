@@ -65,6 +65,7 @@ import nuvio.composeapp.generated.resources.settings_appearance_section_display
 import nuvio.composeapp.generated.resources.settings_appearance_section_home
 import nuvio.composeapp.generated.resources.settings_appearance_section_streams
 import nuvio.composeapp.generated.resources.settings_appearance_section_theme
+import nuvio.composeapp.generated.resources.settings_avix_typography_section
 import nuvio.composeapp.generated.resources.settings_content_discovery_collections_description
 import nuvio.composeapp.generated.resources.settings_content_discovery_homescreen_description
 import nuvio.composeapp.generated.resources.settings_content_discovery_meta_screen_description
@@ -120,6 +121,16 @@ internal fun LazyListScope.appearanceSettingsContent(
                 AvixGradientThemeRow(isTablet = isTablet)
                 SettingsGroupDivider(isTablet = isTablet)
                 AvixAppearanceExtraRows(isTablet = isTablet)
+            }
+        }
+    }
+    item {
+        SettingsSection(
+            title = stringResource(Res.string.settings_avix_typography_section),
+            isTablet = isTablet,
+        ) {
+            SettingsGroup(isTablet = isTablet) {
+                AvixTypographyRow(isTablet = isTablet)
             }
         }
     }

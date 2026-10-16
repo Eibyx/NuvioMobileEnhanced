@@ -11,6 +11,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
@@ -92,13 +94,21 @@ private fun buildColorScheme(palette: ThemeColorPalette, amoled: Boolean = false
     onError = Color(0xFFFCE5EC),
 )
 
+/** Avix: true when Settings → Appearance → Typography is "System font". */
+private val LocalAvixUseSystemFont = staticCompositionLocalOf { false }
+
+/** The app font: Nuvio's original JetBrains Sans, or the device's system font (Avix option). */
 private val JetBrainsSans: FontFamily
     @Composable
-    get() = FontFamily(
-        Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
-        Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
-        Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
-    )
+    get() = if (LocalAvixUseSystemFont.current) {
+        FontFamily.Default
+    } else {
+        FontFamily(
+            Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
+            Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
+            Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
+        )
+    }
 
 private val NuvioTypography: Typography
     @Composable
@@ -242,11 +252,16 @@ fun NuvioTheme(
     val colorScheme = if (darkTheme) buildColorScheme(palette, amoled = amoled) else buildLightColorScheme(palette)
     val tokens = defaultNuvioThemeTokens(palette, amoled = amoled, colorScheme = colorScheme, dark = darkTheme)
 
+    val useSystemFont by remember {
+        AvixAppearancePreferences.ensureLoaded()
+        AvixAppearancePreferences.systemFont
+    }.collectAsState()
     val density = LocalDensity.current
+    CompositionLocalProvider(LocalAvixUseSystemFont provides useSystemFont) {
     CompositionLocalProvider(
         LocalDensity provides Density(
             density = density.density,
-            fontScale = 1f,
+            fontScale = avixFontScale(useSystemFont, density.fontScale),
         ),
         LocalNuvioThemeTokens provides tokens,
         LocalNuvioTypeScale provides NuvioTypeTokens,
@@ -262,6 +277,7 @@ fun NuvioTheme(
         ) {
             SkeletonAnimationProvider(content = content)
         }
+    }
     }
 }
 
