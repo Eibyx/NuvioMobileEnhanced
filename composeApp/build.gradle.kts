@@ -2,6 +2,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -49,10 +50,32 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
     @get:Input
     abstract val tmdbApiKey: Property<String>
 
+    /**
+     * OAuth client IDs given as environment variables (the dedicated GitHub secrets in CI).
+     * Precedence for these keys: environment variable > local.properties > empty.
+     * Client IDs are public identifiers; client secrets are never read here.
+     */
+    @get:Input
+    abstract val oauthClientIdOverrides: MapProperty<String, String>
+
     @TaskAction
     fun generate() {
         val props = Properties()
         localPropertiesFile.asFile.orNull?.takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
+        oauthClientIdOverrides.get().forEach { (key, value) ->
+            val trimmed = value.trim()
+            if (trimmed.isNotEmpty()) props.setProperty(key, trimmed)
+        }
+        val clientIdPattern = Regex("[A-Za-z0-9._~-]+")
+        oauthClientIdOverrides.get().keys.forEach { key ->
+            val value = props.getProperty(key)?.trim().orEmpty()
+            props.setProperty(key, value)
+            // Values end up in generated Kotlin string literals: only accept plain identifiers.
+            // The value itself is never printed.
+            require(value.isEmpty() || clientIdPattern.matches(value)) {
+                "$key contains characters that are not allowed in a client ID (value not shown)."
+            }
+        }
 
         val outDir = outputDir.get().asFile
         outDir.resolve("com/nuvio/app/core/network").apply {
@@ -369,6 +392,17 @@ val generateRuntimeConfigs = tasks.register<GenerateRuntimeConfigsTask>("generat
     supabaseFallbackUrl.set(runtimeConfigValue("NUVIO_SUPABASE_FALLBACK_URL"))
     sentryDsn.set(runtimeConfigValue("SENTRY_DSN"))
     tmdbApiKey.set(runtimeConfigValue("TMDB_API_KEY"))
+    oauthClientIdOverrides.set(
+        listOf(
+            "ANILIST_CLIENT_ID",
+            "MAL_CLIENT_ID",
+            "TRAKT_CLIENT_ID",
+            "SIMKL_CLIENT_ID",
+            "MDBLIST_CLIENT_ID",
+        ).associateWith { key ->
+            providers.environmentVariable(key).orNull?.trim().orEmpty()
+        }
+    )
     sentryEnvironment.set(
         when {
             requestedGradleTasks.any { "benchmark" in it } -> "benchmark"

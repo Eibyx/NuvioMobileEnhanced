@@ -45,6 +45,7 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - `ANILIST_CLIENT_ID` y `WETRAKR_CLIENT_ID` pasan a configuración de compilación (en Luqman estaban fijos en el código). Por defecto vacíos: la integración aparece como no disponible hasta configurar un cliente propio registrado con `avixnuvio://`.
 - `MAL_CLIENT_ID` (MyAnimeList, portado desde AKRusso/NuvioMobile-Enhanced) sigue la misma regla: configuración de compilación, vacío por defecto, cliente propio de tipo «Other» registrado con `avixnuvio://auth/mal`; sin él la integración aparece como no configurada.
 - `SIMKL_APP_NAME` por defecto `avixnuvio`.
+- Los cinco client IDs (`ANILIST_`, `MAL_`, `TRAKT_`, `SIMKL_`, `MDBLIST_CLIENT_ID`) se leen de secretos dedicados del repositorio en Debug y Release, con precedencia secreto dedicado → `NUVIO_LOCAL_PROPERTIES_BASE64` → vacío (BUILDING.md). Nunca se incluyen Client Secrets en la APK.
 
 ## D-8 Workflows
 - Se retiran los workflows heredados (iOS, AltStore, triage de issues, PR-comment) que actuarían sobre este fork.

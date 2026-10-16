@@ -39,6 +39,13 @@ jobs:
       # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
       NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
       NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
+      # OAuth client IDs (public identifiers, never client secrets). Precedence:
+      # dedicated secret > the same key in NUVIO_LOCAL_PROPERTIES_BASE64 > not configured.
+      ANILIST_CLIENT_ID: ${{ secrets.ANILIST_CLIENT_ID }}
+      MAL_CLIENT_ID: ${{ secrets.MAL_CLIENT_ID }}
+      TRAKT_CLIENT_ID: ${{ secrets.TRAKT_CLIENT_ID }}
+      SIMKL_CLIENT_ID: ${{ secrets.SIMKL_CLIENT_ID }}
+      MDBLIST_CLIENT_ID: ${{ secrets.MDBLIST_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -104,6 +111,23 @@ jobs:
             echo "::error::Refusing to publish a release without the Nuvio backend configuration."
             exit 1
           fi
+
+      - name: OAuth providers configuration
+        shell: bash
+        run: |
+          # Values are never printed: only whether each client ID is configured and where from.
+          for key in ANILIST_CLIENT_ID MAL_CLIENT_ID TRAKT_CLIENT_ID SIMKL_CLIENT_ID MDBLIST_CLIENT_ID; do
+            source="not configured"
+            if [ -n "${!key}" ]; then
+              source="configured (repository secret ${key})"
+            elif [ -f local.properties ] && grep -q "^${key}=..*" local.properties; then
+              source="configured (NUVIO_LOCAL_PROPERTIES_BASE64)"
+            fi
+            echo "${key%_CLIENT_ID}: ${source}"
+            if [ "${source}" = "not configured" ]; then
+              echo "::notice title=${key%_CLIENT_ID} not configured::Add the repository secret ${key} to enable it in this APK."
+            fi
+          done
 
       - name: Resolve version
         id: version

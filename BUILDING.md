@@ -1,4 +1,4 @@
-# Compilar Nuvio (Avix)
+# Compilar Nuvio Eibyx
 
 ## Requisitos
 
@@ -69,11 +69,24 @@ En **Settings → Secrets and variables → Actions** del repositorio:
 |---|---|---|
 | `NUVIO_SUPABASE_ANON_KEY` | Clave **publicable** del servidor oficial (`publishable_key` de https://api.nuvio.tv/.well-known/nuvio) | **Iniciar sesión con la cuenta de Nuvio** (correo y enlace) |
 | `NUVIO_SUPABASE_URL` | Opcional. Por defecto `https://api.nuvio.tv` | Cuenta de Nuvio |
+| `ANILIST_CLIENT_ID` | Client ID de AniList (redirect `avixnuvio://auth/anilist`) | Conectar AniList |
+| `MAL_CLIENT_ID` | Client ID de MyAnimeList (tipo «Other», redirect `avixnuvio://auth/mal`) | Conectar MyAnimeList |
+| `TRAKT_CLIENT_ID` | Client ID de Trakt (redirect `avixnuvio://auth/trakt`) | Conectar Trakt |
+| `SIMKL_CLIENT_ID` | Client ID de Simkl (redirect `avixnuvio://auth/simkl`) | Conectar Simkl |
+| `MDBLIST_CLIENT_ID` | Client ID de la app de MDBList (código de dispositivo; no es la API key) | Conectar MDBList |
 | `NUVIO_LOCAL_PROPERTIES_BASE64` | Opcional. `base64 -w0 local.properties` con el resto de claves de la tabla anterior **sin** `sdk.dir` | Integraciones con clave (TMDB, Trakt, …) |
 | `AVIX_RELEASE_KEYSTORE_BASE64` | `base64 -w0 avix-release.jks` | Workflow **Release** |
 | `AVIX_RELEASE_STORE_PASSWORD` | Contraseña del keystore | Release |
 | `AVIX_RELEASE_KEY_ALIAS` | Alias de la clave | Release |
 | `AVIX_RELEASE_KEY_PASSWORD` | Contraseña de la clave | Release |
+
+### Client IDs de OAuth
+
+Los cinco `*_CLIENT_ID` de la tabla son identificadores públicos de la app (van dentro de la APK); **ningún Client Secret** se lee de los secretos ni se incluye en la APK. `ci.yml` (Debug) y `android-release.yml` (Release) los pasan como variables de entorno y `composeApp/build.gradle.kts` los escribe en la configuración generada, sin pasos manuales por compilación.
+
+Precedencia para cada uno: **secreto dedicado** (`secrets.ANILIST_CLIENT_ID`, …) → la misma clave dentro de `NUVIO_LOCAL_PROPERTIES_BASE64` → sin configurar (la integración aparece como «no configurada»). El resto de entradas de `NUVIO_LOCAL_PROPERTIES_BASE64` no cambia. En local, una variable de entorno con el mismo nombre también tiene prioridad sobre `local.properties`.
+
+El paso **«OAuth providers configuration»** del registro de Actions indica para cada proveedor si está configurado y de dónde sale (secreto dedicado o `NUVIO_LOCAL_PROPERTIES_BASE64`), sin mostrar el valor. Un valor con caracteres no válidos para un client ID (comillas, espacios, `$`…) detiene la compilación con un mensaje que tampoco muestra el valor.
 
 Crear el keystore (una vez, guardarlo fuera del repositorio; si se pierde no se podrán publicar actualizaciones con la misma firma):
 
