@@ -12,6 +12,7 @@
 - Reproductor: «Atrás» sale siempre a la pantalla anterior, sin PiP ni mini reproductor automáticos. Inicio (Home) sigue activando PiP mientras se reproduce y el botón PiP sigue abriendo el mini reproductor si está activado.
 - Apariencia → Tipografía: «Fuente original de Nuvio» o «Fuente del sistema» (que sigue el tamaño de texto de accesibilidad del sistema, entre 0,85× y 1,3×). Solo en el dispositivo.
 - Contraste: pantalla de perfiles y arranque siempre oscuras (texto claro), títulos sobre pósteres en blanco, degradados más fuertes en destacado de Inicio, «Seguir viendo», ficha (cabecera y episodios) y pantalla de streams; tarjetas de streams y menú del póster legibles en modo claro; colores de valoraciones (IMDb, TMDB…) con contraste suficiente en modo claro; icono de silencio del tráiler con fondo.
+- Pantalla de streams (episodio): título en blanco, nombre de la serie en blanco atenuado y «S1 E1» en el color de acento aclarado, sobre un degradado oscuro también en modo claro (antes el título salía negro sobre la imagen).
 
 ### Fase 1–3 — Repositorio, base Luqman e identidad Avix
 - Estado inicial de Eibyx/NuvioMobileEnhanced: `cmp-rewrite` = `808272dc` (= NuvioMedia/NuvioMobile).

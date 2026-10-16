@@ -55,6 +55,11 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.geometry.Offset
+import com.nuvio.app.core.ui.LightPalette
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -669,8 +674,42 @@ private fun MovieHeroBlock(
 // Episode Hero
 // ---------------------------------------------------------------------------
 
+/**
+ * Cinematic episode header: white text on a dark scrim in both light and dark mode. The scrim is
+ * always black (never the theme background, which is light in light mode) so the text stays
+ * readable even over a completely white thumbnail; only the last few dp blend into the page.
+ */
+internal object EpisodeHeroColors {
+    /** Black scrim alpha behind the text block (from [SCRIM_FULL_AT] to [SCRIM_BLEND_AT]). */
+    const val SCRIM_ALPHA = 0.72f
+    const val SCRIM_END_ALPHA = 0.80f
+    const val SCRIM_START_AT = 0.15f
+    const val SCRIM_FULL_AT = 0.42f
+    const val SCRIM_BLEND_AT = 0.91f
+    const val MIN_TEXT_CONTRAST = 4.5
+
+    val title = Color.White
+    val showTitle = Color.White.copy(alpha = 0.85f)
+    val textShadow = Shadow(color = Color.Black.copy(alpha = 0.55f), offset = Offset(0f, 1f), blurRadius = 4f)
+
+    /** Worst case behind the text: a pure white thumbnail under the scrim. */
+    val worstCaseBackdrop: Color = Color.Black.copy(alpha = SCRIM_ALPHA).compositeOver(Color.White)
+
+    /** The theme accent, lightened just enough to keep 4.5:1 on the scrim (light-mode accents are darkened). */
+    fun badge(accent: Color): Color {
+        val opaque = accent.copy(alpha = 1f)
+        var candidate = opaque
+        var step = 0
+        while (LightPalette.contrastRatio(candidate, worstCaseBackdrop) < MIN_TEXT_CONTRAST && step < 40) {
+            step++
+            candidate = lerp(opaque, Color.White, step * 0.025f)
+        }
+        return candidate
+    }
+}
+
 @Composable
-private fun EpisodeHeroBlock(
+internal fun EpisodeHeroBlock(
     seasonNumber: Int,
     episodeNumber: Int,
     episodeTitle: String,
@@ -680,6 +719,7 @@ private fun EpisodeHeroBlock(
     modifier: Modifier = Modifier,
 ) {
     val heroBlendColor = MaterialTheme.colorScheme.background
+    val badgeColor = EpisodeHeroColors.badge(MaterialTheme.colorScheme.primary)
 
     Box(
         modifier = modifier
@@ -698,16 +738,8 @@ private fun EpisodeHeroBlock(
             )
         }
 
-        if (LocalNuvioIsDark.current) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.1f)),
-            )
-        }
-
-        // Gradient overlay bottom-up: theme colour only, so the themed text below stays readable
-        // in light mode too (a black band under dark text made it muddy).
+        // Dark scrim behind the white text (same in light and dark mode); the top of the
+        // thumbnail stays visible and the bottom edge blends into the page below.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -715,9 +747,9 @@ private fun EpisodeHeroBlock(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
                             0.0f to Color.Transparent,
-                            0.40f to Color.Transparent,
-                            0.62f to heroBlendColor.copy(alpha = 0.55f),
-                            0.80f to heroBlendColor.copy(alpha = 0.88f),
+                            EpisodeHeroColors.SCRIM_START_AT to Color.Transparent,
+                            EpisodeHeroColors.SCRIM_FULL_AT to Color.Black.copy(alpha = EpisodeHeroColors.SCRIM_ALPHA),
+                            EpisodeHeroColors.SCRIM_BLEND_AT to Color.Black.copy(alpha = EpisodeHeroColors.SCRIM_END_ALPHA),
                             1.0f to heroBlendColor,
                         ),
                         startY = 0f,
@@ -732,7 +764,8 @@ private fun EpisodeHeroBlock(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 12.dp),
+                // Keeps the text above the short blend into the page (last 9 % of the header).
+                .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.Bottom,
         ) {
             // Episode label
@@ -741,8 +774,9 @@ private fun EpisodeHeroBlock(
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
+                    shadow = EpisodeHeroColors.textShadow,
                 ),
-                color = MaterialTheme.colorScheme.primary,
+                color = badgeColor,
             )
             Spacer(modifier = Modifier.height(2.dp))
             // Episode title
@@ -751,8 +785,9 @@ private fun EpisodeHeroBlock(
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
+                    shadow = EpisodeHeroColors.textShadow,
                 ),
-                color = MaterialTheme.colorScheme.onBackground,
+                color = EpisodeHeroColors.title,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -763,8 +798,9 @@ private fun EpisodeHeroBlock(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
+                    shadow = EpisodeHeroColors.textShadow,
                 ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = EpisodeHeroColors.showTitle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
