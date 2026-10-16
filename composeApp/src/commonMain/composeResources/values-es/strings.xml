@@ -2391,4 +2391,10 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="downloads_eta">quedan %1$s</string>
     <string name="settings_avix_remember_choices">Recordar mis elecciones</string>
     <string name="settings_avix_remember_choices_description">Vuelve a aplicar la pista de audio y el subtítulo elegidos en cada título, y el formato de imagen (ajustar, rellenar, zoom).</string>
+    <string name="settings_avix_subtitle_font">Fuente de subtítulos</string>
+    <string name="settings_avix_subtitle_font_current">Personalizada: %1$s. Toca para elegir otra .ttf/.otf. Se aplica a subtítulos de texto (SRT/VTT); ASS conserva sus fuentes.</string>
+    <string name="settings_avix_subtitle_font_default">Fuente predeterminada. Toca para importar un archivo .ttf u .otf.</string>
+    <string name="settings_avix_subtitle_font_reset">Usar la fuente predeterminada</string>
+    <string name="settings_avix_subtitle_font_error_too_large">El archivo de fuente es demasiado grande (máximo 30 MB).</string>
+    <string name="settings_avix_subtitle_font_error_invalid">Ese archivo no es una fuente TrueType/OpenType válida.</string>
 </resources>

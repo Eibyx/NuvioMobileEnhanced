@@ -19,6 +19,7 @@
 - Descargas: velocidad suavizada y tiempo restante («2,1 MB/s • quedan 8m 20s»).
 - «Recordar mis elecciones» (Ajustes de reproducción): permite desactivar que se guarden y restauren audio/subtítulo por título y el formato de imagen.
 - Cambio de calidad (HLS): ya no vuelve a la posición inicial; conserva posición, velocidad, audio y subtítulo.
+- Fuente de subtítulos personalizada (.ttf/.otf) para subtítulos de texto con ambos motores; solo en el dispositivo (Ajustes de reproducción).
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

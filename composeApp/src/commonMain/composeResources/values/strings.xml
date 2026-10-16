@@ -2847,4 +2847,10 @@
     <string name="downloads_eta">%1$s left</string>
     <string name="settings_avix_remember_choices">Remember my choices</string>
     <string name="settings_avix_remember_choices_description">Reapply the audio track and subtitle you picked for each title, and the image format (fit, fill, zoom).</string>
+    <string name="settings_avix_subtitle_font">Subtitle font</string>
+    <string name="settings_avix_subtitle_font_current">Custom: %1$s. Tap to choose another .ttf/.otf. Applies to plain subtitles (SRT/VTT); ASS keeps its own fonts.</string>
+    <string name="settings_avix_subtitle_font_default">Default font. Tap to import a .ttf or .otf file.</string>
+    <string name="settings_avix_subtitle_font_reset">Use the default subtitle font</string>
+    <string name="settings_avix_subtitle_font_error_too_large">The font file is too large (maximum 30 MB).</string>
+    <string name="settings_avix_subtitle_font_error_invalid">That file is not a valid TrueType/OpenType font.</string>
 </resources>

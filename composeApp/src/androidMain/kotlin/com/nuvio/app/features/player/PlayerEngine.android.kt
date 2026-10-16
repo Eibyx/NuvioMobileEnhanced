@@ -2251,6 +2251,8 @@ private class NuvioLibmpvView(
                 executeMpv {
                     mpvLib.setPropertyString("sub-ass-override", "no")
                     mpvLib.setPropertyString("sub-color", style.textColor.toMpvColor())
+                    // Avix: user font for plain-text subtitles (ASS keeps its own styles: sub-ass-override=no).
+                    mpvLib.setPropertyString("sub-font", CustomSubtitleFontStore.current?.familyName ?: "sans-serif")
                     mpvLib.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
                     mpvLib.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
                     mpvLib.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
@@ -2980,7 +2982,7 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
                 android.graphics.Color.TRANSPARENT,
                 if (style.outlineEnabled) CaptionStyleCompat.EDGE_TYPE_OUTLINE else CaptionStyleCompat.EDGE_TYPE_NONE,
                 style.outlineColor.toArgb(),
-                if (style.bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT,
+                customSubtitleTypeface(context, style.bold) ?: if (style.bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT,
             )
         )
         setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, style.fontSizeSp.toFloat() * pipScale)
