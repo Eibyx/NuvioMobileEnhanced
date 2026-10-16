@@ -218,6 +218,7 @@ object DownloadsRepository {
         mutateItem(downloadId) { current ->
             current.copy(
                 status = DownloadStatus.Paused,
+                downloadSpeedBytesPerSecond = 0L,
                 updatedAtEpochMs = DownloadsClock.nowEpochMs(),
                 errorMessage = null,
             )
@@ -316,10 +317,19 @@ object DownloadsRepository {
                     if (current.status != DownloadStatus.Downloading) {
                         current
                     } else {
+                        val now = DownloadsClock.nowEpochMs()
+                        val nextBytes = downloadedBytes.coerceAtLeast(0L)
                         current.copy(
-                            downloadedBytes = downloadedBytes.coerceAtLeast(0L),
+                            downloadedBytes = nextBytes,
                             totalBytes = totalBytes?.takeIf { it > 0L },
-                            updatedAtEpochMs = DownloadsClock.nowEpochMs(),
+                            downloadSpeedBytesPerSecond = nextDownloadSpeed(
+                                previousSpeed = current.downloadSpeedBytesPerSecond,
+                                previousBytes = current.downloadedBytes,
+                                previousUpdatedAtMs = current.updatedAtEpochMs,
+                                nextBytes = nextBytes,
+                                nowMs = now,
+                            ),
+                            updatedAtEpochMs = now,
                             errorMessage = null,
                         )
                     }
@@ -361,7 +371,7 @@ object DownloadsRepository {
                 activeHandles.remove(item.id)
                 mutateItem(item.id) { current ->
                     if (current.status != DownloadStatus.Downloading) return@mutateItem current
-                    current.copy(status = DownloadStatus.Paused, errorMessage = null)
+                    current.copy(status = DownloadStatus.Paused, downloadSpeedBytesPerSecond = 0L, errorMessage = null)
                 }
             },
         )

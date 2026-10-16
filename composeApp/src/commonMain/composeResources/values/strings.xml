@@ -2841,4 +2841,8 @@
     <string name="auth_error_email_not_confirmed">Confirm your email address before signing in.</string>
     <string name="auth_error_rate_limited">Too many attempts. Wait a moment and try again.</string>
     <string name="auth_error_server">The Nuvio server is having problems. Try again later.</string>
+    <string name="player_ends_at">ends %1$s</string>
+    <string name="settings_avix_show_end_time">Show end time</string>
+    <string name="settings_avix_show_end_time_description">Shows when the current video will finish, next to the playback time.</string>
+    <string name="downloads_eta">%1$s left</string>
 </resources>

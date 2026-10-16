@@ -2385,4 +2385,8 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="auth_error_email_not_confirmed">Confirma tu dirección de correo antes de iniciar sesión.</string>
     <string name="auth_error_rate_limited">Demasiados intentos. Espera un momento y vuelve a intentarlo.</string>
     <string name="auth_error_server">El servidor de Nuvio tiene problemas. Inténtalo más tarde.</string>
+    <string name="player_ends_at">termina %1$s</string>
+    <string name="settings_avix_show_end_time">Mostrar hora de fin</string>
+    <string name="settings_avix_show_end_time_description">Muestra a qué hora terminará el vídeo, junto al tiempo de reproducción.</string>
+    <string name="downloads_eta">quedan %1$s</string>
 </resources>

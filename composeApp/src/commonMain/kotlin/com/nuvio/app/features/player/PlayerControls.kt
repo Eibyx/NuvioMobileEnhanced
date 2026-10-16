@@ -1197,7 +1197,7 @@ internal fun LockedPlayerOverlay(
                     enabled = false,
                 )
                 Text(
-                    text = formatPlaybackRuntime(displayedPositionMs, playbackSnapshot.durationMs, showRemainingTime),
+                    text = playbackRuntimeWithEndLabel(displayedPositionMs, playbackSnapshot, showRemainingTime),
                     style = MaterialTheme.nuvioTypeScale.bodyMd.copy(fontSize = (metrics.timeSize.value + 2).sp),
                     color = Color.White.copy(alpha = 0.9f),
                     modifier = Modifier.align(Alignment.End),

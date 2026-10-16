@@ -14,6 +14,10 @@
 - Workflows: `ci.yml` (APK `Nuvio-Avix-Debug.apk`), `mpvrx-tests.yml`, `android-release.yml` (`Nuvio-Avix-Release.apk` + SHA-256), `upstream-watch.yml` (incluye bibliotecas multimedia). Se retiran los heredados.
 - Tests heredados de Luqman que no compilaban (`AndroidDownloadTransferTest`, `NextEpisodeCardTest`, `PlayerGestureOverlayTest`, `PlayerSurfaceGesturesTest`) actualizados a las firmas actuales.
 
+### Ports de Yesnt10
+- Hora de fin en el reproductor («· termina 22:45») según la velocidad; desactivable en Ajustes de reproducción (solo en el dispositivo).
+- Descargas: velocidad suavizada y tiempo restante («2,1 MB/s • quedan 8m 20s»).
+
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.
 - Revisión de colores fijos en 16 archivos para el modo claro (bordes, tarjetas, separadores, barra de navegación, panel de streams…); los colores sobre imágenes y los de marca se mantienen.

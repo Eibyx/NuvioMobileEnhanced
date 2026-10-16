@@ -6,6 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.nuvio.app.features.player.AvixPlaybackEnginePreferences
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.settings_avix_show_end_time_description
+import nuvio.composeapp.generated.resources.settings_avix_show_end_time
 import nuvio.composeapp.generated.resources.settings_avix_engine_prefer_libmpv_ass
 import nuvio.composeapp.generated.resources.settings_avix_engine_prefer_libmpv_ass_description
 import nuvio.composeapp.generated.resources.settings_avix_engine_remember_title
@@ -24,7 +26,17 @@ internal fun AvixEngineSettingsRows(
     val rememberPerTitle by AvixPlaybackEnginePreferences.rememberPerTitle.collectAsState()
     val preferLibmpvForAss by AvixPlaybackEnginePreferences.preferLibmpvForAss.collectAsState()
     val rememberedCount by AvixPlaybackEnginePreferences.rememberedTitleCount.collectAsState()
+    LaunchedEffect(Unit) { com.nuvio.app.features.player.PlaybackEndTimePreference.ensureLoaded() }
+    val showEndTime by com.nuvio.app.features.player.PlaybackEndTimePreference.enabled.collectAsState()
 
+    SettingsGroupDivider(isTablet = isTablet)
+    SettingsSwitchRow(
+        title = stringResource(Res.string.settings_avix_show_end_time),
+        description = stringResource(Res.string.settings_avix_show_end_time_description),
+        checked = showEndTime,
+        isTablet = isTablet,
+        onCheckedChange = com.nuvio.app.features.player.PlaybackEndTimePreference::setEnabled,
+    )
     SettingsGroupDivider(isTablet = isTablet)
     SettingsSwitchRow(
         title = stringResource(Res.string.settings_avix_engine_prefer_libmpv_ass),

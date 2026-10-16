@@ -530,7 +530,11 @@ private fun statusText(item: DownloadItem): String {
     }
 
     return when (item.status) {
-        DownloadStatus.Downloading -> stringResource(Res.string.downloads_status_downloading, size)
+        DownloadStatus.Downloading -> listOfNotNull(
+            stringResource(Res.string.downloads_status_downloading, size),
+            item.downloadSpeedBytesPerSecond.takeIf { it > 0L }?.let { "${formatBytes(it)}/s" },
+            item.estimatedRemainingSeconds?.let { stringResource(Res.string.downloads_eta, formatDownloadEta(it)) },
+        ).joinToString(" • ")
         DownloadStatus.Paused -> stringResource(Res.string.downloads_status_paused, size)
         DownloadStatus.Completed -> stringResource(
             Res.string.downloads_status_completed,

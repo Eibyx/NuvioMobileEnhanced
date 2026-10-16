@@ -11,10 +11,10 @@
 | Personas favoritas | `features/details/FavoritePeopleRepository.kt` | No | Portar | PENDIENTE | — |
 | Selector «Behind the Scenes» | `features/details/components/DetailTrailersSection.kt` | No | Portar | PENDIENTE | — |
 | Temas en degradado MESSENGER, AMETHYST, BLOSSOM, LAGOON, SUNSET | `core/ui/AppTheme.kt`, `ThemeColors.kt` | Degradado de upstream | Portar solo las paletas (el motor `AnimatedTheme` está superado); tema guardado en local | PENDIENTE | — |
-| Hora estimada de fin | commit `49f3bf7e` | No | Portar | PENDIENTE | — |
+| Hora estimada de fin | commit `49f3bf7e` | No | Portado junto al tiempo del reproductor (no existe el overlay de estado de Yesnt10); tiene en cuenta la velocidad; interruptor local | PORTADO (tests `PlaybackEndTimeTest`) | ver CHANGELOG |
 | Recordar elecciones (audio, subtítulos, ajuste) | `settings_playback_remember_choices` | Parcial (`PlayerTrackPreferenceStorage`) | Portar unificado | PENDIENTE | — |
 | Conservar pistas al cambiar de calidad | commit `8d75c294` | Verificar | Comparar y portar lo que falte | PENDIENTE | — |
-| Velocidad y ETA de descargas + foreground service | `402a1599`, `DownloadsForegroundService.kt` | No | Portar | PENDIENTE | — |
+| Velocidad y ETA de descargas + foreground service | `402a1599`, `DownloadsForegroundService.kt` | No | Velocidad (media móvil) y ETA portadas a la lista de descargas; Live Activity de iOS y foreground service pendientes | PARCIAL (tests `DownloadSpeedEtaTest`) | ver CHANGELOG |
 | Importar fuente de subtítulos | `SubtitleFontFileBridge.*` | No | Portar (se combina con la carpeta de fuentes de libmpv) | PENDIENTE | — |
 | Copia de seguridad y restauración de ajustes | `NuvioEnhancedBackupFileBridge.*` | No | Portar y extender a los ajustes locales de Avix | PENDIENTE | — |
 | Diagnóstico de crashes | `core/diagnostics/CrashDiagnostics.kt` | No (Luqman tiene InAppLogger) | Portar | PENDIENTE | — |
