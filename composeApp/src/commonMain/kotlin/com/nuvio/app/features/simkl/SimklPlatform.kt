@@ -14,6 +14,9 @@ internal expect object SimklAuthStorage {
     fun saveMetadataPayload(payload: String)
     fun loadAccessToken(): String?
     fun saveAccessToken(value: String?)
+    fun loadRefreshToken(): String?
+    fun saveRefreshToken(value: String?)
+    /** Pending single-use secret: the PKCE verifier (browser flow) or the device_code (device flow). */
     fun loadCodeVerifier(): String?
     fun saveCodeVerifier(value: String?)
     fun removeProfile(profileId: Int)

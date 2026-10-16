@@ -26,20 +26,31 @@ internal fun buildPendingPinState(userCode: String): String = "$SIMKL_PIN_STATE_
 internal fun pendingPinUserCode(state: String?): String? =
     state?.takeIf { it.startsWith(SIMKL_PIN_STATE_PREFIX) }?.removePrefix(SIMKL_PIN_STATE_PREFIX)
 
+/** `POST /oauth2/device` response (https://api.simkl.org/api-reference/oauth2-device). */
 @Serializable
-internal data class SimklPinResponse(
+internal data class SimklDeviceAuthorizationResponse(
+    @SerialName("device_code") val deviceCode: String = "",
     @SerialName("user_code") val userCode: String = "",
-    @SerialName("verification_url") val verificationUrl: String? = null,
+    @SerialName("verification_uri") val verificationUri: String? = null,
+    @SerialName("verification_uri_complete") val verificationUriComplete: String? = null,
     @SerialName("expires_in") val expiresIn: Int? = null,
     val interval: Int? = null,
-)
-
-@Serializable
-internal data class SimklPinPollResponse(
-    val result: String? = null,
-    val message: String? = null,
-    @SerialName("access_token") val accessToken: String? = null,
 ) {
-    val isAuthorized: Boolean
-        get() = result.equals("OK", ignoreCase = true) && !accessToken.isNullOrBlank()
+    override fun toString(): String = "SimklDeviceAuthorizationResponse(expiresIn=$expiresIn, interval=$interval)"
+}
+
+internal enum class SimklDevicePollOutcome {
+    AUTHORIZED,
+    PENDING,
+    SLOW_DOWN,
+    FAILED,
+}
+
+/** Maps a `/oauth2/token` device-grant error code to the polling action the docs prescribe. */
+internal fun simklDevicePollOutcome(status: Int, errorCode: String?): SimklDevicePollOutcome = when {
+    status in 200..299 -> SimklDevicePollOutcome.AUTHORIZED
+    errorCode == "authorization_pending" -> SimklDevicePollOutcome.PENDING
+    errorCode == "slow_down" -> SimklDevicePollOutcome.SLOW_DOWN
+    status == 429 || status >= 500 -> SimklDevicePollOutcome.PENDING
+    else -> SimklDevicePollOutcome.FAILED
 }

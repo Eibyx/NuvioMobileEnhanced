@@ -49,7 +49,8 @@ class SimklPkceTest {
             material = SimklPkceMaterial("verifier", "challenge", "state"),
         )
 
-        assertTrue(url.startsWith("https://simkl.com/oauth/authorize?"))
+        assertTrue(url.startsWith("https://simkl.com/oauth2/authorize?"))
+        assertTrue("scope=media%3Aread%20media%3Awrite" in url)
         assertTrue("client_id=client+id" in url || "client_id=client%20id" in url)
         assertTrue("code_challenge_method=S256" in url)
         assertTrue("redirect_uri=nuvio%3A%2F%2Fauth%2Fsimkl" in url)
@@ -75,5 +76,45 @@ class SimklPkceTest {
         assertTrue(isSimklAuthorizationExpired(1_000L, 301_001L))
         assertTrue(isSimklAuthorizationExpired(null, 1_000L))
         assertTrue(isSimklAuthorizationExpired(2_000L, 1_000L))
+    }
+
+    @Test
+    fun `auth v2 token exchange form carries the verifier and no secret`() {
+        val form = simklAuthorizationCodeForm(
+            clientId = "client",
+            code = "code",
+            redirectUri = "avixnuvio://auth/simkl",
+            codeVerifier = "verifier",
+        )
+        assertEquals(
+            "grant_type=authorization_code&code=code&redirect_uri=avixnuvio%3A%2F%2Fauth%2Fsimkl" +
+                "&code_verifier=verifier&client_id=client",
+            form,
+        )
+        assertFalse("client_secret" in form)
+    }
+
+    @Test
+    fun `auth v2 device and refresh forms follow the documented parameters`() {
+        assertEquals("client_id=client&scope=media%3Aread+media%3Awrite", simklDeviceAuthorizationForm("client"))
+        assertEquals(
+            "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&client_id=client&device_code=dc",
+            simklDeviceTokenForm("client", "dc"),
+        )
+        assertEquals(
+            "grant_type=refresh_token&client_id=client&refresh_token=rt",
+            simklRefreshTokenForm("client", "rt"),
+        )
+        assertEquals("client_id=client&token=rt", simklRevokeForm("client", "rt"))
+    }
+
+    @Test
+    fun `device polling maps documented error codes`() {
+        assertEquals(SimklDevicePollOutcome.AUTHORIZED, simklDevicePollOutcome(200, null))
+        assertEquals(SimklDevicePollOutcome.PENDING, simklDevicePollOutcome(400, "authorization_pending"))
+        assertEquals(SimklDevicePollOutcome.SLOW_DOWN, simklDevicePollOutcome(400, "slow_down"))
+        assertEquals(SimklDevicePollOutcome.FAILED, simklDevicePollOutcome(400, "expired_token"))
+        assertEquals(SimklDevicePollOutcome.FAILED, simklDevicePollOutcome(401, "invalid_client"))
+        assertEquals(SimklDevicePollOutcome.PENDING, simklDevicePollOutcome(503, null))
     }
 }

@@ -2,6 +2,7 @@ package com.nuvio.app.features.simkl
 
 import io.ktor.http.Url
 import io.ktor.http.encodeURLParameter
+import io.ktor.http.formUrlEncode
 
 internal const val SIMKL_AUTHORIZATION_TIMEOUT_MS = 5L * 60L * 1_000L
 
@@ -52,6 +53,8 @@ internal fun buildSimklAuthorizationUrl(
     append(clientId.encodeURLParameter())
     append("&redirect_uri=")
     append(redirectUri.encodeURLParameter())
+    append("&scope=")
+    append(SIMKL_OAUTH2_SCOPE.encodeURLParameter())
     append("&code_challenge=")
     append(material.challenge.encodeURLParameter())
     append("&code_challenge_method=S256")
@@ -62,3 +65,40 @@ internal fun buildSimklAuthorizationUrl(
     append("&app-version=")
     append(appVersion.encodeURLParameter())
 }
+
+// AUTH V2 form bodies (application/x-www-form-urlencoded). Public clients never send a secret.
+
+internal fun simklAuthorizationCodeForm(
+    clientId: String,
+    code: String,
+    redirectUri: String,
+    codeVerifier: String,
+): String = listOf(
+    "grant_type" to "authorization_code",
+    "code" to code,
+    "redirect_uri" to redirectUri,
+    "code_verifier" to codeVerifier,
+    "client_id" to clientId,
+).formUrlEncode()
+
+internal fun simklRefreshTokenForm(clientId: String, refreshToken: String): String = listOf(
+    "grant_type" to "refresh_token",
+    "client_id" to clientId,
+    "refresh_token" to refreshToken,
+).formUrlEncode()
+
+internal fun simklDeviceAuthorizationForm(clientId: String): String = listOf(
+    "client_id" to clientId,
+    "scope" to SIMKL_OAUTH2_SCOPE,
+).formUrlEncode()
+
+internal fun simklDeviceTokenForm(clientId: String, deviceCode: String): String = listOf(
+    "grant_type" to "urn:ietf:params:oauth:grant-type:device_code",
+    "client_id" to clientId,
+    "device_code" to deviceCode,
+).formUrlEncode()
+
+internal fun simklRevokeForm(clientId: String, token: String): String = listOf(
+    "client_id" to clientId,
+    "token" to token,
+).formUrlEncode()
