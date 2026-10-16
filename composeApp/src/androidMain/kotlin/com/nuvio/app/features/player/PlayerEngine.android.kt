@@ -1694,8 +1694,38 @@ private class NuvioLibmpvView(
         mpvLib.setOptionString("demuxer-max-back-bytes", "${libmpvCacheBytes()}").logIfMpvError("demuxer-max-back-bytes")
         mpvLib.setOptionString("vd-lavc-film-grain", "cpu")
         mpvLib.setPropertyBoolean("keep-open", true)
-        mpvLib.setPropertyBoolean("input-default-bindings", true)
         mpvLib.setPropertyBoolean("audio-fallback-to-null", true)
+        disableMpvOnScreenUi()
+    }
+
+    /**
+     * Avix: the player UI is the shared Compose control layer (PlayerControlsShell), identical for
+     * ExoPlayer and libmpv. mpv must never draw its own controller, OSD bar, OSD messages,
+     * console, stats page or menus on the video surface, and must not bind keys/mouse itself.
+     * libmpv's built-in profile only turns some of these off, and BaseMPVView enables
+     * config loading (config=yes), so everything is disabled explicitly here, before init.
+     * OSD level 0 is "subtitles only": subtitle/libass rendering is unaffected.
+     */
+    private fun disableMpvOnScreenUi() {
+        listOf(
+            "osc" to "no",
+            "osd-level" to "0",
+            "osd-bar" to "no",
+            "osd-on-seek" to "no",
+            "osd-playing-msg" to "",
+            "load-osd-console" to "no",
+            "load-stats-overlay" to "no",
+            "load-select" to "no",
+            "load-positioning" to "no",
+            "load-commands" to "no",
+            "load-context-menu" to "no",
+            "load-scripts" to "no",
+            "input-default-bindings" to "no",
+            "input-builtin-bindings" to "no",
+            "input-vo-keyboard" to "no",
+        ).forEach { (option, value) ->
+            mpvLib.setOptionString(option, value).logIfMpvError(option)
+        }
     }
 
     override fun postInitOptions() = Unit
