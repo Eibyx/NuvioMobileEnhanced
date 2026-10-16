@@ -97,7 +97,16 @@ fun nextReleasedEpisodeAfter(
         }
     }
 
-    if (watchedIndex < 0) return null
+    if (watchedIndex < 0) {
+        // Yesnt10 port: a watched special (S0) missing from the addon's episode list still
+        // leads to the first released main episode instead of no next-up at all.
+        if (seasonNumber == null || normalizeSeasonNumber(seasonNumber) != 0) return null
+        return sortedEpisodes.firstOrNull { episode ->
+            normalizeSeasonNumber(episode.seasonNumber) > 0 &&
+                episode.available &&
+                (showUnairedNextUp || isReleasedBy(todayIsoDate, episode.releasedDate, episode.available))
+        }
+    }
 
     val watchedEpisodeSeason = sortedEpisodes[watchedIndex].seasonNumber
     val candidates = sortedEpisodes

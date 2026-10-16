@@ -18,31 +18,31 @@ actual object LiveTvStorage {
     private const val nativeNavigationDidChangeNotification = "NuvioLiveTvNavigationVisibilityDidChange"
 
     actual fun loadPlaylistUrl(): String? =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(playlistUrlKey))
+        readLiveTvScoped(playlistUrlKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
 
     actual fun savePlaylistUrl(url: String) {
-        NSUserDefaults.standardUserDefaults.setObject(url, forKey = ProfileScopedKey.of(playlistUrlKey))
+        NSUserDefaults.standardUserDefaults.setObject(url, forKey = LiveTvProfileScope.key(playlistUrlKey))
     }
 
     actual fun loadPlaylistsBlob(): String? =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(playlistsBlobKey))
+        readLiveTvScoped(playlistsBlobKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
 
     actual fun savePlaylistsBlob(blob: String) {
-        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = ProfileScopedKey.of(playlistsBlobKey))
+        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = LiveTvProfileScope.key(playlistsBlobKey))
     }
 
     actual fun loadFavoriteChannelIdsBlob(): String? =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(favoriteChannelIdsBlobKey))
+        readLiveTvScoped(favoriteChannelIdsBlobKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
 
     actual fun saveFavoriteChannelIdsBlob(blob: String) {
-        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = ProfileScopedKey.of(favoriteChannelIdsBlobKey))
+        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = LiveTvProfileScope.key(favoriteChannelIdsBlobKey))
     }
 
     actual fun loadLastWatchedChannelId(): String? =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(lastWatchedChannelIdKey))
+        readLiveTvScoped(lastWatchedChannelIdKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
 
     actual fun saveLastWatchedChannelId(channelId: String) {
-        NSUserDefaults.standardUserDefaults.setObject(channelId, forKey = ProfileScopedKey.of(lastWatchedChannelIdKey))
+        NSUserDefaults.standardUserDefaults.setObject(channelId, forKey = LiveTvProfileScope.key(lastWatchedChannelIdKey))
     }
 
     actual fun loadNavigationEnabled(): Boolean? {
@@ -59,23 +59,23 @@ actual object LiveTvStorage {
     }
 
     actual fun loadStalkerSettings(): LiveTvStalkerSettings =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(stalkerSettingsKey))
+        readLiveTvScoped(stalkerSettingsKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
             ?.split('\u001F')
             ?.let { LiveTvStalkerSettings(it.getOrNull(0).orEmpty(), it.getOrNull(1).orEmpty(), it.getOrNull(2).orEmpty(), it.getOrNull(3).orEmpty(), it.getOrNull(4) != "false") }
             ?: LiveTvStalkerSettings()
 
     actual fun saveStalkerSettings(settings: LiveTvStalkerSettings) {
-        NSUserDefaults.standardUserDefaults.setObject(listOf(settings.portalUrl, settings.macAddress, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"), forKey = ProfileScopedKey.of(stalkerSettingsKey))
+        NSUserDefaults.standardUserDefaults.setObject(listOf(settings.portalUrl, settings.macAddress, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"), forKey = LiveTvProfileScope.key(stalkerSettingsKey))
     }
 
     actual fun loadXtreamSettings(): LiveTvXtreamSettings =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(xtreamSettingsKey))
+        readLiveTvScoped(xtreamSettingsKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
             ?.split('\u001F')
             ?.let { LiveTvXtreamSettings(it.getOrNull(0).orEmpty(), it.getOrNull(1).orEmpty(), it.getOrNull(2).orEmpty(), it.getOrNull(3) != "false") }
             ?: LiveTvXtreamSettings()
 
     actual fun saveXtreamSettings(settings: LiveTvXtreamSettings) {
-        NSUserDefaults.standardUserDefaults.setObject(listOf(settings.serverUrl, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"), forKey = ProfileScopedKey.of(xtreamSettingsKey))
+        NSUserDefaults.standardUserDefaults.setObject(listOf(settings.serverUrl, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"), forKey = LiveTvProfileScope.key(xtreamSettingsKey))
     }
 
     actual fun publishNavigationVisibility(visible: Boolean) {
@@ -87,22 +87,22 @@ actual object LiveTvStorage {
     }
 
     actual fun loadEpgSourcesBlob(): String? =
-        NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(epgSourcesBlobKey))
+        readLiveTvScoped(epgSourcesBlobKey) { NSUserDefaults.standardUserDefaults.stringForKey(it) }
 
     actual fun saveEpgSourcesBlob(blob: String) {
-        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = ProfileScopedKey.of(epgSourcesBlobKey))
+        NSUserDefaults.standardUserDefaults.setObject(blob, forKey = LiveTvProfileScope.key(epgSourcesBlobKey))
     }
 
     actual fun loadEpgAutoDetectEnabled(): Boolean? {
         val defaults = NSUserDefaults.standardUserDefaults
-        val key = ProfileScopedKey.of(epgAutoDetectEnabledKey)
-        return if (defaults.objectForKey(key) == null) null else defaults.boolForKey(key)
+        val key = LiveTvProfileScope.readKeys(epgAutoDetectEnabledKey).firstOrNull { defaults.objectForKey(it) != null } ?: return null
+        return defaults.boolForKey(key)
     }
 
     actual fun saveEpgAutoDetectEnabled(enabled: Boolean) {
         NSUserDefaults.standardUserDefaults.setBool(
             enabled,
-            forKey = ProfileScopedKey.of(epgAutoDetectEnabledKey),
+            forKey = LiveTvProfileScope.key(epgAutoDetectEnabledKey),
         )
     }
 }

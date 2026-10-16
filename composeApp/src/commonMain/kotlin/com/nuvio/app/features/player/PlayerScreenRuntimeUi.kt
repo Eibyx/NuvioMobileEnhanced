@@ -7,6 +7,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -340,6 +343,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
             )
         }
 
+        RenderDeviceStatusOverlay()
         RenderPlayerControls(isEpisode = isEpisode)
         RenderPlaybackOverlays(
             runtime = runtime,
@@ -388,6 +392,45 @@ private val PlayerScreenRuntime.activeAddonLogo: String?
 private fun PlayerScreenRuntime.currentInitialPositionRequestKey(): String? {
     val positionMs = activeInitialPositionMs.takeIf { it > 0L } ?: return null
     return "$activePlaybackIdentity:${activeVideoId.orEmpty()}:$positionMs"
+}
+
+/** Avix (Yesnt10 port): clock, battery, network and end time while the controls are hidden. */
+@Composable
+private fun PlayerScreenRuntime.RenderDeviceStatusOverlay() {
+    LaunchedEffect(Unit) {
+        PlayerStatusOverlayPreference.ensureLoaded()
+        PlaybackEndTimePreference.ensureLoaded()
+    }
+    val enabled by PlayerStatusOverlayPreference.enabled.collectAsStateWithLifecycle()
+    val showEndTime by PlaybackEndTimePreference.enabled.collectAsStateWithLifecycle()
+    val isInPip = rememberIsInPictureInPicture()
+    AnimatedVisibility(
+        visible = enabled &&
+            !isMiniPresentation &&
+            !isInPip &&
+            !controlsVisible &&
+            !showParentalGuide &&
+            !playerControlsLocked &&
+            !pausedOverlayVisible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 220)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 180)),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            PlayerDeviceStatusPill(
+                positionMs = playbackSnapshot.positionMs,
+                durationMs = if (isLiveTvPlayback) 0L else playbackSnapshot.durationMs,
+                playbackSpeed = playbackSnapshot.playbackSpeed,
+                showEndTime = showEndTime,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(
+                        androidx.compose.foundation.layout.WindowInsets.safeContent
+                            .only(androidx.compose.foundation.layout.WindowInsetsSides.Top),
+                    )
+                    .padding(top = 8.dp),
+            )
+        }
+    }
 }
 
 @Composable

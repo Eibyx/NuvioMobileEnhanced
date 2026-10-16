@@ -50,6 +50,24 @@ object LiveTvRepository {
         publishNavigationVisibility()
     }
 
+    /** Avix (Yesnt10 port): reload the data of the new profile's Live TV scope. */
+    fun onProfileChanged() {
+        if (!hasLoaded) return
+        val reloadChannels = channelsRequested
+        refreshJob?.cancel()
+        epgJob?.cancel()
+        refreshJob = null
+        epgJob = null
+        hasLoaded = false
+        channelsRequested = false
+        channelsSignature = null
+        restoredEpg = null
+        detectedEpgUrls = emptyList()
+        epgGuideCache.clear()
+        _uiState.value = LiveTvUiState()
+        if (reloadChannels) ensureChannelsLoaded() else ensureLoaded()
+    }
+
     fun ensureChannelsLoaded() {
         ensureLoaded()
         if (channelsRequested) return

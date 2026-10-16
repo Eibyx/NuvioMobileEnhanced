@@ -2422,4 +2422,17 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="detail_trailer_category_clips">Clips</string>
     <string name="detail_trailer_category_bloopers">Tomas falsas</string>
     <string name="detail_trailer_category_opening_credits">Créditos iniciales</string>
+    <string name="crash_report_title">Nuvio se cerró inesperadamente</string>
+    <string name="crash_report_intro">Se guardó un informe del error en este dispositivo (nunca se envía). Puedes copiarlo para adjuntarlo a un reporte; se eliminan tokens, claves y parámetros de URL.</string>
+    <string name="crash_report_copy">Copiar informe</string>
+    <string name="crash_report_copied">Copiado al portapapeles.</string>
+    <string name="crash_report_close">Cerrar</string>
+    <string name="crash_report_section">Diagnóstico de errores</string>
+    <string name="crash_report_last">Último informe de error</string>
+    <string name="crash_report_none">No hay errores registrados en este dispositivo.</string>
+    <string name="player_status_network_wifi">Wi-Fi</string>
+    <string name="player_status_network_cellular">Datos</string>
+    <string name="player_status_network_offline">Sin conexión</string>
+    <string name="settings_avix_status_overlay">Barra de estado en el reproductor</string>
+    <string name="settings_avix_status_overlay_description">Con los controles ocultos, muestra la hora, la batería, la red y la hora de fin en la parte superior del reproductor.</string>
 </resources>

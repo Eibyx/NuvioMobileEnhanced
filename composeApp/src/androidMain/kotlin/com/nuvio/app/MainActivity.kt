@@ -101,6 +101,7 @@ open class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Avix: strip tokens/API keys from every log line before anything logs.
         com.nuvio.app.core.logging.NuvioLogging.install()
+        com.nuvio.app.core.diagnostics.CrashDiagnostics.initialize(applicationContext)
         installSplashScreen().setKeepOnScreenCondition { !contentReady }
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(

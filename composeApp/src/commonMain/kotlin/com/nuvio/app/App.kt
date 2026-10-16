@@ -121,5 +121,7 @@ internal fun AppEnvironment(content: @Composable () -> Unit) {
         paletteOverride = gradientTheme?.palette,
     ) {
         content()
+        // Avix: local crash report from the previous run, if any.
+        com.nuvio.app.core.diagnostics.PendingCrashReportDialog()
     }
 }

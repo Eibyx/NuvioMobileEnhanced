@@ -204,6 +204,8 @@ object ProfileRepository {
         SearchHistoryRepository.onProfileChanged()
         // Avix: device-local favorite people are stored per profile.
         com.nuvio.app.features.details.FavoritePeopleRepository.onProfileChanged(profileIndex)
+        // Avix: Live TV data follows the profile (shared with profile 1 when addons are shared).
+        com.nuvio.app.features.livetv.LiveTvRepository.onProfileChanged()
         SearchRepository.reset()
         CollectionRepository.onProfileChanged()
         CollectionMobileSettingsRepository.onProfileChanged()

@@ -14,8 +14,8 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 | AniList/WeTrakr `CLIENT_ID` configurable | COMPILADA | `AniListConfig.kt`, `WeTrakrConfig.kt` | Sin cliente propio → no disponible |
 | Actualizador → `Eibyx/NuvioMobileEnhanced` | COMPILADA | `AppUpdaterRepository.kt` | Aún no hay releases publicadas |
 | Ajustes exclusivos solo locales (D-5) | COMPILADA | `core/avix/AvixLocalStore*`, `PlayerSettingsStorage.*` | Prueba cruzada con Nuvio original: NOT RUN |
-| CI (tests + `Nuvio-Avix-Debug.apk`) | IMPLEMENTADA | `.github/workflows/ci.yml` | **Actions está deshabilitado en el fork**: no se ha ejecutado |
-| Pruebas del motor en emulador | IMPLEMENTADA | `mpvrx-tests.yml`, `MpvRxEngineSmokeTest.kt` | No ejecutada (ver TESTING.md) |
+| CI (tests + `Nuvio-Avix-Debug.apk`) | COMPILADA | `.github/workflows/ci.yml` | Se ejecuta en cada push; «Debug APK» en verde; «Unit tests» en rojo solo por los 23 fallos heredados (fase 2) |
+| Pruebas del motor en emulador | COMPILADA | `mpvrx-tests.yml`, `MpvRxEngineSmokeTest.kt` | PASS en emulador de CI (ejecuciones #5–#9); dispositivo real NOT RUN |
 | Release firmada + SHA-256 | IMPLEMENTADA | `android-release.yml` | Requiere secretos `AVIX_RELEASE_*` |
 | Vigilancia de upstreams y bibliotecas | IMPLEMENTADA | `upstream-watch.yml`, `.github/upstreams.json` | Programado solo desde la rama por defecto |
 
@@ -34,13 +34,13 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 | Volver al motor anterior si el elegido falla antes de reproducir | COMPILADA | `recoverFromFailedEngineSwitch()` | Dispositivo: NOT RUN |
 | Importar subtítulos locales | COMPILADA | `LocalSubtitleImport.kt`, `LocalSubtitlePicker.*`, `SubtitleModal.kt` | `LocalSubtitleImportTest` 11/11 PASS; dispositivo NOT RUN; iOS no soportado |
 | libmpv: `sub-ass-override=no`, fuentes incrustadas, carpeta de fuentes | COMPILADA | `PlayerEngine.android.kt` | ASS_SSA_TESTS.md NOT RUN |
-| Importar fuentes (UI) | PENDIENTE | — | Port de Yesnt10 |
+| Importar fuente de subtítulos (UI) | COMPILADA | `SubtitleFontFile.kt`, `SubtitleFontPicker.android.kt` | `SubtitleFontFileTest` PASS; dispositivo NOT RUN |
 
 ## 3. Heredado de Luqman (+ original)
 
 | Característica | Estado |
 |---|---|
-| Cuenta Nuvio (Supabase): correo, sesiones, perfiles, PIN, biometría, código TV | COMPILADA (requiere `NUVIO_SUPABASE_*`; sin ellos, modo sin cuenta) |
+| Cuenta Nuvio (Supabase): correo, sesiones, perfiles, PIN, biometría, código TV | COMPILADA (CI inyecta `NUVIO_SUPABASE_*` desde secretos; mensajes de error por tipo y tokens redactados en logs) |
 | Sincronización: addons, biblioteca, progreso, historial, colecciones, catálogos | COMPILADA |
 | Addons Stremio, plugins QuickJS, debrid, P2P | COMPILADA |
 | Jellyfin / Emby | COMPILADA |
@@ -55,9 +55,28 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 
 | Característica | Estado |
 |---|---|
-| Ports de Yesnt10 | PENDIENTE (docs/integration/YESNT_PORT_LEDGER.md) |
+| Resto de ports de Yesnt10 | PENDIENTE (docs/integration/YESNT_PORT_LEDGER.md) |
 | Tema Claro / Oscuro / Sistema | COMPILADA — `ThemeMode.kt`, `LightPalette.kt`, `AvixThemeModeRow.kt`; contraste WCAG `LightPaletteContrastTest` 3/3 PASS; revisión visual en dispositivo: NOT RUN |
 | Valoraciones IMDb de episodios junto a OMDb | PENDIENTE |
-| Revisión de `ProviderCredentialSync` y de tokens en logs | PENDIENTE |
+| Redacción de tokens en logs y Sentry | COMPILADA (`SecretRedactor`, `SecretRedactorTest`) |
 | CloudStream | BLOQUEADA (procedencia y seguridad del runtime) |
 | Telegram Android | Fuera de la v1 (no existe implementación Android) |
+
+## 5. Ports de Yesnt10 (detalle en docs/integration/YESNT_PORT_LEDGER.md)
+
+Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha probado aún en dispositivo.
+
+| Característica | Estado | Archivos | Pruebas |
+|---|---|---|---|
+| Hora estimada de fin | COMPILADA | `PlaybackEndTime.kt` | `PlaybackEndTimeTest` PASS |
+| Velocidad y ETA de descargas | COMPILADA | `DownloadsModels.kt` | `DownloadSpeedEtaTest` PASS |
+| Recordar elecciones / conservar estado al cambiar de calidad | COMPILADA | `PlayerScreenRuntimeEngineSwitch.kt` | — |
+| Fuente de subtítulos personalizada | COMPILADA | `SubtitleFontFile.kt` | `SubtitleFontFileTest` PASS |
+| Copia de ajustes locales | COMPILADA | `core/avix/AvixSettingsBackup.kt` | `AvixSettingsBackupTest` PASS |
+| Personas favoritas | COMPILADA | `FavoritePeopleRepository.kt` | `FavoritePeopleRepositoryTest` PASS |
+| Degradados de Avix | COMPILADA | `core/ui/AvixGradientThemes.kt` | `LightPaletteContrastTest` PASS |
+| «Detrás de cámaras» | COMPILADA | `TrailerCategories.kt` | `TrailerCategoriesTest` PASS |
+| Informe local de errores | COMPILADA | `core/diagnostics/CrashDiagnostics*.kt`, `CrashReportDialog.kt` | `CrashDiagnosticsTest` PASS |
+| Live TV compartido por perfiles con addons compartidos | COMPILADA | `LiveTvProfileScope.kt` | `LiveTvProfileScopeTest` PASS |
+| Siguiente episodio tras un especial | COMPILADA | `SeriesContinuity.kt` | `SeriesContinuityTest` PASS |
+| Barra de estado en el reproductor | COMPILADA | `PlayerDeviceStatus*.kt` | `PlayerDeviceStatusTest` PASS |

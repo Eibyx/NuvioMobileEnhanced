@@ -70,6 +70,9 @@ import nuvio.composeapp.generated.resources.settings_avix_backup_section
 import nuvio.composeapp.generated.resources.settings_avix_backup_export
 import nuvio.composeapp.generated.resources.settings_avix_backup_description
 import nuvio.composeapp.generated.resources.settings_avix_backup_import
+import nuvio.composeapp.generated.resources.crash_report_section
+import nuvio.composeapp.generated.resources.crash_report_last
+import nuvio.composeapp.generated.resources.crash_report_none
 import org.jetbrains.compose.resources.stringResource
 
 internal fun LazyListScope.advancedSettingsContent(
@@ -179,6 +182,9 @@ internal fun LazyListScope.advancedSettingsContent(
     }
     item {
         AvixLocalSettingsBackupSection(isTablet = isTablet)
+    }
+    item {
+        AvixLastCrashReportSection(isTablet = isTablet)
     }
     item {
         SettingsSection(
@@ -360,5 +366,28 @@ private fun AvixLocalSettingsBackupSection(isTablet: Boolean) {
                 onClick = files::import,
             )
         }
+    }
+}
+
+/** Avix (Yesnt10): view/copy the last local crash report (never uploaded). */
+@androidx.compose.runtime.Composable
+private fun AvixLastCrashReportSection(isTablet: Boolean) {
+    if (!com.nuvio.app.core.diagnostics.CrashDiagnostics.reportsSupported) return
+    val last by com.nuvio.app.core.diagnostics.CrashDiagnostics.lastReport.collectAsStateWithLifecycle()
+    var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    SettingsSection(title = stringResource(Res.string.crash_report_section), isTablet = isTablet) {
+        SettingsGroup(isTablet = isTablet) {
+            SettingsNavigationRow(
+                title = stringResource(Res.string.crash_report_last),
+                description = last?.summary ?: stringResource(Res.string.crash_report_none),
+                enabled = last != null,
+                isTablet = isTablet,
+                onClick = { open = true },
+            )
+        }
+    }
+    val report = last
+    if (open && report != null) {
+        com.nuvio.app.core.diagnostics.CrashReportDialog(report = report, onDismiss = { open = false })
     }
 }

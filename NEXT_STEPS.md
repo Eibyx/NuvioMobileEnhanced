@@ -3,24 +3,27 @@
 Actualizado en cada sesión de trabajo. Estado detallado: [FEATURES.md](FEATURES.md). Resultados de pruebas: [docs/TESTING.md](docs/TESTING.md).
 
 ## Hecho
-- Fase 1: repositorio Eibyx/NuvioMobileEnhanced, rama `integration/avix`, estado inicial registrado (DECISIONS D-0).
-- Fase 2: merge de Luqman con historial.
-- Fase 3: identidad Avix (`com.avix.nuvio`, `avixnuvio://`, recursos originales de Nuvio).
-- Fase 4: primera APK debug compilada localmente; CI configurado.
-
-## En curso
-- Fase 5: motor mpvRx (`mpvlib 1.1.3`) en sustitución del libmpv anterior + `MpvRxEngineSmokeTest` + `mpvrx-tests.yml`.
+- Repositorio Eibyx/NuvioMobileEnhanced, rama `integration/avix` (DECISIONS D-0); merge de Luqman con historial; identidad Avix (`com.avix.nuvio`, `avixnuvio://`, recursos originales de Nuvio).
+- CI en marcha: «Debug APK» y «mpvRx engine tests» en verde; la APK de CI incluye la configuración del backend de Nuvio (inicio de sesión con la cuenta original).
+- Motor mpvRx (`mpvlib 1.1.3`), selector de motor en el reproductor, subtítulos locales, fuente de subtítulos personalizada.
+- Tema Claro/Oscuro/Sistema y degradados de Avix.
+- Errores de autenticación por tipo y redacción de tokens en logs y Sentry.
+- Ports de Yesnt10: hora de fin, velocidad/ETA de descargas, recordar elecciones, conservar estado al cambiar de calidad, copia de ajustes locales, personas favoritas, «Detrás de cámaras», informe local de errores, Live TV compartido por perfil.
+- Inventario completo de Yesnt10 frente a Avix en docs/integration/YESNT_PORT_LEDGER.md (duplicados y funciones retiradas en origen marcados como DESCARTADA).
 
 ## Pendiente
-1. **Motor mpvRx** — pruebas 1–20 de docs/MPVRX_INTEGRATION.md en emulador y dispositivo real (ARM64). Nada se marca PASS sin ejecución.
-2. **Selector de motor** — ajuste de motor por defecto con las tres opciones (Automático / ExoPlayer / libmpv (mpvRx)) dentro del reproductor; prioridad manual; recuperar el motor anterior si el nuevo falla.
-3. **Subtítulos locales** — verificación en dispositivo con ambos motores; iOS no soportado en v1.
-4. **Fuentes** — empaquetar Go Noto Current (OFL 1.1) solo si el `subfont.ttf` de mpvlib no basta; UI para importar fuentes (port de Yesnt10).
-5. **Ports de Yesnt10** — ver docs/integration/YESNT_PORT_LEDGER.md (catálogo, inicio, Concierge, Behind the Scenes, personas favoritas, degradados, hora de fin, recordar elecciones, conservar pistas, velocidad/ETA de descargas, importar fuentes, copia de seguridad, diagnóstico, Live TV/calendario, avisos de contenido, prefetch, avatares GIF, asistente de IA).
-6. **Tema Claro/Oscuro/Sistema** — `ThemeMode` local, tokens semánticos en todas las pantallas, sin reinicio, pruebas de contraste.
-7. **Sincronización** — revisar `ProviderCredentialSync` en el código real; confirmar que los tokens no se registran en logs; prueba con cuenta real (con la configuración autorizada del propietario).
-8. **Valoraciones IMDb de episodios** junto a OMDb (DECISIONS D-4).
-9. **Release** — crear keystore y secretos `AVIX_RELEASE_*`; primera release `vX.Y.Z-avix.N` solo tras validar en dispositivo.
+1. **Fase 1 — ports de Yesnt10 que quedan** (orden de trabajo):
+   - Inicio y catálogo: filas por estante, ocultar fechas/subrayado, columnas fijas, opciones del hero, deslizar para recargar, filtro Visto/No visto.
+   - Reproductor y streams: overlay de estado (hora/batería/red), «ver más» en la sinopsis, siguiente episodio tras un especial, prefetch de streams (desactivado por defecto).
+   - Live TV: abrir/compartir M3U, URL o magnet hacia la app.
+   - Perfil: avatares GIF (clave del usuario), recuentos de temporadas/episodios, extras de Profile Insights.
+   - Apariencia: temas animados, ocultar la barra de estado.
+   - Asistente de IA (desactivado por defecto, claves del usuario cifradas).
+2. **Fase 2** — corregir los 23 fallos heredados de tests unitarios hasta que «CI / Unit tests», «CI / Debug APK» y «mpvRx engine tests» estén en verde en el mismo commit.
+3. **Fase 3 (reservada, no iniciada)** — rediseño del reproductor; no abrir mini reproductor/PiP automáticamente al volver; fuente del sistema en toda la app; contraste de texto sobre imágenes.
+4. Pruebas en dispositivo real (motor, subtítulos ASS, tema claro, ports). Nada se marca PASS sin ejecución.
+5. Valoraciones IMDb de episodios junto a OMDb (DECISIONS D-4).
+6. Release — keystore y secretos `AVIX_RELEASE_*`; primera release solo tras validar en dispositivo.
 
 ## Bloqueado / fuera de alcance
 - CloudStream: experimental y desactivado hasta verificar la procedencia y la seguridad del runtime.

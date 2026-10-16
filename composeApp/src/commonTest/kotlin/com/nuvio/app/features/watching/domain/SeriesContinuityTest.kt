@@ -413,4 +413,38 @@ class SeriesContinuityTest {
         assertEquals("Next Up • S2 E2", action.label)
         assertEquals("show:2:2", action.videoId)
     }
+
+    @Test
+    fun nextReleasedEpisodeAfter_special_missing_from_list_falls_back_to_first_main_episode() {
+        val episodes = listOf(
+            WatchingReleasedEpisode(videoId = "s1e1", seasonNumber = 1, episodeNumber = 1, title = "Episode 1", releasedDate = "2026-01-08"),
+            WatchingReleasedEpisode(videoId = "s1e2", seasonNumber = 1, episodeNumber = 2, title = "Episode 2", releasedDate = "2026-01-15"),
+        )
+
+        val nextEpisode = nextReleasedEpisodeAfter(
+            content = show,
+            episodes = episodes,
+            seasonNumber = 0,
+            episodeNumber = 3,
+            todayIsoDate = "2026-02-01",
+        )
+
+        assertNotNull(nextEpisode)
+        assertEquals("s1e1", nextEpisode.videoId)
+    }
+
+    @Test
+    fun nextReleasedEpisodeAfter_missing_regular_episode_still_has_no_next_up() {
+        val nextEpisode = nextReleasedEpisodeAfter(
+            content = show,
+            episodes = listOf(
+                WatchingReleasedEpisode(videoId = "s1e1", seasonNumber = 1, episodeNumber = 1, title = "Episode 1", releasedDate = "2026-01-08"),
+            ),
+            seasonNumber = 4,
+            episodeNumber = 9,
+            todayIsoDate = "2026-02-01",
+        )
+
+        assertEquals(null, nextEpisode)
+    }
 }

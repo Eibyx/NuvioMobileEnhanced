@@ -24,6 +24,10 @@
 - «Detrás de cámaras»: los vídeos de la ficha se agrupan en chips por categoría (tráilers, teasers, detrás de cámaras, reportajes, clips…).
 - Personas favoritas: corazón en la ficha de cada persona y sección en Profile Insights (fijar, ver todo); por perfil y solo en el dispositivo.
 - Degradados de Avix (Messenger, Amethyst, Blossom, Lagoon, Sunset) en Ajustes → Apariencia; solo en el dispositivo, la cuenta conserva su tema.
+- Informe local de errores: si la app se cierra inesperadamente, al volver a abrirla se ofrece copiar el informe (sin tokens, claves ni parámetros de URL). También en Ajustes → Avanzado → «Último informe de error». No se envía a ningún servidor.
+- Live TV: los perfiles que usan los addons del perfil principal comparten sus listas, favoritos y guía (EPG); al cambiar de perfil se recargan los datos de Live TV.
+- «Siguiente episodio» tras ver un especial (temporada 0) que no figura en la lista del addon: ahora propone el primer episodio principal publicado en lugar de nada.
+- Barra de estado en el reproductor (opcional, desactivada por defecto): con los controles ocultos muestra hora, batería, red y hora de fin (Ajustes de reproducción).
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

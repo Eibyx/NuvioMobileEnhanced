@@ -23,42 +23,42 @@ actual object LiveTvStorage {
     }
 
     actual fun loadPlaylistUrl(): String? =
-        preferences?.getString(ProfileScopedKey.of(playlistUrlKey), null)
+        readLiveTvScoped(playlistUrlKey) { preferences?.getString(it, null) }
 
     actual fun savePlaylistUrl(url: String) {
         preferences
             ?.edit()
-            ?.putString(ProfileScopedKey.of(playlistUrlKey), url)
+            ?.putString(LiveTvProfileScope.key(playlistUrlKey), url)
             ?.apply()
     }
 
     actual fun loadPlaylistsBlob(): String? =
-        preferences?.getString(ProfileScopedKey.of(playlistsBlobKey), null)
+        readLiveTvScoped(playlistsBlobKey) { preferences?.getString(it, null) }
 
     actual fun savePlaylistsBlob(blob: String) {
         preferences
             ?.edit()
-            ?.putString(ProfileScopedKey.of(playlistsBlobKey), blob)
+            ?.putString(LiveTvProfileScope.key(playlistsBlobKey), blob)
             ?.apply()
     }
 
     actual fun loadFavoriteChannelIdsBlob(): String? =
-        preferences?.getString(ProfileScopedKey.of(favoriteChannelIdsBlobKey), null)
+        readLiveTvScoped(favoriteChannelIdsBlobKey) { preferences?.getString(it, null) }
 
     actual fun saveFavoriteChannelIdsBlob(blob: String) {
         preferences
             ?.edit()
-            ?.putString(ProfileScopedKey.of(favoriteChannelIdsBlobKey), blob)
+            ?.putString(LiveTvProfileScope.key(favoriteChannelIdsBlobKey), blob)
             ?.apply()
     }
 
     actual fun loadLastWatchedChannelId(): String? =
-        preferences?.getString(ProfileScopedKey.of(lastWatchedChannelIdKey), null)
+        readLiveTvScoped(lastWatchedChannelIdKey) { preferences?.getString(it, null) }
 
     actual fun saveLastWatchedChannelId(channelId: String) {
         preferences
             ?.edit()
-            ?.putString(ProfileScopedKey.of(lastWatchedChannelIdKey), channelId)
+            ?.putString(LiveTvProfileScope.key(lastWatchedChannelIdKey), channelId)
             ?.apply()
     }
 
@@ -76,47 +76,47 @@ actual object LiveTvStorage {
     }
 
     actual fun loadStalkerSettings(): LiveTvStalkerSettings =
-        preferences?.getString(ProfileScopedKey.of(stalkerSettingsKey), null)
+        readLiveTvScoped(stalkerSettingsKey) { preferences?.getString(it, null) }
             ?.split('\u001F')
             ?.let { LiveTvStalkerSettings(it.getOrNull(0).orEmpty(), it.getOrNull(1).orEmpty(), it.getOrNull(2).orEmpty(), it.getOrNull(3).orEmpty(), it.getOrNull(4) != "false") }
             ?: LiveTvStalkerSettings()
 
     actual fun saveStalkerSettings(settings: LiveTvStalkerSettings) {
-        preferences?.edit()?.putString(ProfileScopedKey.of(stalkerSettingsKey), listOf(settings.portalUrl, settings.macAddress, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"))?.apply()
+        preferences?.edit()?.putString(LiveTvProfileScope.key(stalkerSettingsKey), listOf(settings.portalUrl, settings.macAddress, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"))?.apply()
     }
 
     actual fun loadXtreamSettings(): LiveTvXtreamSettings =
-        preferences?.getString(ProfileScopedKey.of(xtreamSettingsKey), null)
+        readLiveTvScoped(xtreamSettingsKey) { preferences?.getString(it, null) }
             ?.split('\u001F')
             ?.let { LiveTvXtreamSettings(it.getOrNull(0).orEmpty(), it.getOrNull(1).orEmpty(), it.getOrNull(2).orEmpty(), it.getOrNull(3) != "false") }
             ?: LiveTvXtreamSettings()
 
     actual fun saveXtreamSettings(settings: LiveTvXtreamSettings) {
-        preferences?.edit()?.putString(ProfileScopedKey.of(xtreamSettingsKey), listOf(settings.serverUrl, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"))?.apply()
+        preferences?.edit()?.putString(LiveTvProfileScope.key(xtreamSettingsKey), listOf(settings.serverUrl, settings.username, settings.password, settings.isEnabled).joinToString("\u001F"))?.apply()
     }
 
     actual fun publishNavigationVisibility(visible: Boolean) = Unit
 
     actual fun loadEpgSourcesBlob(): String? =
-        preferences?.getString(ProfileScopedKey.of(epgSourcesBlobKey), null)
+        readLiveTvScoped(epgSourcesBlobKey) { preferences?.getString(it, null) }
 
     actual fun saveEpgSourcesBlob(blob: String) {
         preferences
             ?.edit()
-            ?.putString(ProfileScopedKey.of(epgSourcesBlobKey), blob)
+            ?.putString(LiveTvProfileScope.key(epgSourcesBlobKey), blob)
             ?.apply()
     }
 
     actual fun loadEpgAutoDetectEnabled(): Boolean? {
         val preferences = preferences ?: return null
-        val key = ProfileScopedKey.of(epgAutoDetectEnabledKey)
-        return if (preferences.contains(key)) preferences.getBoolean(key, true) else null
+        val key = LiveTvProfileScope.readKeys(epgAutoDetectEnabledKey).firstOrNull(preferences::contains) ?: return null
+        return preferences.getBoolean(key, true)
     }
 
     actual fun saveEpgAutoDetectEnabled(enabled: Boolean) {
         preferences
             ?.edit()
-            ?.putBoolean(ProfileScopedKey.of(epgAutoDetectEnabledKey), enabled)
+            ?.putBoolean(LiveTvProfileScope.key(epgAutoDetectEnabledKey), enabled)
             ?.apply()
     }
 }

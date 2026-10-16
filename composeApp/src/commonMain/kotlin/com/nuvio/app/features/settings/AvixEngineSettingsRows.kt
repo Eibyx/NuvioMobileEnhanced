@@ -17,6 +17,8 @@ import nuvio.composeapp.generated.resources.settings_avix_remember_choices_descr
 import nuvio.composeapp.generated.resources.settings_avix_remember_choices
 import nuvio.composeapp.generated.resources.settings_avix_show_end_time_description
 import nuvio.composeapp.generated.resources.settings_avix_show_end_time
+import nuvio.composeapp.generated.resources.settings_avix_status_overlay
+import nuvio.composeapp.generated.resources.settings_avix_status_overlay_description
 import nuvio.composeapp.generated.resources.settings_avix_engine_prefer_libmpv_ass
 import nuvio.composeapp.generated.resources.settings_avix_engine_prefer_libmpv_ass_description
 import nuvio.composeapp.generated.resources.settings_avix_engine_remember_title
@@ -37,6 +39,8 @@ internal fun AvixEngineSettingsRows(
     val rememberedCount by AvixPlaybackEnginePreferences.rememberedTitleCount.collectAsState()
     LaunchedEffect(Unit) { com.nuvio.app.features.player.PlaybackEndTimePreference.ensureLoaded() }
     val showEndTime by com.nuvio.app.features.player.PlaybackEndTimePreference.enabled.collectAsState()
+    LaunchedEffect(Unit) { com.nuvio.app.features.player.PlayerStatusOverlayPreference.ensureLoaded() }
+    val showStatusOverlay by com.nuvio.app.features.player.PlayerStatusOverlayPreference.enabled.collectAsState()
     LaunchedEffect(Unit) { com.nuvio.app.features.player.RememberPlayerChoicesPreference.ensureLoaded() }
     val rememberChoices by com.nuvio.app.features.player.RememberPlayerChoicesPreference.enabled.collectAsState()
 
@@ -47,6 +51,14 @@ internal fun AvixEngineSettingsRows(
         checked = showEndTime,
         isTablet = isTablet,
         onCheckedChange = com.nuvio.app.features.player.PlaybackEndTimePreference::setEnabled,
+    )
+    SettingsGroupDivider(isTablet = isTablet)
+    SettingsSwitchRow(
+        title = stringResource(Res.string.settings_avix_status_overlay),
+        description = stringResource(Res.string.settings_avix_status_overlay_description),
+        checked = showStatusOverlay,
+        isTablet = isTablet,
+        onCheckedChange = com.nuvio.app.features.player.PlayerStatusOverlayPreference::setEnabled,
     )
     SettingsGroupDivider(isTablet = isTablet)
     SettingsSwitchRow(
