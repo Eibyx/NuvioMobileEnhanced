@@ -70,6 +70,7 @@ Regla: ningún test se desactiva, elimina ni debilita. Cada fallo se clasificó 
 | `HomeHeroSectionTest` ×3 | Hero vertical de Luqman (ancho × 1,5) ignoraba el espacio para «Continuar viendo» y pantallas cortas | Código: se mantiene el tamaño de Luqman pero limitado por el espacio de «Continuar viendo»; tests actualizados al tamaño vertical y uno nuevo para pantalla corta |
 | `AvatarPickerTest` | Avatares sin imagen perdieron su etiqueta de accesibilidad en un merge | Código: etiqueta restaurada |
 | `RatingsVisibilityTest` | El merge dejó de usar las valoraciones obtenidas y las del addon en dos diseños de episodio | Código: los tres diseños usan las mismas reglas |
+| Entorno de CI | `AndroidDownloadLifecycleTest` usa `@Config(sdk = [34, 36])`; Robolectric necesita Java 21 para SDK 36 y CI usaba JDK 17 (`UnsupportedOperationException` en `DefaultSdkProvider`) | CI pasa a JDK 21 (el mismo con el que la suite completa pasa en local) |
 
 ### Motor mpvRx — pruebas 1–20
 

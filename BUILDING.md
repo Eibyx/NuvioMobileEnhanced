@@ -2,7 +2,7 @@
 
 ## Requisitos
 
-- JDK 17 (CI) o 21 (local: también funciona)
+- JDK 21 (CI y local). Robolectric necesita Java 21 para los tests con `sdk = 36`
 - Android SDK: `platforms;android-37.0`, `build-tools;37.0.0`, `platform-tools`
 - No hace falta NDK: las bibliotecas nativas llegan precompiladas como AAR. El motor libmpv (`app.gyrolet.mpvlib:mpvlib:1.1.3`) se descarga de las releases de GitHub de Riteshp2001/mpvlibAndroid y Gradle verifica su SHA-256 antes de compilar (ver [docs/MPVRX_INTEGRATION.md](docs/MPVRX_INTEGRATION.md)).
 
