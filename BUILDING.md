@@ -28,7 +28,7 @@ Todas las claves son **opcionales para compilar**. Si falta una, solo se desacti
 | `NUVIO_SUPABASE_ANON_KEY` | Clave **publicable** (`sb_publishable_…`) de ese backend | Config. pública del servicio |
 | `NUVIO_SUPABASE_FALLBACK_URL` | URL de respaldo (opcional) | — |
 | `TMDB_API_KEY` | Metadatos de TMDB | Clave de app propia |
-| `TRAKT_CLIENT_ID`, `TRAKT_CLIENT_SECRET`, `TRAKT_REDIRECT_URI` | Trakt. Redirect por defecto: `avixnuvio://auth/trakt` | App OAuth propia en trakt.tv |
+| `TRAKT_CLIENT_ID`, `TRAKT_REDIRECT_URI` | Trakt (PKCE S256, sin Client Secret; `TRAKT_CLIENT_SECRET` ya no se usa). Redirect por defecto: `avixnuvio://auth/trakt` | App OAuth propia en trakt.tv |
 | `SIMKL_CLIENT_ID`, `SIMKL_REDIRECT_URI`, `SIMKL_APP_NAME` | Simkl. Redirect por defecto: `avixnuvio://auth/simkl` | App propia en simkl.com |
 | `ANILIST_CLIENT_ID` | AniList. Redirect a registrar: `avixnuvio://auth/anilist` | Cliente propio en anilist.co |
 | `MAL_CLIENT_ID` | MyAnimeList (seguimiento automático de episodios). Registrar un cliente de tipo «Other» con redirect `avixnuvio://auth/mal` | Cliente propio en myanimelist.net |

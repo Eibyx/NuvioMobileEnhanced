@@ -80,3 +80,8 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - El `FileProvider` usa `${applicationId}.fileprovider` y el código `context.packageName`, así que se adaptan solos.
 - `versionCode` sigue siendo incremental (`100000 + número de ejecución` en CI, `-Pavix.versionCode` en release).
 - **Datos:** Android trata el nuevo paquete como otra app con su propio almacenamiento. No hay migración automática y no se borra nada de la instalación anterior (ver docs/RELEASE.md).
+
+## D-14 OAuth como cliente público (sin Client Secret)
+- Trakt usa Authorization Code + PKCE S256 sin `client_secret` (documentación oficial de Trakt; el secreto está obsoleto para el inicio de sesión de usuarios). `TRAKT_CLIENT_SECRET` deja de leerse y no se incluye en la APK.
+- Simkl pasa a AUTH V2 (`/oauth2/*`, PKCE S256, refresh token, revocación).
+- Se mantienen los redirects registrados `avixnuvio://auth/{anilist,mal,simkl,trakt}`. No se usa un App Link HTTPS porque no hay dominio propio (no se inventa). Detalles: docs/OAUTH.md.

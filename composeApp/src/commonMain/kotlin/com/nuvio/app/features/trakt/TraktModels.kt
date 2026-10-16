@@ -13,6 +13,8 @@ data class TraktAuthState(
     val userSlug: String? = null,
     val pendingAuthorizationState: String? = null,
     val pendingAuthorizationStartedAtMillis: Long? = null,
+    /** PKCE code_verifier of the pending browser sign-in; single-use, cleared with the pending state. */
+    val pendingCodeVerifier: String? = null,
 ) {
     val isAuthenticated: Boolean
         get() = !accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()
