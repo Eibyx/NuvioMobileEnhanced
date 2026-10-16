@@ -33,4 +33,18 @@ class AvixHomeLayoutPreferencesTest {
         assertEquals(54, homeShelfPreviewLimit(18, 3))
         assertEquals(72, homeShelfPreviewLimit(18, 10))
     }
+
+    @Test
+    fun balancedHeroKeepsTheOriginalOverlay() {
+        assertEquals(listOf(0.02f, 0.12f, 0.34f, 0.78f), heroOverlayAlphas(AvixHeroDisplayMode.BALANCED))
+        assertEquals(AvixHeroDisplayMode.BALANCED, AvixHeroDisplayMode.fromStorageValue("unknown"))
+    }
+
+    @Test
+    fun overviewLinesFollowModeAndToggle() {
+        assertEquals(2, heroOverviewMaxLines(AvixHeroOptions()))
+        assertEquals(1, heroOverviewMaxLines(AvixHeroOptions(displayMode = AvixHeroDisplayMode.CINEMATIC)))
+        assertEquals(4, heroOverviewMaxLines(AvixHeroOptions(displayMode = AvixHeroDisplayMode.INFO_RICH)))
+        assertEquals(0, heroOverviewMaxLines(AvixHeroOptions(showOverview = false)))
+    }
 }

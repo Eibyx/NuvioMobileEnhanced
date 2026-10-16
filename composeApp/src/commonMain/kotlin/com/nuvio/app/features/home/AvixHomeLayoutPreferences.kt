@@ -18,7 +18,47 @@ data class AvixHomeLayout(
     val catalogColumns: Int = 0,
     val hideReleaseDates: Boolean = false,
     val heroAutoScroll: Boolean = true,
+    val hero: AvixHeroOptions = AvixHeroOptions(),
+    val pullToRefresh: Boolean = false,
 )
+
+/** Yesnt10 hero display modes. BALANCED is the existing Avix/Luqman look. */
+enum class AvixHeroDisplayMode(val storageValue: String) {
+    CINEMATIC("cinematic"),
+    BALANCED("balanced"),
+    INFO_RICH("info_rich"),
+    ;
+
+    companion object {
+        fun fromStorageValue(value: String?): AvixHeroDisplayMode =
+            entries.firstOrNull { it.storageValue == value } ?: BALANCED
+    }
+}
+
+data class AvixHeroOptions(
+    val displayMode: AvixHeroDisplayMode = AvixHeroDisplayMode.BALANCED,
+    /** Only rating, year and type in the metadata row (no genre or age rating). */
+    val compactMetadata: Boolean = false,
+    val showRatings: Boolean = true,
+    val showOverview: Boolean = true,
+    /** Full-bleed hero uses the portrait poster instead of the backdrop on portrait phones. */
+    val posterArtwork: Boolean = false,
+)
+
+/** Alpha stops of the full-bleed hero's darkening overlay (top to bottom). */
+internal fun heroOverlayAlphas(mode: AvixHeroDisplayMode): List<Float> = when (mode) {
+    AvixHeroDisplayMode.CINEMATIC -> listOf(0f, 0.04f, 0.2f, 0.62f)
+    AvixHeroDisplayMode.BALANCED -> listOf(0.02f, 0.12f, 0.34f, 0.78f)
+    AvixHeroDisplayMode.INFO_RICH -> listOf(0.06f, 0.2f, 0.46f, 0.86f)
+}
+
+/** Synopsis lines in the hero; 0 hides it. */
+internal fun heroOverviewMaxLines(options: AvixHeroOptions): Int = when {
+    !options.showOverview -> 0
+    options.displayMode == AvixHeroDisplayMode.CINEMATIC -> 1
+    options.displayMode == AvixHeroDisplayMode.INFO_RICH -> 4
+    else -> 2
+}
 
 object AvixHomeLayoutPreferences {
     const val MIN_SHELF_ROWS = 1
@@ -30,6 +70,12 @@ object AvixHomeLayoutPreferences {
     private const val KEY_CATALOG_COLUMNS = "ui.catalog.columns"
     private const val KEY_HIDE_RELEASE_DATES = "ui.home.hide_release_dates"
     private const val KEY_HERO_AUTO_SCROLL = "ui.home.hero_auto_scroll"
+    private const val KEY_PULL_TO_REFRESH = "ui.home.pull_to_refresh"
+    private const val KEY_HERO_MODE = "ui.home.hero_mode"
+    private const val KEY_HERO_COMPACT = "ui.home.hero_compact_metadata"
+    private const val KEY_HERO_RATINGS = "ui.home.hero_show_ratings"
+    private const val KEY_HERO_OVERVIEW = "ui.home.hero_show_overview"
+    private const val KEY_HERO_POSTER = "ui.home.hero_poster_artwork"
 
     private val _layout = MutableStateFlow(AvixHomeLayout())
     val layout: StateFlow<AvixHomeLayout> = _layout.asStateFlow()
@@ -50,6 +96,14 @@ object AvixHomeLayoutPreferences {
             catalogColumns = normalizeCatalogColumns(AvixLocalStore.getString(KEY_CATALOG_COLUMNS)?.toIntOrNull()),
             hideReleaseDates = AvixLocalStore.getBoolean(KEY_HIDE_RELEASE_DATES) ?: false,
             heroAutoScroll = AvixLocalStore.getBoolean(KEY_HERO_AUTO_SCROLL) ?: true,
+            pullToRefresh = AvixLocalStore.getBoolean(KEY_PULL_TO_REFRESH) ?: false,
+            hero = AvixHeroOptions(
+                displayMode = AvixHeroDisplayMode.fromStorageValue(AvixLocalStore.getString(KEY_HERO_MODE)),
+                compactMetadata = AvixLocalStore.getBoolean(KEY_HERO_COMPACT) ?: false,
+                showRatings = AvixLocalStore.getBoolean(KEY_HERO_RATINGS) ?: true,
+                showOverview = AvixLocalStore.getBoolean(KEY_HERO_OVERVIEW) ?: true,
+                posterArtwork = AvixLocalStore.getBoolean(KEY_HERO_POSTER) ?: false,
+            ),
         )
     }
 
@@ -73,6 +127,24 @@ object AvixHomeLayoutPreferences {
         _layout.value = _layout.value.copy(heroAutoScroll = enabled)
         AvixLocalStore.putBoolean(KEY_HERO_AUTO_SCROLL, enabled)
     }
+
+    fun setPullToRefresh(value: Boolean) =
+        update(KEY_PULL_TO_REFRESH, value.toString()) { it.copy(pullToRefresh = value) }
+
+    fun setHeroDisplayMode(mode: AvixHeroDisplayMode) =
+        update(KEY_HERO_MODE, mode.storageValue) { it.copy(hero = it.hero.copy(displayMode = mode)) }
+
+    fun setHeroCompactMetadata(value: Boolean) =
+        update(KEY_HERO_COMPACT, value.toString()) { it.copy(hero = it.hero.copy(compactMetadata = value)) }
+
+    fun setHeroShowRatings(value: Boolean) =
+        update(KEY_HERO_RATINGS, value.toString()) { it.copy(hero = it.hero.copy(showRatings = value)) }
+
+    fun setHeroShowOverview(value: Boolean) =
+        update(KEY_HERO_OVERVIEW, value.toString()) { it.copy(hero = it.hero.copy(showOverview = value)) }
+
+    fun setHeroPosterArtwork(value: Boolean) =
+        update(KEY_HERO_POSTER, value.toString()) { it.copy(hero = it.hero.copy(posterArtwork = value)) }
 
     private inline fun update(key: String, stored: String, transform: (AvixHomeLayout) -> AvixHomeLayout) {
         ensureLoaded()

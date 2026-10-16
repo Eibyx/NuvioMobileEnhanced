@@ -4,8 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nuvio.app.features.home.AvixHeroDisplayMode
 import com.nuvio.app.features.home.AvixHomeLayoutPreferences
-import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.*
 import nuvio.composeapp.generated.resources.settings_avix_catalog_columns
 import nuvio.composeapp.generated.resources.settings_avix_catalog_columns_auto
 import nuvio.composeapp.generated.resources.settings_avix_catalog_columns_description
@@ -72,6 +73,70 @@ internal fun AvixHomeLayoutSettingsSection(isTablet: Boolean) {
                 checked = layout.heroAutoScroll,
                 isTablet = isTablet,
                 onCheckedChange = AvixHomeLayoutPreferences::setHeroAutoScroll,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
+                title = stringResource(Res.string.settings_avix_home_pull_refresh),
+                description = stringResource(Res.string.settings_avix_home_pull_refresh_description),
+                checked = layout.pullToRefresh,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setPullToRefresh,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsChipRow(
+                title = stringResource(Res.string.settings_avix_hero_mode),
+                description = stringResource(Res.string.settings_avix_hero_mode_description),
+                isTablet = isTablet,
+            ) {
+                AvixHeroDisplayMode.entries.forEach { mode ->
+                    androidx.compose.material3.FilterChip(
+                        selected = layout.hero.displayMode == mode,
+                        onClick = { AvixHomeLayoutPreferences.setHeroDisplayMode(mode) },
+                        label = {
+                            androidx.compose.material3.Text(
+                                stringResource(
+                                    when (mode) {
+                                        AvixHeroDisplayMode.CINEMATIC -> Res.string.settings_avix_hero_mode_cinematic
+                                        AvixHeroDisplayMode.BALANCED -> Res.string.settings_avix_hero_mode_balanced
+                                        AvixHeroDisplayMode.INFO_RICH -> Res.string.settings_avix_hero_mode_info_rich
+                                    },
+                                ),
+                            )
+                        },
+                    )
+                }
+            }
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
+                title = stringResource(Res.string.settings_avix_hero_compact),
+                description = stringResource(Res.string.settings_avix_hero_compact_description),
+                checked = layout.hero.compactMetadata,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setHeroCompactMetadata,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
+                title = stringResource(Res.string.settings_avix_hero_ratings),
+                description = stringResource(Res.string.settings_avix_hero_ratings_description),
+                checked = layout.hero.showRatings,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setHeroShowRatings,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
+                title = stringResource(Res.string.settings_avix_hero_overview),
+                description = stringResource(Res.string.settings_avix_hero_overview_description),
+                checked = layout.hero.showOverview,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setHeroShowOverview,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
+                title = stringResource(Res.string.settings_avix_hero_poster),
+                description = stringResource(Res.string.settings_avix_hero_poster_description),
+                checked = layout.hero.posterArtwork,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setHeroPosterArtwork,
             )
         }
     }

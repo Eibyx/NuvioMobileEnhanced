@@ -84,3 +84,6 @@ Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha prob
 | Preparar streams por adelantado (desactivado por defecto) | COMPILADA | `StreamPrefetchPreference.kt`, `MetaDetailsScreen.kt` | `StreamPrefetchTargetTest` PASS |
 | Búsqueda de avatares GIF (GIPHY, clave del usuario) | COMPILADA | `GifAvatarSearch.kt`, `GifAvatarSearchDialog.kt` | `GifAvatarSearchTest` PASS |
 | Asistente de IA (desactivado por defecto, claves del usuario cifradas) | COMPILADA | `features/ai/*`, `AvixSecretStore*` | `AiAssistantServiceTest` PASS; con proveedor real NOT RUN |
+| Opciones del destacado (estilo, datos, valoración, sinopsis, póster) | COMPILADA | `AvixHomeLayoutPreferences.kt`, `HomeHeroSection.kt` | `AvixHomeLayoutPreferencesTest` PASS |
+| Deslizar para recargar Inicio (opcional) | COMPILADA | `AvixHomePullToRefresh.kt` | Dispositivo NOT RUN |
+| Filtro Vistos / No vistos en catálogos de biblioteca | COMPILADA | `CatalogWatchedFilter.kt` | `CatalogWatchedFilterTest` PASS |

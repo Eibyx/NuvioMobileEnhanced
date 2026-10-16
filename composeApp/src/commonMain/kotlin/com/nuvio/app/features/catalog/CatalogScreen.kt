@@ -174,6 +174,22 @@ fun CatalogScreen(
             )
         }
 
+        // Avix (Yesnt10 port): watched filter for library catalogs.
+        var watchedFilter by remember(target) { mutableStateOf(CatalogWatchedFilter.ALL) }
+        val isItemWatched: (MetaPreview) -> Boolean = { item ->
+            WatchingState.isPosterWatched(
+                watchedKeys = watchedUiState.watchedKeys,
+                item = item,
+                fullyWatchedSeriesKeys = fullyWatchedSeriesKeys,
+            )
+        }
+        val watchedCount = remember(uiState.items, watchedUiState.watchedKeys, fullyWatchedSeriesKeys) {
+            uiState.items.count(isItemWatched)
+        }
+        val visibleItems = remember(uiState.items, watchedFilter, watchedUiState.watchedKeys, fullyWatchedSeriesKeys) {
+            if (target is CatalogTarget.Library) filterByWatched(uiState.items, watchedFilter, isItemWatched) else uiState.items
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(columns),
@@ -211,8 +227,18 @@ fun CatalogScreen(
                         )
                     }
                 } else {
+                    if (target is CatalogTarget.Library) {
+                        item(span = { GridItemSpan(maxLineSpan) }, key = "avix_watched_filter") {
+                            CatalogWatchedFilterRow(
+                                selected = watchedFilter,
+                                watchedCount = watchedCount,
+                                unwatchedCount = uiState.items.size - watchedCount,
+                                onSelected = { watchedFilter = it },
+                            )
+                        }
+                    }
                     items(
-                        items = uiState.items.withDuplicateSafeLazyKeys { item -> item.stableKey() },
+                        items = visibleItems.withDuplicateSafeLazyKeys { item -> item.stableKey() },
                         key = { item -> item.lazyKey },
                     ) { keyedItem ->
                         val item = keyedItem.value

@@ -204,6 +204,7 @@ internal fun HomeHeroSection(
     onItemClick: ((MetaPreview) -> Unit)? = null,
     onActiveArtworkChange: ((String?) -> Unit)? = null,
     autoScrollEnabled: Boolean = true,
+    heroOptions: com.nuvio.app.features.home.AvixHeroOptions = com.nuvio.app.features.home.AvixHeroOptions(),
 ) {
     if (items.isEmpty()) return
 
@@ -295,6 +296,8 @@ internal fun HomeHeroSection(
                 baseLayout
             }
             val effectiveArtworkSource = when {
+                !isCardStyle && heroOptions.posterArtwork &&
+                    !heroUsesWideArtwork(maxWidth, viewportHeight, baseLayout.isTablet) -> HomeHeroArtworkSource.POSTER
                 !isCardStyle -> HomeHeroArtworkSource.BACKDROP
                 heroUsesWideArtwork(maxWidth, viewportHeight, baseLayout.isTablet) ->
                     HomeHeroArtworkSource.BACKDROP
@@ -529,12 +532,8 @@ internal fun HomeHeroSection(
                                     val fade = heroFadeColorState?.value ?: themeBackground
                                     drawRect(
                                         Brush.verticalGradient(
-                                            colors = listOf(
-                                                fade.copy(alpha = 0.02f),
-                                                fade.copy(alpha = 0.12f),
-                                                fade.copy(alpha = 0.34f),
-                                                fade.copy(alpha = 0.78f),
-                                            ),
+                                            colors = com.nuvio.app.features.home.heroOverlayAlphas(heroOptions.displayMode)
+                                                .map { alpha -> fade.copy(alpha = alpha) },
                                         ),
                                     )
                                 },
@@ -599,6 +598,7 @@ internal fun HomeHeroSection(
                                             item = layerItem,
                                             layout = layout,
                                             onItemClick = onItemClick,
+                                            options = heroOptions,
                                         )
                                     }
                                     }
@@ -779,6 +779,7 @@ private fun HeroContentBlock(
     item: MetaPreview,
     layout: HomeHeroLayout,
     onItemClick: ((MetaPreview) -> Unit)?,
+    options: com.nuvio.app.features.home.AvixHeroOptions = com.nuvio.app.features.home.AvixHeroOptions(),
 ) {
     var logoLoadError by remember(item.type, item.id, item.logo) {
         mutableStateOf(false)
@@ -836,12 +837,15 @@ private fun HeroContentBlock(
         }
         val details = detailsState.value
         val rating = (item.imdbRating ?: details?.imdbRating)
+            ?.takeIf { options.showRatings }
             ?.takeIf { raw -> raw.toDoubleOrNull()?.let { it > 0.0 } == true }
         val year = (item.releaseInfo ?: details?.releaseInfo)
             ?.takeIf { it.isNotBlank() }
             ?.let(::formatReleaseDateForDisplay)
-        val genre = (item.genres.firstOrNull() ?: details?.genres?.firstOrNull())?.takeIf { it.isNotBlank() }
-        val ageRating = details?.ageRating?.trim()?.takeIf { it.isNotBlank() }
+        val genre = (item.genres.firstOrNull() ?: details?.genres?.firstOrNull())
+            ?.takeIf { it.isNotBlank() && !options.compactMetadata }
+        val ageRating = details?.ageRating?.trim()?.takeIf { it.isNotBlank() && !options.compactMetadata }
+        val overviewMaxLines = com.nuvio.app.features.home.heroOverviewMaxLines(options)
         val synopsis = (item.description ?: details?.description)?.trim()?.takeIf { it.isNotBlank() }
         val typeLabel = when (item.type.lowercase()) {
             "movie" -> stringResource(Res.string.media_movie)
@@ -890,7 +894,7 @@ private fun HeroContentBlock(
             HeroTypePill(text = typeLabel)
         }
 
-        if (synopsis != null) {
+        if (synopsis != null && overviewMaxLines > 0) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = synopsis,
@@ -898,7 +902,7 @@ private fun HeroContentBlock(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
                 textAlign = textAlign,
-                maxLines = 2,
+                maxLines = overviewMaxLines,
                 overflow = TextOverflow.Ellipsis,
             )
         }

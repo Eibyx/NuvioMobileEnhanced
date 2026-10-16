@@ -32,6 +32,9 @@
 - «Preparar los streams por adelantado» (opcional, desactivado por defecto): con la ficha abierta se buscan en segundo plano los streams del botón Reproducir para que la reproducción empiece antes.
 - Avatares GIF: «Buscar GIF» al editar un perfil (GIPHY con tu propia clave, que solo se guarda en el dispositivo).
 - Asistente de IA en las fichas (opcional, desactivado por defecto): pregunta sobre el título con tu propia clave de Groq, Cerebras, Gemini u OpenRouter; búsqueda web opcional con Tavily. Las claves se guardan cifradas solo en el dispositivo.
+- Destacado de Inicio: estilos Cinematográfico / Equilibrado / Detallado, datos compactos, mostrar u ocultar valoración y sinopsis, y arte de póster (Ajustes → Inicio → Diseño).
+- Deslizar para recargar Inicio con vibración (opcional).
+- Catálogos de biblioteca: filtros Todos / Vistos / No vistos con recuento.
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

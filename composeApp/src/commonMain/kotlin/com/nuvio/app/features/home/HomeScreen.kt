@@ -997,7 +997,7 @@ fun HomeScreen(
         }
 
         val heroStretchState = rememberHeroStretchState(homeListState)
-        val heroStretchModifier = if (showHeroSlot) {
+        val heroStretchModifier = if (showHeroSlot && !avixHomeLayout.pullToRefresh) {
             Modifier.nestedScroll(heroStretchState.nestedScrollConnection)
         } else {
             Modifier
@@ -1009,6 +1009,11 @@ fun HomeScreen(
         }
 
         DynamicArtworkBackground(artworkUrl = activeHeroArtworkUrl) {
+            AvixHomePullToRefresh(
+                enabled = avixHomeLayout.pullToRefresh,
+                isLoading = homeUiState.isLoading,
+                onRefresh = { HomeRepository.refresh(addonsUiState.addons.enabledAddons(), force = true) },
+            ) {
             NuvioScreen(
                 modifier = Modifier.fillMaxSize().then(heroStretchModifier),
                 horizontalPadding = 0.dp,
@@ -1044,6 +1049,7 @@ fun HomeScreen(
                                 onItemClick = onPosterClick,
                                 onActiveArtworkChange = onActiveHeroArtworkChange,
                                 autoScrollEnabled = avixHomeLayout.heroAutoScroll,
+                                heroOptions = avixHomeLayout.hero,
                             )
 
                             else -> HomeHeroReservedSpace(
@@ -1226,6 +1232,7 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
             }
         }
     }

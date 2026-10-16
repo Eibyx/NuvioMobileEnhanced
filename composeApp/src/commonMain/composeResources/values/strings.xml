@@ -2933,4 +2933,22 @@
     <string name="ai_settings_web_search">Web search (Tavily)</string>
     <string name="ai_settings_web_search_description">Look up web sources to ground answers. Needs your own Tavily key; sends the title and question to Tavily.</string>
     <string name="ai_settings_tavily_key_label">Tavily API key</string>
+    <string name="settings_avix_hero_mode">Featured style</string>
+    <string name="settings_avix_hero_mode_description">How much information the featured banner shows.</string>
+    <string name="settings_avix_hero_mode_cinematic">Cinematic</string>
+    <string name="settings_avix_hero_mode_balanced">Balanced</string>
+    <string name="settings_avix_hero_mode_info_rich">Detailed</string>
+    <string name="settings_avix_hero_compact">Compact details</string>
+    <string name="settings_avix_hero_compact_description">Hide genre and age rating in the featured banner.</string>
+    <string name="settings_avix_hero_ratings">Show ratings</string>
+    <string name="settings_avix_hero_ratings_description">Show the rating in the featured banner.</string>
+    <string name="settings_avix_hero_overview">Show synopsis</string>
+    <string name="settings_avix_hero_overview_description">Show the synopsis in the featured banner.</string>
+    <string name="settings_avix_hero_poster">Poster artwork</string>
+    <string name="settings_avix_hero_poster_description">On phones in portrait, fill the full-width banner with the poster instead of the backdrop.</string>
+    <string name="settings_avix_home_pull_refresh">Pull down to refresh Home</string>
+    <string name="settings_avix_home_pull_refresh_description">Reload the catalogs by pulling down at the top of Home (with a vibration). Replaces the stretch effect of the featured banner.</string>
+    <string name="catalog_filter_all">All (%1$d)</string>
+    <string name="catalog_filter_watched">Watched (%1$d)</string>
+    <string name="catalog_filter_unwatched">Unwatched (%1$d)</string>
 </resources>
