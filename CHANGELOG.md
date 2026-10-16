@@ -39,6 +39,8 @@
 - Fichas de series: «N temporadas · M episodios».
 - MyAnimeList (portado de AKRusso/NuvioMobile-Enhanced, GPL-3.0): seguimiento automático de episodios de anime al terminar (≥80 %), solo si el progreso aumenta. Requiere registrar un cliente propio de MAL («Other», redirect `avixnuvio://auth/mal`) y configurar `MAL_CLIENT_ID`; sin él aparece como no configurado.
 - Apariencia: «Acento animado» (opcional) y «Ocultar barra de estado» en toda la app.
+- DNS seguro (DoH) opcional para addons y reproducción (Ajustes → Avanzado → Red).
+- Descargas: filtros Todos / Películas / Series.
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

@@ -12,16 +12,10 @@ Actualizado en cada sesión de trabajo. Estado detallado: [FEATURES.md](FEATURES
 - Inventario completo de Yesnt10 frente a Avix en docs/integration/YESNT_PORT_LEDGER.md (duplicados y funciones retiradas en origen marcados como DESCARTADA).
 
 ## Pendiente
-1. **Fase 1 — ports de Yesnt10 que quedan** (orden de trabajo):
-   - Inicio y catálogo: filas por estante, ocultar fechas/subrayado, columnas fijas, opciones del hero, deslizar para recargar, filtro Visto/No visto.
-   - Reproductor y streams: overlay de estado (hora/batería/red), «ver más» en la sinopsis, siguiente episodio tras un especial, prefetch de streams (desactivado por defecto).
-   - Live TV: abrir/compartir M3U, URL o magnet hacia la app.
-   - Perfil: avatares GIF (clave del usuario), recuentos de temporadas/episodios, extras de Profile Insights.
-   - Apariencia: temas animados, ocultar la barra de estado.
-   - Asistente de IA (desactivado por defecto, claves del usuario cifradas).
-2. **Fase 2** — corregir los 23 fallos heredados de tests unitarios hasta que «CI / Unit tests», «CI / Debug APK» y «mpvRx engine tests» estén en verde en el mismo commit.
+1. **Fase 1 — ports de Yesnt10: completada.** Todas las funciones Android compatibles están portadas o documentadas como duplicadas, retiradas en origen, excluidas por el propietario o bloqueadas (docs/integration/YESNT_PORT_LEDGER.md). MyAnimeList portado desde AKRusso.
+2. **Fase 2 (en curso)** — corregir los 23 fallos heredados de tests unitarios (y el test intermitente `ExternalPlaybackProgressTest`) hasta que «CI / Unit tests», «CI / Debug APK» y «mpvRx engine tests» estén en verde en el mismo commit.
 3. **Fase 3 (reservada, no iniciada)** — rediseño del reproductor; no abrir mini reproductor/PiP automáticamente al volver; fuente del sistema en toda la app; contraste de texto sobre imágenes.
-4. Pruebas en dispositivo real (motor, subtítulos ASS, tema claro, ports). Nada se marca PASS sin ejecución.
+4. Pruebas en dispositivo real (motor, subtítulos ASS, tema claro, ports, cuenta). Nada se marca PASS sin ejecución.
 5. Valoraciones IMDb de episodios junto a OMDb (DECISIONS D-4).
 6. Release — keystore y secretos `AVIX_RELEASE_*`; primera release solo tras validar en dispositivo.
 

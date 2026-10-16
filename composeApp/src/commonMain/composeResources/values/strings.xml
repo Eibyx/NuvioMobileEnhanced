@@ -2981,4 +2981,10 @@
     <string name="settings_avix_animated_accent_description">With gradient themes, the accent of buttons and the selected tab slowly flows. Uses a little more battery.</string>
     <string name="settings_avix_hide_status_bar">Hide status bar</string>
     <string name="settings_avix_hide_status_bar_description">Hide the clock and notification icons across the app. Swipe down from the top to see them.</string>
+    <string name="settings_avix_doh_section">Network</string>
+    <string name="settings_avix_doh">Secure DNS (DNS over HTTPS)</string>
+    <string name="settings_avix_doh_description">Resolve addon and stream addresses with an encrypted DNS provider. Can help when your network blocks some addons. Your Nuvio account always uses the system DNS.</string>
+    <string name="settings_avix_doh_system">System</string>
+    <string name="downloads_filter_movies">Movies (%1$d)</string>
+    <string name="downloads_filter_shows">Series (%1$d)</string>
 </resources>

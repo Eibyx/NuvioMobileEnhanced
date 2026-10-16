@@ -91,3 +91,5 @@ Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha prob
 | Recuento de temporadas y episodios | COMPILADA | `MetaSeriesStats.kt` | `MetaSeriesStatsTest` PASS |
 | MyAnimeList: seguimiento automático (port de AKRusso) | COMPILADA | `features/mal/*`, `MalProviderCard.kt` | `MalTrackingTest` 18/18 PASS; con cuenta real NOT RUN (requiere `MAL_CLIENT_ID`) |
 | Acento animado y ocultar barra de estado | COMPILADA | `AvixAppearanceExtras.kt`, `AvixSystemUiController.*` | `AnimatedAccentBrushTest` PASS; dispositivo NOT RUN |
+| DNS seguro (DoH) para addons y reproducción | COMPILADA | `DnsOverHttpsSettings.kt`, `AvixDns.kt` | `DnsOverHttpsProviderTest` PASS; dispositivo NOT RUN |
+| Filtros de tipo en Descargas | COMPILADA | `DownloadsTypeFilter.kt` | Dispositivo NOT RUN |

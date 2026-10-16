@@ -66,6 +66,7 @@ fun DownloadsScreen(
     }
 
     var selectedShowId by rememberSaveable(initialShowId) { mutableStateOf(initialShowId) }
+    var typeFilter by remember { mutableStateOf(DownloadsTypeFilter.ALL) }
     var downloadPendingDeletionId by rememberSaveable { mutableStateOf<String?>(null) }
     val openDownloadsDirectoryFailedText = stringResource(Res.string.downloads_open_directory_failed)
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -136,6 +137,8 @@ fun DownloadsScreen(
         if (selectedShowId == null) {
             downloadsRootContent(
                 uiState = uiState,
+                typeFilter = typeFilter,
+                onTypeFilterChange = { typeFilter = it },
                 onOpenDownload = onOpenDownload,
                 onOpenShow = { showId, title ->
                     onNavigateToShow?.invoke(showId, title) ?: run { selectedShowId = showId }
@@ -172,6 +175,8 @@ fun DownloadsScreen(
 
 private fun LazyListScope.downloadsRootContent(
     uiState: DownloadsUiState,
+    typeFilter: DownloadsTypeFilter,
+    onTypeFilterChange: (DownloadsTypeFilter) -> Unit,
     onOpenDownload: (DownloadItem) -> Unit,
     onOpenShow: (showId: String, title: String) -> Unit,
     onDeleteDownload: (String) -> Unit,
@@ -187,6 +192,20 @@ private fun LazyListScope.downloadsRootContent(
             }
         }
         .sortedBy { (item, _) -> item.title.lowercase() }
+
+    // Avix (Yesnt10 port): All / Movies / Series filter for completed downloads.
+    if (completedMovies.isNotEmpty() && completedShows.isNotEmpty()) {
+        item(key = "avix_downloads_filter") {
+            DownloadsTypeFilterRow(
+                selected = typeFilter,
+                movieCount = completedMovies.size,
+                showCount = completedShows.size,
+                onSelected = onTypeFilterChange,
+            )
+        }
+    }
+    val showMovies = typeFilter != DownloadsTypeFilter.SHOWS
+    val showShows = typeFilter != DownloadsTypeFilter.MOVIES
 
     if (activeItems.isNotEmpty()) {
         item {
@@ -207,7 +226,7 @@ private fun LazyListScope.downloadsRootContent(
         }
     }
 
-    if (completedMovies.isNotEmpty()) {
+    if (showMovies && completedMovies.isNotEmpty()) {
         item {
             SectionTitle(stringResource(Res.string.downloads_section_movies))
         }
@@ -226,7 +245,7 @@ private fun LazyListScope.downloadsRootContent(
         }
     }
 
-    if (completedShows.isNotEmpty()) {
+    if (showShows && completedShows.isNotEmpty()) {
         item {
             SectionTitle(stringResource(Res.string.downloads_section_shows))
         }
