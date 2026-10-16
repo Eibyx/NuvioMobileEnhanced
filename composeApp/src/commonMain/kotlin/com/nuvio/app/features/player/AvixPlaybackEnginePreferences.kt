@@ -27,6 +27,13 @@ object AvixPlaybackEnginePreferences {
 
     private var loaded = false
 
+    init {
+        com.nuvio.app.core.avix.AvixPreferencesReload.register {
+            loaded = false
+            ensureLoaded()
+        }
+    }
+
     fun ensureLoaded() {
         if (loaded) return
         loaded = true

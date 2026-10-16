@@ -2853,4 +2853,12 @@
     <string name="settings_avix_subtitle_font_reset">Use the default subtitle font</string>
     <string name="settings_avix_subtitle_font_error_too_large">The font file is too large (maximum 30 MB).</string>
     <string name="settings_avix_subtitle_font_error_invalid">That file is not a valid TrueType/OpenType font.</string>
+    <string name="settings_avix_backup_section">Nuvio Avix settings on this device</string>
+    <string name="settings_avix_backup_export">Export Avix settings</string>
+    <string name="settings_avix_backup_import">Import Avix settings</string>
+    <string name="settings_avix_backup_description">Saves or restores appearance, player engine, end time, remembered choices and subtitle font. Your Nuvio account settings are not included or changed.</string>
+    <string name="settings_avix_backup_exported">Settings exported.</string>
+    <string name="settings_avix_backup_export_failed">Could not save the file.</string>
+    <string name="settings_avix_backup_imported">%1$d settings restored.</string>
+    <string name="settings_avix_backup_import_failed">That file is not a valid Nuvio Avix settings backup.</string>
 </resources>

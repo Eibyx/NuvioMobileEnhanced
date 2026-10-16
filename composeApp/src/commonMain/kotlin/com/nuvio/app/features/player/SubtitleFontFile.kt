@@ -22,6 +22,13 @@ object CustomSubtitleFontStore {
     val selected: StateFlow<CustomSubtitleFont?> = _selected.asStateFlow()
     private var loaded = false
 
+    init {
+        com.nuvio.app.core.avix.AvixPreferencesReload.register {
+            loaded = false
+            ensureLoaded()
+        }
+    }
+
     fun ensureLoaded() {
         if (loaded) return
         loaded = true

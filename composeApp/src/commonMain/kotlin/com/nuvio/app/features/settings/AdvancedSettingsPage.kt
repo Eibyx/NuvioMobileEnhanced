@@ -62,6 +62,14 @@ import nuvio.composeapp.generated.resources.sentry_sent_body
 import nuvio.composeapp.generated.resources.sentry_sent_title
 import nuvio.composeapp.generated.resources.sentry_turn_off
 import nuvio.composeapp.generated.resources.sentry_turn_on
+import nuvio.composeapp.generated.resources.settings_avix_backup_exported
+import nuvio.composeapp.generated.resources.settings_avix_backup_export_failed
+import nuvio.composeapp.generated.resources.settings_avix_backup_imported
+import nuvio.composeapp.generated.resources.settings_avix_backup_import_failed
+import nuvio.composeapp.generated.resources.settings_avix_backup_section
+import nuvio.composeapp.generated.resources.settings_avix_backup_export
+import nuvio.composeapp.generated.resources.settings_avix_backup_description
+import nuvio.composeapp.generated.resources.settings_avix_backup_import
 import org.jetbrains.compose.resources.stringResource
 
 internal fun LazyListScope.advancedSettingsContent(
@@ -168,6 +176,9 @@ internal fun LazyListScope.advancedSettingsContent(
                 )
             }
         }
+    }
+    item {
+        AvixLocalSettingsBackupSection(isTablet = isTablet)
     }
     item {
         SettingsSection(
@@ -299,5 +310,55 @@ private fun SentryInfoSection(
             style = MaterialTheme.typography.bodyMedium,
             color = tokens.colors.textMuted,
         )
+    }
+}
+
+/** Avix: export / import of the device-local Avix preferences (never the synced account settings). */
+@androidx.compose.runtime.Composable
+private fun AvixLocalSettingsBackupSection(isTablet: Boolean) {
+    var message by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    val exportedOk = stringResource(Res.string.settings_avix_backup_exported)
+    val exportFailed = stringResource(Res.string.settings_avix_backup_export_failed)
+    val importedOk = stringResource(Res.string.settings_avix_backup_imported)
+    val importFailed = stringResource(Res.string.settings_avix_backup_import_failed)
+    val files = com.nuvio.app.core.avix.rememberAvixBackupFiles(
+        onExported = { ok -> message = if (ok) exportedOk else exportFailed },
+        onImported = { result ->
+            message = result.mapCatching { text ->
+                val prefs = com.nuvio.app.core.avix.AvixSettingsBackup.decode(text)
+                com.nuvio.app.core.avix.AvixSettingsBackup.restore(prefs)
+                prefs.size
+            }.fold(onSuccess = { importedOk.replace("%1\$d", it.toString()) }, onFailure = { importFailed })
+        },
+    )
+    if (!files.isSupported) return
+    SettingsSection(
+        title = stringResource(Res.string.settings_avix_backup_section),
+        isTablet = isTablet,
+    ) {
+        SettingsGroup(isTablet = isTablet) {
+            SettingsNavigationRow(
+                title = stringResource(Res.string.settings_avix_backup_export),
+                description = message ?: stringResource(Res.string.settings_avix_backup_description),
+                isTablet = isTablet,
+                onClick = {
+                    val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    files.export(
+                        "nuvio-avix-ajustes.json",
+                        com.nuvio.app.core.avix.AvixSettingsBackup.encode(
+                            com.nuvio.app.core.avix.AvixSettingsBackup.snapshot(),
+                            now,
+                        ),
+                    )
+                },
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsNavigationRow(
+                title = stringResource(Res.string.settings_avix_backup_import),
+                description = null,
+                isTablet = isTablet,
+                onClick = files::import,
+            )
+        }
     }
 }

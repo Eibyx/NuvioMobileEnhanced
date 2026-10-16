@@ -42,6 +42,13 @@ object PlaybackEndTimePreference {
     val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
     private var loaded = false
 
+    init {
+        com.nuvio.app.core.avix.AvixPreferencesReload.register {
+            loaded = false
+            ensureLoaded()
+        }
+    }
+
     fun ensureLoaded() {
         if (loaded) return
         loaded = true
@@ -91,6 +98,13 @@ object RememberPlayerChoicesPreference {
     private val _enabled = MutableStateFlow(true)
     val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
     private var loaded = false
+
+    init {
+        com.nuvio.app.core.avix.AvixPreferencesReload.register {
+            loaded = false
+            ensureLoaded()
+        }
+    }
 
     fun ensureLoaded() {
         if (loaded) return

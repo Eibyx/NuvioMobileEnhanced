@@ -20,6 +20,7 @@
 - «Recordar mis elecciones» (Ajustes de reproducción): permite desactivar que se guarden y restauren audio/subtítulo por título y el formato de imagen.
 - Cambio de calidad (HLS): ya no vuelve a la posición inicial; conserva posición, velocidad, audio y subtítulo.
 - Fuente de subtítulos personalizada (.ttf/.otf) para subtítulos de texto con ambos motores; solo en el dispositivo (Ajustes de reproducción).
+- Exportar/importar los ajustes locales de Avix (Ajustes → Avanzado). No incluye ni modifica los ajustes de la cuenta de Nuvio.
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.
