@@ -741,12 +741,14 @@ private fun ContinueWatchingCard(
                     .drawWithContent {
                         drawContent()
 
-                        val startY = size.height * 0.45f
+                        // Starts higher: episode code, title and episode title begin near mid-card.
+                        val startY = size.height * 0.25f
                         val gradient = Brush.verticalGradient(
                             colorStops = arrayOf(
                                 0.0f to Color.Transparent,
-                                0.60f to backgroundColor.copy(alpha = 0.70f),
-                                1.0f to backgroundColor.copy(alpha = 0.95f),
+                                0.40f to backgroundColor.copy(alpha = 0.75f),
+                                0.70f to backgroundColor.copy(alpha = 0.92f),
+                                1.0f to backgroundColor.copy(alpha = 0.97f),
                             ),
                             startY = startY,
                             endY = size.height,
@@ -797,7 +799,7 @@ private fun ContinueWatchingCard(
                         fontSize = cardMetrics.metaTextSize,
                         fontWeight = FontWeight.Medium,
                     ),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

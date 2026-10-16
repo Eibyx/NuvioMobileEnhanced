@@ -9,6 +9,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -183,7 +184,7 @@ fun DetailHero(
                                 end = if (isTablet) 32.dp else 22.dp,
                             )
                             .graphicsLayer {
-                                alpha = trailerAlpha * 0.72f
+                                alpha = trailerAlpha * 0.9f
                             },
                         transitionSpec = {
                             (fadeIn(animationSpec = tween(120)) + scaleIn(
@@ -200,7 +201,12 @@ fun DetailHero(
                             imageVector = if (muted) Icons.Rounded.VolumeOff else Icons.Rounded.VolumeUp,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(muteIconSize),
+                            // Backing circle so the icon stays visible over bright trailer frames.
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .padding(8.dp)
+                                .size(muteIconSize),
                         )
                     }
                 }
@@ -213,12 +219,13 @@ fun DetailHero(
                         .background(
                             Brush.verticalGradient(
                                 colorStops = arrayOf(
+                                    // Denser where the logo/title and genres sit (from ~0.6).
                                     0.00f to Color.Transparent,
-                                    0.16f to bottomGradientColor.copy(alpha = 0.04f),
-                                    0.32f to bottomGradientColor.copy(alpha = 0.14f),
-                                    0.50f to bottomGradientColor.copy(alpha = 0.34f),
-                                    0.68f to bottomGradientColor.copy(alpha = 0.62f),
-                                    0.84f to bottomGradientColor.copy(alpha = 0.84f),
+                                    0.20f to bottomGradientColor.copy(alpha = 0.08f),
+                                    0.40f to bottomGradientColor.copy(alpha = 0.30f),
+                                    0.58f to bottomGradientColor.copy(alpha = 0.62f),
+                                    0.72f to bottomGradientColor.copy(alpha = 0.86f),
+                                    0.86f to bottomGradientColor.copy(alpha = 0.96f),
                                     1.00f to bottomGradientColor,
                                 ),
                             ),

@@ -74,8 +74,11 @@ internal fun StreamCard(
             .background(
                 if (isCurrent) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                } else {
+                } else if (com.nuvio.app.core.ui.LocalNuvioIsDark.current) {
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+                } else {
+                    // Light mode: a solid-ish card so the text does not sit on the tinted page.
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.78f)
                 },
             )
             .then(

@@ -988,12 +988,13 @@ private fun EpisodeHorizontalCard(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
+                        // Starts higher: badge, title and overview begin at ~30-45 % of the card.
                         0f to Color.Transparent,
-                        0.42f to Color.Transparent,
-                        0.56f to Color.Black.copy(alpha = 0.20f),
-                        0.70f to Color.Black.copy(alpha = 0.45f),
-                        0.84f to Color.Black.copy(alpha = 0.68f),
-                        1f to Color.Black.copy(alpha = 0.92f),
+                        0.22f to Color.Transparent,
+                        0.40f to Color.Black.copy(alpha = 0.35f),
+                        0.58f to Color.Black.copy(alpha = 0.62f),
+                        0.78f to Color.Black.copy(alpha = 0.82f),
+                        1f to Color.Black.copy(alpha = 0.94f),
                     ),
                 ),
         )
@@ -1061,7 +1062,7 @@ private fun EpisodeHorizontalCard(
                         Text(
                             text = runtime,
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = metrics.metaTextSize),
-                            color = Color.White.copy(alpha = 0.78f),
+                            color = Color.White.copy(alpha = 0.85f),
                             maxLines = 1,
                         )
                     }
@@ -1077,7 +1078,7 @@ private fun EpisodeHorizontalCard(
                         Text(
                             text = date,
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = metrics.metaTextSize),
-                            color = Color.White.copy(alpha = 0.78f),
+                            color = Color.White.copy(alpha = 0.85f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.End,

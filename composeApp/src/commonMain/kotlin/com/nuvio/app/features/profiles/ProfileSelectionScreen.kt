@@ -183,6 +183,8 @@ fun ProfileSelectionScreen(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val backgroundProfile = profileState.activeProfile ?: profileState.profiles.firstOrNull()
 
+    // The backdrop (mesh or darkened photo) is dark in both modes: keep its text light.
+    com.nuvio.app.core.ui.NuvioForceDarkTheme {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize(),
@@ -399,6 +401,7 @@ fun ProfileSelectionScreen(
         }
 
         NuvioToastHost(modifier = Modifier.align(Alignment.TopCenter))
+    }
     }
 
     pendingPinSelection?.let { (profile, tapCenter) ->

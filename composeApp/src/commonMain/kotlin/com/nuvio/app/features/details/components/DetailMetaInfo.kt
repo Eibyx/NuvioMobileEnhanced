@@ -133,7 +133,7 @@ fun DetailMetaInfo(
                         Text(
                             text = validImdbRating,
                             style = imdbTextStyle,
-                            color = ImdbYellow,
+                            color = readableRatingColor(ImdbYellow),
                         )
                     }
                 }
@@ -235,7 +235,7 @@ internal fun DetailRatingsRow(
                 Text(
                     text = visuals.format(rating.value),
                     style = ratingTextStyle,
-                    color = visuals.valueColor,
+                    color = readableRatingColor(visuals.valueColor),
                 )
             }
         }
@@ -432,3 +432,19 @@ internal fun seriesStatsLabel(stats: com.nuvio.app.features.details.MetaSeriesSt
     )
     return "$seasons · $episodes"
 }
+
+/**
+ * Brand rating colours (IMDb yellow, TMDB cyan, Letterboxd green…) are too light on the light
+ * background; in light mode they are darkened just enough for text contrast (WCAG 4.5:1).
+ */
+@Composable
+private fun readableRatingColor(color: Color): Color =
+    if (com.nuvio.app.core.ui.LocalNuvioIsDark.current) {
+        color
+    } else {
+        com.nuvio.app.core.ui.LightPalette.ensureContrast(
+            color,
+            MaterialTheme.colorScheme.background,
+            com.nuvio.app.core.ui.LightPalette.MIN_SECONDARY_TEXT_CONTRAST,
+        )
+    }

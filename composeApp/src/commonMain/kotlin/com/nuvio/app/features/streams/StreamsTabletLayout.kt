@@ -132,9 +132,9 @@ internal fun TabletStreamsLayout(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.2f),
-                                Color.Black.copy(alpha = 0.4f),
-                                Color.Black.copy(alpha = 0.6f),
+                                Color.Black.copy(alpha = 0.45f),
+                                Color.Black.copy(alpha = 0.55f),
+                                Color.Black.copy(alpha = 0.72f),
                             ),
                         ),
                     ),
@@ -368,7 +368,7 @@ private fun TabletEpisodeInfoPanel(
                 fontWeight = FontWeight.SemiBold,
                 shadow = textShadow,
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.95f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

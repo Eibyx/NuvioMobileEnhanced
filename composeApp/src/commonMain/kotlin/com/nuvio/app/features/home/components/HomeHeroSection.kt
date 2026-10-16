@@ -547,7 +547,16 @@ internal fun HomeHeroSection(
                                 .align(Alignment.BottomCenter)
                                 .drawBehind {
                                     val fade = heroFadeColorState?.value ?: themeBackground
-                                    drawRect(Brush.verticalGradient(colors = listOf(fade.copy(alpha = 0f), fade)))
+                                    // Reaches 0.6 a third of the way up, so the logo, metadata and
+                                    // synopsis sit on a solid enough fade in both modes.
+                                    drawRect(
+                                        Brush.verticalGradient(
+                                            0f to fade.copy(alpha = 0f),
+                                            0.35f to fade.copy(alpha = 0.6f),
+                                            0.7f to fade.copy(alpha = 0.9f),
+                                            1f to fade,
+                                        ),
+                                    )
                                 },
                         )
                     }
@@ -911,7 +920,7 @@ private fun HeroContentBlock(
                 text = synopsis,
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                 textAlign = textAlign,
                 maxLines = overviewMaxLines,
                 overflow = TextOverflow.Ellipsis,
@@ -1013,7 +1022,7 @@ internal fun homeHeroLayout(
             contentWidthFraction = 1f,
             contentHorizontalPadding = 24.dp,
             contentVerticalPadding = 16.dp,
-            bottomFadeHeight = 220.dp,
+            bottomFadeHeight = 280.dp,
             logoWidthFraction = 0.62f,
         )
     }

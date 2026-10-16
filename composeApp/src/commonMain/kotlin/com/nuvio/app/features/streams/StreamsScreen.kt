@@ -469,8 +469,11 @@ private fun MobileStreamsLayout(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        (if (LocalNuvioIsDark.current) Color.Black else MaterialTheme.colorScheme.background)
-                            .copy(alpha = if (isEpisode) 0.9f else 0.82f),
+                        if (LocalNuvioIsDark.current) {
+                            Color.Black.copy(alpha = if (isEpisode) 0.9f else 0.82f)
+                        } else {
+                            MaterialTheme.colorScheme.background.copy(alpha = if (isEpisode) 0.94f else 0.92f)
+                        },
                     ),
             )
         }
@@ -695,13 +698,16 @@ private fun EpisodeHeroBlock(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.1f)),
-        )
+        if (LocalNuvioIsDark.current) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.1f)),
+            )
+        }
 
-        // Gradient overlay bottom-up
+        // Gradient overlay bottom-up: theme colour only, so the themed text below stays readable
+        // in light mode too (a black band under dark text made it muddy).
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -709,9 +715,9 @@ private fun EpisodeHeroBlock(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
                             0.0f to Color.Transparent,
-                            0.58f to Color.Transparent,
-                            0.8f to Color.Black.copy(alpha = 0.42f),
-                            0.93f to heroBlendColor.copy(alpha = 0.84f),
+                            0.40f to Color.Transparent,
+                            0.62f to heroBlendColor.copy(alpha = 0.55f),
+                            0.80f to heroBlendColor.copy(alpha = 0.88f),
                             1.0f to heroBlendColor,
                         ),
                         startY = 0f,

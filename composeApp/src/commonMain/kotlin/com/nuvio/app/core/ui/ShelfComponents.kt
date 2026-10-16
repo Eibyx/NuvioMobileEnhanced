@@ -231,8 +231,8 @@ fun NuvioPosterCard(
                             val gradient = Brush.verticalGradient(
                                 colorStops = arrayOf(
                                     0.0f to Color.Transparent,
-                                    0.58f to Color.Transparent,
-                                    1.0f to Color.Black.copy(alpha = 0.75f)
+                                    0.45f to Color.Transparent,
+                                    1.0f to Color.Black.copy(alpha = 0.85f)
                                 )
                             )
                             onDrawBehind { drawRect(gradient) }
@@ -257,7 +257,8 @@ fun NuvioPosterCard(
                         Text(
                             text = bottomLeftText.orEmpty(),
                             style = MaterialTheme.typography.labelMedium,
-                            color = tokens.colors.textPrimary,
+                            // Over the black scrim: white in both light and dark mode.
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.widthIn(max = catalogLogoOverlaySize.textMaxWidth),

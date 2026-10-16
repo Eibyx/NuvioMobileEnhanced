@@ -268,7 +268,13 @@ fun NuvioPosterZoomActionOverlay(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    Color.Black.copy(alpha = 0.45f * scrim.value.coerceIn(0f, 1f)),
+                    // Title and subtitle are drawn on this scrim with theme colours: dark text in
+                    // light mode needs a light scrim, light text in dark mode a dark one.
+                    if (LocalNuvioIsDark.current) {
+                        Color.Black.copy(alpha = 0.45f * scrim.value.coerceIn(0f, 1f))
+                    } else {
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.72f * scrim.value.coerceIn(0f, 1f))
+                    },
                 ),
         )
 

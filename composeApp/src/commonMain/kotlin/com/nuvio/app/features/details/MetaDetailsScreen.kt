@@ -1193,7 +1193,11 @@ fun MetaDetailsScreen(
                         enabled = dominantColorEnabled,
                     )
                     val dominantBackdropTargetColor = if (dominantColorEnabled && extractedDominantColor != null) {
-                        dominantBackdropBlendColor(extractedDominantColor, colorScheme.background)
+                        dominantBackdropBlendColor(
+                            extractedDominantColor,
+                            colorScheme.background,
+                            isDark = com.nuvio.app.core.ui.LocalNuvioIsDark.current,
+                        )
                     } else {
                         colorScheme.background
                     }
@@ -2719,8 +2723,12 @@ private fun detailTabletContentMaxWidth(maxWidth: Dp, isTablet: Boolean): Dp =
         (maxWidth * 0.6f).coerceIn(520.dp, 680.dp)
     }
 
-private fun dominantBackdropBlendColor(dominantColor: Color, backgroundColor: Color): Color =
-    backgroundColor.blendTowards(dominantColor, fraction = 0.42f)
+/**
+ * In light mode the page text stays dark, so the tint is lighter (a dark poster at 0.42 gave a
+ * mid-tone fill under dark text).
+ */
+private fun dominantBackdropBlendColor(dominantColor: Color, backgroundColor: Color, isDark: Boolean): Color =
+    backgroundColor.blendTowards(dominantColor, fraction = if (isDark) 0.42f else 0.25f)
 
 private fun Color.blendTowards(target: Color, fraction: Float): Color {
     val clamped = fraction.coerceIn(0f, 1f)

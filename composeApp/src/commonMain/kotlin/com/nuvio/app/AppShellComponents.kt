@@ -679,10 +679,13 @@ internal fun AppLaunchOverlay(
     Box(
         modifier = modifier.zIndex(NuvioTokens.Z.dialog),
     ) {
-        ProfileBackgroundBackdrop(
-            profile = profile,
-            modifier = Modifier.fillMaxSize(),
-        )
-        AppLoadingContent(modifier = Modifier.fillMaxSize(), profile = profile)
+        // Dark backdrop in both modes: keep the loading content light.
+        com.nuvio.app.core.ui.NuvioForceDarkTheme {
+            ProfileBackgroundBackdrop(
+                profile = profile,
+                modifier = Modifier.fillMaxSize(),
+            )
+            AppLoadingContent(modifier = Modifier.fillMaxSize(), profile = profile)
+        }
     }
 }

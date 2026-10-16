@@ -5,6 +5,13 @@
 ### Nuvio Eibyx
 - Nuevo paquete `com.eibyx.nuvio` (debug `com.eibyx.nuvio.debug`) y nombre visible «Nuvio Eibyx». Se instala junto a la versión anterior (`com.avix.nuvio`) y no hereda sus datos locales: hay que iniciar sesión y reconectar los servicios (docs/RELEASE.md, D-13). Iconos sin cambios; redirects `avixnuvio://` sin cambios.
 - APK: `Nuvio-Eibyx-Debug.apk`, `Nuvio-Eibyx-Release.apk` y `Nuvio-Eibyx-Release-<abi>.apk`.
+- Client IDs de AniList, MyAnimeList, Trakt, Simkl y MDBList desde secretos dedicados del repositorio (Debug y Release), con prioridad sobre `NUVIO_LOCAL_PROPERTIES_BASE64`; el registro de Actions indica qué proveedores están configurados sin mostrar valores.
+- Trakt: inicio de sesión con PKCE S256 sin Client Secret (`auth.trakt.tv`), `state` de un solo uso, tokens cifrados. `TRAKT_CLIENT_SECRET` ya no se usa.
+- Simkl: OAuth AUTH V2 (`/oauth2/*`), PKCE S256, renovación y revocación del token. Las sesiones anteriores deben reconectarse.
+- libmpv (mpvRx): mpv ya no dibuja su propia barra de búsqueda ni mensajes OSD sobre los controles; ambos motores muestran solo los controles de Nuvio.
+- Reproductor: «Atrás» sale siempre a la pantalla anterior, sin PiP ni mini reproductor automáticos. Inicio (Home) sigue activando PiP mientras se reproduce y el botón PiP sigue abriendo el mini reproductor si está activado.
+- Apariencia → Tipografía: «Fuente original de Nuvio» o «Fuente del sistema» (que sigue el tamaño de texto de accesibilidad del sistema, entre 0,85× y 1,3×). Solo en el dispositivo.
+- Contraste: pantalla de perfiles y arranque siempre oscuras (texto claro), títulos sobre pósteres en blanco, degradados más fuertes en destacado de Inicio, «Seguir viendo», ficha (cabecera y episodios) y pantalla de streams; tarjetas de streams y menú del póster legibles en modo claro; colores de valoraciones (IMDb, TMDB…) con contraste suficiente en modo claro; icono de silencio del tráiler con fondo.
 
 ### Fase 1–3 — Repositorio, base Luqman e identidad Avix
 - Estado inicial de Eibyx/NuvioMobileEnhanced: `cmp-rewrite` = `808272dc` (= NuvioMedia/NuvioMobile).
