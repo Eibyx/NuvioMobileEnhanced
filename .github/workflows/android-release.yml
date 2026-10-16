@@ -195,13 +195,11 @@ jobs:
         id: files
         shell: bash
         run: |
-          apksigner="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)/apksigner"
           mkdir -p dist
           for apk in androidApp/build/outputs/apk/full/release/*.apk; do
-            "${apksigner}" verify --print-certs "${apk}" | grep -E 'Signer #1 certificate (DN|SHA-256)'
-            if "${apksigner}" verify --print-certs "${apk}" | grep -q 'CN=Android Debug'; then
-              echo "::error::${apk} is signed with a debug certificate"; exit 1
-            fi
+            # Real apksigner exit code, one v2/v3 signer, not a debug certificate, and the same
+            # certificate as the release key in the keystore from the secrets.
+            bash .github/scripts/verify-release-signature.sh "${apk}" "${RUNNER_TEMP}/avix-release.jks" "${KEY_ALIAS}"
             variant=$(basename "${apk}" | sed -E 's/^androidApp-full-//; s/-release(-unsigned)?\.apk$//')
             if [ "${variant}" = "universal" ]; then name="Nuvio-Eibyx-Release.apk"; else name="Nuvio-Eibyx-Release-${variant}.apk"; fi
             cp "${apk}" "dist/${name}"
