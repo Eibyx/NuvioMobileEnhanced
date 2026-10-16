@@ -81,3 +81,32 @@ internal fun playbackRuntimeWithEndLabel(
         )
     }
 }
+
+/**
+ * Avix (Yesnt10 "Remember my choices"): when off, the player neither saves nor reapplies the
+ * per-title audio/subtitle choice nor the image format. Device-local; default on (Luqman behaviour).
+ */
+object RememberPlayerChoicesPreference {
+    private const val KEY = "player.remember_choices"
+    private val _enabled = MutableStateFlow(true)
+    val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
+    private var loaded = false
+
+    fun ensureLoaded() {
+        if (loaded) return
+        loaded = true
+        _enabled.value = AvixLocalStore.getBoolean(KEY) ?: true
+    }
+
+    val isEnabled: Boolean
+        get() {
+            ensureLoaded()
+            return _enabled.value
+        }
+
+    fun setEnabled(value: Boolean) {
+        ensureLoaded()
+        _enabled.value = value
+        AvixLocalStore.putBoolean(KEY, value)
+    }
+}

@@ -761,6 +761,7 @@ private fun PlayerScreenRuntime.saveDirectStreamForReuse(
 
 
 internal fun PlayerScreenRuntime.selectPlayerQuality(qualityId: String?) {
+    preserveStateForSourceReload()
     selectedPlayerQualityId = qualityId.takeUnless { it == PlayerQualityAutoId }
     val selectedVariant = playerQualityState.selectedVariantFor(selectedPlayerQualityId)
     activePlaybackSourceUrl = playerQualityState.playbackUrlFor(selectedPlayerQualityId) ?: activeSourceUrl

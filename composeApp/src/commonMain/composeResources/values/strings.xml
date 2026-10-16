@@ -2845,4 +2845,6 @@
     <string name="settings_avix_show_end_time">Show end time</string>
     <string name="settings_avix_show_end_time_description">Shows when the current video will finish, next to the playback time.</string>
     <string name="downloads_eta">%1$s left</string>
+    <string name="settings_avix_remember_choices">Remember my choices</string>
+    <string name="settings_avix_remember_choices_description">Reapply the audio track and subtitle you picked for each title, and the image format (fit, fill, zoom).</string>
 </resources>

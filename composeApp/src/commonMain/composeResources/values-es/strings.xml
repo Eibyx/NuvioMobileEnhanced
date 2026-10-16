@@ -2389,4 +2389,6 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="settings_avix_show_end_time">Mostrar hora de fin</string>
     <string name="settings_avix_show_end_time_description">Muestra a qué hora terminará el vídeo, junto al tiempo de reproducción.</string>
     <string name="downloads_eta">quedan %1$s</string>
+    <string name="settings_avix_remember_choices">Recordar mis elecciones</string>
+    <string name="settings_avix_remember_choices_description">Vuelve a aplicar la pista de audio y el subtítulo elegidos en cada título, y el formato de imagen (ajustar, rellenar, zoom).</string>
 </resources>

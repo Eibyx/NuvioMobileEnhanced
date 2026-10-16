@@ -36,6 +36,7 @@ internal val PlayerScreenRuntime.selectedAddonSubtitle: AddonSubtitle?
 internal fun PlayerScreenRuntime.updateTrackPreference(
     update: (PersistedPlayerTrackPreference) -> PersistedPlayerTrackPreference,
 ) {
+    if (!RememberPlayerChoicesPreference.isEnabled) return
     if (parentMetaId.isBlank()) return
     val current = PlayerTrackPreferenceStorage.load(parentMetaId) ?: PersistedPlayerTrackPreference()
     PlayerTrackPreferenceStorage.save(parentMetaId, update(current))
@@ -89,6 +90,10 @@ internal fun PlayerScreenRuntime.persistAddonSubtitlePreference(subtitle: AddonS
 
 internal fun PlayerScreenRuntime.restorePersistedTrackPreferenceIfNeeded(): Boolean {
     if (trackPreferenceRestoreApplied) return true
+    if (!RememberPlayerChoicesPreference.isEnabled) {
+        trackPreferenceRestoreApplied = true
+        return true
+    }
     val preference = PlayerTrackPreferenceStorage.load(parentMetaId)
     if (preference == null) {
         trackPreferenceRestoreApplied = true

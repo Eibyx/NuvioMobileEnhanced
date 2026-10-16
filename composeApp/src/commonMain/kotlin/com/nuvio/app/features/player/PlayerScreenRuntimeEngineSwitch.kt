@@ -69,6 +69,21 @@ internal fun PlayerScreenRuntime.switchPlaybackEngine(
     )
 }
 
+/**
+ * Avix (Yesnt10 8d75c294, extended): before reloading the same engine with another URL (HLS quality
+ * change), keep the current position, speed, audio and subtitle and re-apply them once loaded.
+ * Previously the reload restarted from the session's original start position.
+ */
+internal fun PlayerScreenRuntime.preserveStateForSourceReload() {
+    val engine = playerController?.playbackEngine ?: return
+    pendingEngineSwitchRestore = captureEngineSwitchRestore(engine)
+    flushWatchProgress()
+    if (initialSeekApplied) {
+        activeInitialPositionMs = playbackSnapshot.positionMs.coerceAtLeast(0L)
+        activeInitialProgressFraction = null
+    }
+}
+
 private fun PlayerScreenRuntime.captureEngineSwitchRestore(target: AndroidPlaybackEngine): EngineSwitchRestore {
     val subtitle = when {
         useCustomSubtitles -> selectedAddonSubtitle?.url?.let(SubtitleRestore::Addon) ?: SubtitleRestore.Off
