@@ -19,6 +19,7 @@ on:
       - "settings.gradle.kts"
       - "composeApp/build.gradle.kts"
       - ".github/workflows/mpvrx-tests.yml"
+      - ".github/scripts/wait-for-android-ready.sh"
   pull_request:
     paths:
       - "composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/**"
@@ -101,6 +102,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            bash .github/scripts/wait-for-android-ready.sh
             adb shell getconf PAGE_SIZE || true
             ./gradlew --stacktrace :androidApp:connectedFullDebugAndroidTest -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore -Pandroid.testInstrumentationRunnerArguments.class=com.nuvio.android.MpvRxEngineSmokeTest
             adb logcat -d -s MpvRxEngineSmokeTest:I > mpvrx-logcat.txt || true
