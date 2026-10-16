@@ -905,6 +905,40 @@ fun MetaDetailsScreen(
                     }
                 }
 
+                // Avix (Yesnt10 port): optional background prefetch of the primary Play target.
+                // Same arguments as onPrimaryPlayClick (manual selection off), so the streams
+                // screen reuses this request when Play is tapped.
+                val streamPrefetchEnabled by remember {
+                    com.nuvio.app.features.streams.StreamPrefetchPreference.ensureLoaded()
+                    com.nuvio.app.features.streams.StreamPrefetchPreference.enabled
+                }.collectAsStateWithLifecycle()
+                val streamPrefetchTarget = if (streamPrefetchEnabled && !shufflePoolEmpty) {
+                    val playsEpisode = (meta.type == "series" || hasEpisodes) && seriesAction != null
+                    com.nuvio.app.features.streams.streamPrefetchTarget(
+                        metaType = meta.type,
+                        metaId = meta.id,
+                        isSeriesLike = playsEpisode,
+                        seriesVideoId = if (playsEpisode) seriesStreamVideoId ?: seriesAction?.videoId else null,
+                        seasonNumber = seriesAction?.seasonNumber,
+                        episodeNumber = seriesAction?.episodeNumber,
+                        canPlay = isPrimaryPlayEnabled,
+                    )
+                } else {
+                    null
+                }
+                LaunchedEffect(streamPrefetchTarget) {
+                    val target = streamPrefetchTarget ?: return@LaunchedEffect
+                    kotlinx.coroutines.delay(com.nuvio.app.features.streams.StreamPrefetchPreference.DELAY_MS)
+                    com.nuvio.app.features.streams.StreamsRepository.load(
+                        type = target.type,
+                        videoId = target.videoId,
+                        parentMetaId = target.parentMetaId,
+                        season = target.season,
+                        episode = target.episode,
+                        manualSelection = false,
+                    )
+                }
+
                 val activeResumePositionMs = if ((meta.type == "series" || hasEpisodes) && seriesAction != null) {
                     seriesAction.resumePositionMs
                 } else {

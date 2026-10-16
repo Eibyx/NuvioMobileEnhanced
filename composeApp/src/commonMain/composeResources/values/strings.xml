@@ -2901,4 +2901,6 @@
     <string name="settings_avix_hide_release_dates_description">Do not show the date under posters on Home and in catalogs.</string>
     <string name="settings_avix_hero_auto_scroll">Hero auto-scroll</string>
     <string name="settings_avix_hero_auto_scroll_description">Move to the next featured title automatically.</string>
+    <string name="settings_avix_stream_prefetch">Prepare streams in advance</string>
+    <string name="settings_avix_stream_prefetch_description">When a details page stays open, look up the streams for its Play button in the background so playback starts sooner. Sends requests to your addons for titles you may not play.</string>
 </resources>
