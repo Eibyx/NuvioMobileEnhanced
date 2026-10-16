@@ -85,3 +85,9 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - Trakt usa Authorization Code + PKCE S256 sin `client_secret` (documentación oficial de Trakt; el secreto está obsoleto para el inicio de sesión de usuarios). `TRAKT_CLIENT_SECRET` deja de leerse y no se incluye en la APK.
 - Simkl pasa a AUTH V2 (`/oauth2/*`, PKCE S256, refresh token, revocación).
 - Se mantienen los redirects registrados `avixnuvio://auth/{anilist,mal,simkl,trakt}`. No se usa un App Link HTTPS porque no hay dominio propio (no se inventa). Detalles: docs/OAUTH.md.
+
+## D-15 Release solo ARM64 con R8
+- La release publicada es una única APK `Nuvio-Eibyx-Release-arm64-v8a.apk` (split ABI de Gradle, `-Pavix.abis=arm64-v8a`), sin universal ni otras ABI. Las otras ABI siguen disponibles con `abis=all`.
+- R8 (minificación + reducción de recursos, `proguard-android-optimize.txt` + `composeApp/proguard-rules.pro`) sin cambios de reglas: el puente JNI de mpvRx (`is.xyz.mpv`) ya se conserva; `verify-release-apk.py` comprueba con el mapping de R8 que ningún método nativo exportado fue renombrado (los no usados que R8 elimina se informan).
+- Se mantiene `subfont.ttf` (fuente de reserva de libass para subtítulos ASS/SSA) y todas las traducciones.
+- La firma release solo se aplica si están las cuatro credenciales (`AVIX_RELEASE_*`); sin ellas la APK queda sin firmar y el workflow la rechaza. Nunca se firma con la clave de depuración.

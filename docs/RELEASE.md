@@ -1,4 +1,4 @@
-# Publicar e instalar Nuvio (Avix)
+# Publicar e instalar Nuvio Eibyx
 
 ## Versionado
 
@@ -19,14 +19,14 @@
 
 ## Publicar
 
-- **Manual:** Actions → *Android release* → *Run workflow* (marcado como pre-release por defecto).
-- **Por tag:** `git tag v0.5.10-avix.200001 && git push origin v0.5.10-avix.200001`.
+- **Por tag (forma habitual):** `git tag v0.5.10-avix.200001 && git push origin v0.5.10-avix.200001`.
+- **Manual:** Actions → *Release* → *Run workflow*. GitHub solo lo ofrece cuando el workflow existe en la rama por defecto del repositorio (`cmp-rewrite`); desde `integration/avix` se usa el tag.
 
-El workflow ejecuta los tests, compila las APK firmadas, **rechaza** cualquier APK firmada con certificado de depuración, genera `SHA256SUMS.txt` y crea la GitHub Release con:
+El workflow ejecuta los tests, compila con R8 (minificación de código y reducción de recursos), comprueba el paquete `com.eibyx.nuvio`, las ABI, que las bibliotecas nativas de reproducción (mpvRx/libmpv, FFmpeg, libass) están presentes con alineación de 16 KB y que R8 no renombró ningún enlace JNI (`.github/scripts/verify-release-apk.py`), **rechaza** APK sin firmar o firmadas con certificado de depuración, genera `SHA256SUMS.txt` y crea la GitHub Release.
 
-- `Nuvio-Eibyx-Release.apk` (universal)
-- `Nuvio-Eibyx-Release-arm64-v8a.apk`, `-armeabi-v7a`, `-x86`, `-x86_64`
-- `SHA256SUMS.txt`
+Por defecto publica **solo** `Nuvio-Eibyx-Release-arm64-v8a.apk` (+ `SHA256SUMS.txt`): casi todos los teléfonos actuales son ARM64 y la APK pesa un tercio de la universal. Con *Run workflow* y `abis` = `all` se publican la universal (`Nuvio-Eibyx-Release.apk`) y las de `armeabi-v7a`, `x86` y `x86_64`. En Gradle: `-Pavix.abis=arm64-v8a` (lista separada por comas); sin la propiedad se compilan todas las ABI + universal.
+
+`release-smoke.yml` compila la misma release con R8 para x86_64, la instala en un emulador API 35 con páginas de 16 KB y comprueba que arranca sin errores (no publica nada).
 
 No se publica una release como estable sin haber superado las pruebas de docs/TESTING.md en dispositivo.
 

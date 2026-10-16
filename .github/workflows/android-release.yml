@@ -1,6 +1,7 @@
 name: Release
 
-# Signed release APKs (per ABI + universal) published as a GitHub Release.
+# Signed release APK(s) published as a GitHub Release. By default only the arm64-v8a APK
+# (Nuvio-Eibyx-Release-arm64-v8a.apk); the "abis" input "all" builds every ABI + universal.
 # Run manually from the Actions tab, or push a tag named v<version>-avix.<n>.
 # Versions are semver prereleases (X.Y.Z-avix.N) so the in-app updater (Beta channel,
 # Eibyx/NuvioMobileEnhanced releases) offers them in order.
@@ -13,6 +14,10 @@ on:
         description: Mark the GitHub Release as a pre-release
         type: boolean
         default: true
+      abis:
+        description: 'ABIs to build: comma-separated (e.g. arm64-v8a) or "all" (every ABI + universal)'
+        type: string
+        default: arm64-v8a
   push:
     tags:
       - "v*-avix.*"
@@ -35,6 +40,8 @@ jobs:
       KEY_ALIAS: ${{ secrets.AVIX_RELEASE_KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.AVIX_RELEASE_KEY_PASSWORD }}
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      # Tag pushes have no inputs: they build the arm64-v8a APK only.
+      RELEASE_ABIS: ${{ inputs.abis || 'arm64-v8a' }}
       # Nuvio account backend (DECISIONS D-6). The URL is public; the publishable key is a secret
       # of this repository so it is not committed. Read by composeApp/build.gradle.kts.
       NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
@@ -153,13 +160,30 @@ jobs:
           -Pnuvio.ios.distribution=appstore
 
       - name: Build release APKs
-        run: >
-          ./gradlew --stacktrace
-          :androidApp:assembleFullRelease
-          -Pnuvio.android.distribution=full
-          -Pnuvio.ios.distribution=appstore
-          -Pavix.versionCode=${{ steps.version.outputs.code }}
-          -Pnuvio.app.versionName=${{ steps.version.outputs.name }}
+        shell: bash
+        run: |
+          abi_flag=()
+          if [ "${RELEASE_ABIS}" != "all" ]; then abi_flag=("-Pavix.abis=${RELEASE_ABIS}"); fi
+          echo "ABIs: ${RELEASE_ABIS}"
+          ./gradlew --stacktrace \
+            :androidApp:assembleFullRelease \
+            -Pnuvio.android.distribution=full \
+            -Pnuvio.ios.distribution=appstore \
+            -Pavix.versionCode=${{ steps.version.outputs.code }} \
+            -Pnuvio.app.versionName=${{ steps.version.outputs.name }} \
+            "${abi_flag[@]}"
+
+      - name: Verify package, ABIs and native libraries
+        shell: bash
+        run: |
+          build_tools="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)"
+          for apk in androidApp/build/outputs/apk/full/release/*.apk; do
+            echo "== $(basename "${apk}")"
+            "${build_tools}/aapt2" dump badging "${apk}" | grep -E "^package|application-label:|native-code"
+            "${build_tools}/aapt2" dump badging "${apk}" | grep -q "^package: name='com.eibyx.nuvio' " \
+              || { echo "::error::${apk}: package is not com.eibyx.nuvio"; exit 1; }
+            python3 .github/scripts/verify-release-apk.py "${apk}" "${RELEASE_ABIS}" androidApp/build/outputs/mapping/fullRelease/mapping.txt
+          done
 
       - name: Verify signatures and checksums
         id: files

@@ -103,7 +103,8 @@ Los workflows nunca imprimen los valores de los secretos. El workflow **Release*
 |---|---|---|
 | `ci.yml` | Push a `cmp-rewrite`, `integration/**`, `experiment/**`; PR; manual | Tests unitarios + `Nuvio-Eibyx-Debug.apk` como artefacto |
 | `mpvrx-tests.yml` | Cambios en el reproductor, manual | Pruebas instrumentadas del motor mpvRx en emulador (`MpvRxEngineSmokeTest`) |
-| `android-release.yml` | Manual o tag `v*-avix.*` | Tests + APKs release firmadas (`Nuvio-Eibyx-Release.apk` universal + por ABI) + `SHA256SUMS.txt` + GitHub Release |
+| `android-release.yml` | Tag `v*-avix.*` (o manual desde la rama por defecto) | Tests + APK release firmada con R8 (por defecto solo `Nuvio-Eibyx-Release-arm64-v8a.apk`; `abis=all` para todas + universal) + verificación de bibliotecas nativas/JNI + `SHA256SUMS.txt` + GitHub Release |
+| `release-smoke.yml` | Cambios en la configuración de release/R8 | Release R8 x86_64 instalada y arrancada en emulador API 35 (16 KB); no publica nada |
 | `upstream-watch.yml` | Lunes 06:17 UTC, manual | Propone PRs de sincronización con Luqman y el original hacia `integration/avix` (nunca los fusiona); informa de commits nuevos de Yesnt10 y de versiones nuevas de las bibliotecas multimedia |
 
 `versionCode` en CI: `100000 + número de ejecución` (debug) y `200000 + número de ejecución` (release). `versionName`: la versión de upstream integrada (`iosApp/Configuration/Version.xcconfig`); en release, `X.Y.Z-avix.<versionCode>` (ver [docs/RELEASE.md](docs/RELEASE.md)).

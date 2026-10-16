@@ -33,6 +33,11 @@ val releaseStorePassword = localProps.getProperty("NUVIO_RELEASE_STORE_PASSWORD"
 val releaseKeyAlias = localProps.getProperty("NUVIO_RELEASE_KEY_ALIAS")?.takeIf { it.isNotBlank() }
 val releaseKeyPassword = localProps.getProperty("NUVIO_RELEASE_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
 val releaseKeystore = releaseStoreFile?.let(rootProject::file)
+// Avix: only sign with the release key when all four credentials are present (CI writes them from
+// GitHub secrets). Otherwise the release APK is left unsigned (local analysis builds); it is never
+// signed with the debug key, and the release workflow rejects unsigned or debug-signed APKs.
+val releaseSigningReady =
+    releaseKeystore != null && releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
 fun envOrLocalProperty(key: String): String? =
     providers.environmentVariable(key).orNull?.trim()?.takeIf { it.isNotBlank() }
         ?: localProps.getProperty(key)?.trim()?.takeIf { it.isNotBlank() }
@@ -54,6 +59,15 @@ val requestedTaskNames = gradle.startParameter.taskNames.map { it.substringAfter
 val buildsReleaseApks = requestedTaskNames.any {
     it.startsWith("assemble", ignoreCase = true) && it.endsWith("Release", ignoreCase = true)
 }
+// Avix: -Pavix.abis=arm64-v8a (comma-separated) builds only those ABI splits and no universal APK,
+// so each release APK carries a single ABI's native libraries. Without it: every ABI + universal.
+val avixSupportedAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val avixRequestedAbis = providers.gradleProperty("avix.abis").orNull
+    ?.split(',')
+    ?.map(String::trim)
+    ?.filter(String::isNotEmpty)
+    ?.takeIf { it.isNotEmpty() }
+    ?.onEach { abi -> require(abi in avixSupportedAbis) { "avix.abis: unknown ABI '$abi' (use ${avixSupportedAbis.joinToString()})" } }
 
 
 // Avix: several AARs ship lib/<abi>/libc++_shared.so (ass-kt 0.5.1 with an older NDK, mpvlib 1.1.3
@@ -141,7 +155,7 @@ android {
 
     signingConfigs {
         create("release") {
-            if (releaseKeystore != null && releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null) {
+            if (releaseSigningReady) {
                 storeFile = releaseKeystore
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
@@ -205,8 +219,8 @@ android {
         abi {
             isEnable = buildsReleaseApks
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            include(*(avixRequestedAbis ?: avixSupportedAbis).toTypedArray())
+            isUniversalApk = avixRequestedAbis == null
         }
     }
 
@@ -221,7 +235,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "../composeApp/proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigningReady) signingConfigs.getByName("release") else null
             ndk {
                 debugSymbolLevel = "FULL"
             }
