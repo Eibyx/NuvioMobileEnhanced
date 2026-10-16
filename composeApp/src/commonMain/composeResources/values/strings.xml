@@ -2871,4 +2871,11 @@
     <string name="profile_insights_favorite_people_hint">Pinned people are shown first. Stored on this device only.</string>
     <string name="profile_insights_favorite_people_pin">Pin</string>
     <string name="profile_insights_favorite_people_unpin">Unpin</string>
+    <string name="detail_trailer_category_trailers">Trailers</string>
+    <string name="detail_trailer_category_teasers">Teasers</string>
+    <string name="detail_trailer_category_behind_the_scenes">Behind the Scenes</string>
+    <string name="detail_trailer_category_featurettes">Featurettes</string>
+    <string name="detail_trailer_category_clips">Clips</string>
+    <string name="detail_trailer_category_bloopers">Bloopers</string>
+    <string name="detail_trailer_category_opening_credits">Opening Credits</string>
 </resources>

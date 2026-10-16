@@ -21,6 +21,7 @@
 - Cambio de calidad (HLS): ya no vuelve a la posición inicial; conserva posición, velocidad, audio y subtítulo.
 - Fuente de subtítulos personalizada (.ttf/.otf) para subtítulos de texto con ambos motores; solo en el dispositivo (Ajustes de reproducción).
 - Exportar/importar los ajustes locales de Avix (Ajustes → Avanzado). No incluye ni modifica los ajustes de la cuenta de Nuvio.
+- «Detrás de cámaras»: los vídeos de la ficha se agrupan en chips por categoría (tráilers, teasers, detrás de cámaras, reportajes, clips…).
 - Personas favoritas: corazón en la ficha de cada persona y sección en Profile Insights (fijar, ver todo); por perfil y solo en el dispositivo.
 - Degradados de Avix (Messenger, Amethyst, Blossom, Lagoon, Sunset) en Ajustes → Apariencia; solo en el dispositivo, la cuenta conserva su tema.
 
