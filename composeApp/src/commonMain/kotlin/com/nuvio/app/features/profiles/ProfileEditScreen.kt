@@ -236,6 +236,23 @@ fun ProfileEditScreen(
                         },
                         placeholder = stringResource(Res.string.profile_custom_avatar_url_placeholder),
                     )
+                    // Avix (Yesnt10 port): fill the custom avatar URL from a GIPHY search.
+                    var showGifSearch by remember { mutableStateOf(false) }
+                    if (GifAvatarSearchSettings.isAvailable) {
+                        androidx.compose.material3.TextButton(onClick = { showGifSearch = true }) {
+                            Text(stringResource(Res.string.gif_avatar_search_open))
+                        }
+                    }
+                    if (showGifSearch) {
+                        GifAvatarSearchDialog(
+                            onDismiss = { showGifSearch = false },
+                            onSelected = { url ->
+                                avatarUrl = url
+                                selectedAvatarId = null
+                                showGifSearch = false
+                            },
+                        )
+                    }
                     if (avatarUrlIsInvalid) {
                         Text(
                             text = stringResource(Res.string.profile_avatar_url_invalid),

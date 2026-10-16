@@ -16,7 +16,7 @@ object SecretRedactor {
         // Authorization headers: "Authorization: Bearer xxx", "Authorization=[Bearer xxx]"
         Regex("""(?i)(authorization["']?\s*[:=]\s*\[?\s*["']?(?:bearer|basic)\s+)[^\s,\]"']+"""),
         // apikey header / query parameter
-        Regex("""(?i)(apikey["']?\s*[:=]\s*\[?\s*["']?)[^\s,\]"'&]+"""),
+        Regex("""(?i)(api[_-]?key["']?\s*[:=]\s*\[?\s*["']?)[^\s,\]"'&]+"""),
         // OAuth / session fields in JSON, query strings or form bodies
         Regex("""(?i)((?:access_token|refresh_token|id_token|provider_token|client_secret|password|code_verifier)["']?\s*[:=]\s*["']?)[^\s,&"'}\]]+"""),
         // Any remaining JWT (header.payload.signature)

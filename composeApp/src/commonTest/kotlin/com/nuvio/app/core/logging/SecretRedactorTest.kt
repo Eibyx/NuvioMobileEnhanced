@@ -35,6 +35,14 @@ class SecretRedactorTest {
     }
 
     @Test
+    fun apiKeyQueryParametersAreRedacted() {
+        val text = "GET https://api.giphy.com/v1/gifs/search?api_key=Gk9xSecretValue&q=cat"
+        val redacted = SecretRedactor.redact(text)
+        assertFalse(redacted.contains("Gk9xSecretValue"), redacted)
+        assertTrue(redacted.contains("q=cat"), redacted)
+    }
+
+    @Test
     fun plainTextIsUnchanged() {
         val text = "Email sign-in failed: Network (timeout after 15000 ms)"
         assertEquals(text, SecretRedactor.redact(text))
