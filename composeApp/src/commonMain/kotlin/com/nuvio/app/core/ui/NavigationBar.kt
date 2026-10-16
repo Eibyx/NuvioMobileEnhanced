@@ -262,7 +262,7 @@ private class NuvioNavigationBarScopeImpl(
                 Icon(
                     modifier = Modifier
                         .size(iconSize)
-                        .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
+                        .then(if (selected) Modifier.gradientMask(palette.rememberAccentBrush()) else Modifier),
                     imageVector = icon,
                     contentDescription = contentDescription,
                     tint = if (selected) Color.White else iconColor,
@@ -311,7 +311,7 @@ private class NuvioNavigationBarScopeImpl(
                 Icon(
                     modifier = Modifier
                         .size(iconSize)
-                        .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
+                        .then(if (selected) Modifier.gradientMask(palette.rememberAccentBrush()) else Modifier),
                     painter = painterResource(icon),
                     contentDescription = contentDescription,
                     tint = if (selected) Color.White else iconColor,
@@ -457,7 +457,7 @@ private class NuvioClassicNavigationBarScopeImpl(
                     )
                     .padding(NuvioTokens.Space.s10)
                     .size(tokens.components.navIconSize)
-                    .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
+                    .then(if (selected) Modifier.gradientMask(palette.rememberAccentBrush()) else Modifier),
                 imageVector = icon,
                 contentDescription = contentDescription,
                 tint = if (selected) Color.White else iconColor,
@@ -495,7 +495,7 @@ private class NuvioClassicNavigationBarScopeImpl(
                     )
                     .padding(NuvioTokens.Space.s10)
                     .size(tokens.components.navIconSize)
-                    .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
+                    .then(if (selected) Modifier.gradientMask(palette.rememberAccentBrush()) else Modifier),
                 painter = painterResource(icon),
                 contentDescription = contentDescription,
                 tint = if (selected) Color.White else iconColor,

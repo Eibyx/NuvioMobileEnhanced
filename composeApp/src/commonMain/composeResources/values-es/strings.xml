@@ -2525,4 +2525,8 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="mal_auth_expired">La solicitud de inicio de sesión caducó. Vuelve a conectar.</string>
     <string name="mal_auth_revoked">Tu conexión con MyAnimeList caducó o se revocó. Vuelve a conectar para reanudar el seguimiento.</string>
     <string name="mal_sign_in_failed">No se pudo completar el inicio de sesión en MyAnimeList. Inténtalo de nuevo.</string>
+    <string name="settings_avix_animated_accent">Acento animado</string>
+    <string name="settings_avix_animated_accent_description">Con temas en degradado, el acento de los botones y de la pestaña seleccionada fluye lentamente. Consume algo más de batería.</string>
+    <string name="settings_avix_hide_status_bar">Ocultar barra de estado</string>
+    <string name="settings_avix_hide_status_bar_description">Oculta la hora y los iconos de notificación en toda la app. Desliza desde arriba para verlos.</string>
 </resources>

@@ -115,6 +115,7 @@ open class MainActivity : AppCompatActivity() {
         ThemeSettingsStorage.initialize(applicationContext)
         com.nuvio.app.core.avix.AvixLocalStore.initialize(applicationContext)
         com.nuvio.app.core.avix.AvixSecretStore.initialize(applicationContext)
+        com.nuvio.app.core.ui.AvixSystemUiController.bind(this)
         AppIconPlatform.initialize(applicationContext)
         SentrySettingsStorage.initialize(applicationContext)
         SentryInitializer.start(application)

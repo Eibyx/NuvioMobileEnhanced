@@ -313,7 +313,7 @@ fun NuvioPrimaryButton(
     val tokens = MaterialTheme.nuvio
     val palette = MaterialTheme.themePalette
     val containerBrush = if (enabled) {
-        palette.accentBrush()
+        palette.rememberAccentBrush()
     } else {
         palette.accentBrush(alpha = tokens.opacity.disabled)
     }

@@ -118,6 +118,8 @@ internal fun LazyListScope.appearanceSettingsContent(
                 AvixThemeModeRow(isTablet = isTablet)
                 SettingsGroupDivider(isTablet = isTablet)
                 AvixGradientThemeRow(isTablet = isTablet)
+                SettingsGroupDivider(isTablet = isTablet)
+                AvixAppearanceExtraRows(isTablet = isTablet)
             }
         }
     }

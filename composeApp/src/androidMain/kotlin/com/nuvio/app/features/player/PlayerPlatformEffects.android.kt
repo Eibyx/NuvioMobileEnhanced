@@ -72,6 +72,8 @@ actual fun HidePlayerSystemBars() {
         onDispose {
             controller.show(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior = previousBehavior
+            // Avix: keep the app-wide "hide status bar" preference after leaving the player.
+            com.nuvio.app.core.ui.AvixSystemUiController.reapply()
         }
     }
 }
