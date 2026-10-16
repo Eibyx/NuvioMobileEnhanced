@@ -151,13 +151,13 @@ jobs:
         run: |
           mkdir -p dist
           apk=$(ls androidApp/build/outputs/apk/full/debug/*.apk | head -1)
-          cp "$apk" dist/Nuvio-Avix-Debug.apk
-          (cd dist && sha256sum Nuvio-Avix-Debug.apk | tee Nuvio-Avix-Debug.apk.sha256)
+          cp "$apk" dist/Nuvio-Eibyx-Debug.apk
+          (cd dist && sha256sum Nuvio-Eibyx-Debug.apk | tee Nuvio-Eibyx-Debug.apk.sha256)
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: Nuvio-Avix-Debug-${{ github.run_number }}${{ steps.backend.outputs.configured != 'true' && '-sin-cuenta' || '' }}
+          name: Nuvio-Eibyx-Debug-${{ github.run_number }}${{ steps.backend.outputs.configured != 'true' && '-sin-cuenta' || '' }}
           path: dist/
           if-no-files-found: error
           retention-days: 14

@@ -53,8 +53,8 @@ object AvixSettingsBackup {
     /** Parses and validates a backup; unknown or foreign keys are dropped. */
     fun decode(text: String): Map<String, String> {
         val file = runCatching { json.decodeFromString(AvixSettingsBackupFile.serializer(), text) }
-            .getOrElse { throw AvixBackupException("not a Nuvio Avix settings backup") }
-        if (file.format != AvixSettingsBackupFile.FORMAT) throw AvixBackupException("not a Nuvio Avix settings backup")
+            .getOrElse { throw AvixBackupException("not a Nuvio Eibyx (Avix) settings backup") }
+        if (file.format != AvixSettingsBackupFile.FORMAT) throw AvixBackupException("not a Nuvio Eibyx (Avix) settings backup")
         if (file.version > AvixSettingsBackupFile.VERSION) throw AvixBackupException("backup from a newer version")
         if (file.preferences.size > MAX_ENTRIES) throw AvixBackupException("backup too large")
         return file.preferences.filter { (key, value) -> isAllowedKey(key) && value.length <= maxValueLength(key) }

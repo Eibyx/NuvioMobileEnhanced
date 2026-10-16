@@ -36,7 +36,7 @@ Fallos heredados (pendientes de corregir; no se ocultan ni se desactivan):
 
 | Prueba | Resultado | Evidencia |
 |---|---|---|
-| CI run #2 (`a44828db`): APK debug | PASS (compila) | Artefacto `Nuvio-Avix-Debug-2` |
+| CI run #2 (`a44828db`): APK debug | PASS (compila) | Artefacto `Nuvio-Eibyx-Debug-2` |
 | `MpvRxEngineSmokeTest` API 34 / API 35 16 KB (`a44828db`) | **FAIL 7/7** | run 38819658331: `libmpv.so` no carga, la APK llevaba el `libc++_shared.so` antiguo de `ass-kt` |
 | Corrección local: `libc++_shared.so` de mpvlib en las 4 ABI + `verifyAvixCxxRuntimeFullDebug` | PASS | hashes idénticos; símbolo `__hash_memory` presente |
 | `MpvRxEngineSmokeTest` tras la corrección (`643b58c6`) | **PASS 7/7 en API 34 y 7/7 en API 35 (16 KB)** | run 38824203030; logcat: `mpv v0.41.0-dev-gc3ac7f395-dirty`, `ffmpeg n9.0.2`, `pageSize=16384` en API 35 |

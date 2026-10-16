@@ -70,3 +70,12 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - Con la lista de addons del servidor vacía, Avix ya no sube automáticamente los addons locales (`sync_push_addons`) ni los conserva: sigue al servidor, como Nuvio original desde 1854dfc3 («prevent automatic pulls from restoring deleted data»). La rama de migración la habían reintroducido merges de Luqman.
 - El estilo y la posición de la barra de navegación siguen siendo locales (decisión de Luqman, b8c793b9), sin sincronizar.
 
+
+## D-13 Identidad Nuvio Eibyx (`com.eibyx.nuvio`)
+- `applicationId` **`com.eibyx.nuvio`**, debug **`com.eibyx.nuvio.debug`** (antes `com.avix.nuvio` / `com.avix.nuvio.debug`, D-1). Nombre visible «Nuvio Eibyx» («Nuvio Eibyx Debug» en debug). Icono, logotipo, iconos adaptativos y splash sin cambios.
+- APK: `Nuvio-Eibyx-Debug.apk`, `Nuvio-Eibyx-Release.apk` (universal) y `Nuvio-Eibyx-Release-<abi>.apk` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`). Releases de GitHub tituladas «Nuvio Eibyx …».
+- No se renombran el `namespace` de Kotlin (`com.nuvio.app`), los paquetes, las clases `Avix*`, el formato de la copia de ajustes (`nuvio-avix-local-settings`), los tags `v*-avix.*` ni los alias del Keystore (`com.avix.nuvio.secrets.v1`, `com.avix.nuvio.mal.credentials.v1`). Los alias del Keystore son por app (UID), así que no chocan con la instalación anterior.
+- El esquema `avixnuvio://` y los redirects OAuth registrados (`avixnuvio://auth/{anilist,mal,simkl,trakt}`) **no cambian**: no dependen del paquete.
+- El `FileProvider` usa `${applicationId}.fileprovider` y el código `context.packageName`, así que se adaptan solos.
+- `versionCode` sigue siendo incremental (`100000 + número de ejecución` en CI, `-Pavix.versionCode` en release).
+- **Datos:** Android trata el nuevo paquete como otra app con su propio almacenamiento. No hay migración automática y no se borra nada de la instalación anterior (ver docs/RELEASE.md).

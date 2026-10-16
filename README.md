@@ -1,6 +1,6 @@
-# Nuvio (Avix)
+# Nuvio Eibyx
 
-Rama de integración **Nuvio Avix** de [Eibyx/NuvioMobileEnhanced](https://github.com/Eibyx/NuvioMobileEnhanced), fork de [NuvioMedia/NuvioMobile](https://github.com/NuvioMedia/NuvioMobile).
+Rama de integración **Nuvio Eibyx** (antes «Nuvio Avix») de [Eibyx/NuvioMobileEnhanced](https://github.com/Eibyx/NuvioMobileEnhanced), fork de [NuvioMedia/NuvioMobile](https://github.com/NuvioMedia/NuvioMobile).
 
 Es una aplicación Android (Kotlin Multiplatform + Compose Multiplatform) que parte de **Nuvio Mobile Enhanced (Luqman)**, conserva todas sus funciones, añade funciones exclusivas portadas a mano desde Yesnt10 y sustituye el libmpv del reproductor por el **motor de mpvRx** (`mpvlib`).
 
@@ -21,17 +21,19 @@ Hashes integrados y reglas de actualización: [docs/integration/UPSTREAMS.md](do
 
 | App | `applicationId` |
 |---|---|
-| **Nuvio (Avix)** | `com.avix.nuvio` (debug: `com.avix.nuvio.debug`) |
+| **Nuvio Eibyx** | `com.eibyx.nuvio` (debug: `com.eibyx.nuvio.debug`) |
 | Nuvio (original) | `com.nuvio.app` |
 | Nuvio Enhanced (Yesnt10) | `com.nuvio.enhanced` |
 | Nuvio Enhanced (Luqman) | `com.nuvio.media` (debug `com.nuviodebug.com`) |
 
-El nombre visible es **«Nuvio»** y se conservan el icono, el logotipo y el splash originales de Nuvio. Para no abrir otra app al volver de un inicio de sesión, Avix usa su propio esquema de enlaces: **`avixnuvio://`** (p. ej. `avixnuvio://auth/trakt`).
+El nombre visible es **«Nuvio Eibyx»** («Nuvio Eibyx Debug» en las compilaciones de depuración) y se conservan el icono, el logotipo y el splash originales de Nuvio. Para no abrir otra app al volver de un inicio de sesión, la app usa su propio esquema de enlaces: **`avixnuvio://`** (p. ej. `avixnuvio://auth/trakt`), que no cambia con el nuevo paquete.
+
+> **Cambio de paquete (D-13).** Hasta octubre de 2026 la app se llamaba «Nuvio» con el paquete `com.avix.nuvio`. Nuvio Eibyx (`com.eibyx.nuvio`) es para Android **otra app**: se instala al lado, no actualiza a la anterior y **no hereda sus datos locales**. Ver [docs/RELEASE.md](docs/RELEASE.md#cambio-de-paquete-comavixnuvio--comeibyxnuvio).
 
 ## Descargar la APK
 
-- **Debug (cada push a `integration/avix` y cada PR):** pestaña **Actions** → workflow **CI** → la ejecución más reciente en verde → **Artifacts** → `Nuvio-Avix-Debug-…`. El ZIP contiene `Nuvio-Avix-Debug.apk` y su SHA-256.
-- **Release firmada:** pestaña **Releases** (`Nuvio-Avix-Release.apk` universal + APK por ABI + `SHA256SUMS.txt`), cuando se configure la firma. Ver [docs/RELEASE.md](docs/RELEASE.md).
+- **Debug (cada push a `integration/avix` y cada PR):** pestaña **Actions** → workflow **CI** → la ejecución más reciente en verde → **Artifacts** → `Nuvio-Eibyx-Debug-…`. El ZIP contiene `Nuvio-Eibyx-Debug.apk` y su SHA-256.
+- **Release firmada:** pestaña **Releases** (`Nuvio-Eibyx-Release.apk` universal + APK por ABI + `SHA256SUMS.txt`), cuando se configure la firma. Ver [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Cuenta de Nuvio
 

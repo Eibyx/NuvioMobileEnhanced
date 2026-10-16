@@ -48,7 +48,7 @@ Avix **no reutiliza** las credenciales de aplicación de Nuvio ni de los forks:
 
 ### Cuenta de Nuvio (iniciar sesión)
 
-Sin `NUVIO_SUPABASE_ANON_KEY` la APK se compila igual, pero **no puede iniciar sesión** (correo ni enlace): la pantalla de inicio de sesión lo indica y el artefacto de CI se llama `Nuvio-Avix-Debug-N-sin-cuenta`. Origen de los valores:
+Sin `NUVIO_SUPABASE_ANON_KEY` la APK se compila igual, pero **no puede iniciar sesión** (correo ni enlace): la pantalla de inicio de sesión lo indica y el artefacto de CI se llama `Nuvio-Eibyx-Debug-N-sin-cuenta`. Origen de los valores:
 
 - `NUVIO_SUPABASE_URL`: `https://api.nuvio.tv` (público; ya figura en el código, `ServerDiscovery.kt`).
 - `NUVIO_SUPABASE_ANON_KEY`: la clave **publicable** que el propio servidor de Nuvio publica para clientes en su documento de descubrimiento `https://api.nuvio.tv/.well-known/nuvio` (campo `publishable_key`). Es una clave pública de cliente (rol `anon` de Supabase), no una clave privada. No se extrae de ninguna APK.
@@ -88,9 +88,9 @@ Los workflows nunca imprimen los valores de los secretos. El workflow **Release*
 
 | Workflow | Cuándo | Qué hace |
 |---|---|---|
-| `ci.yml` | Push a `cmp-rewrite`, `integration/**`, `experiment/**`; PR; manual | Tests unitarios + `Nuvio-Avix-Debug.apk` como artefacto |
+| `ci.yml` | Push a `cmp-rewrite`, `integration/**`, `experiment/**`; PR; manual | Tests unitarios + `Nuvio-Eibyx-Debug.apk` como artefacto |
 | `mpvrx-tests.yml` | Cambios en el reproductor, manual | Pruebas instrumentadas del motor mpvRx en emulador (`MpvRxEngineSmokeTest`) |
-| `android-release.yml` | Manual o tag `v*-avix.*` | Tests + APKs release firmadas (`Nuvio-Avix-Release.apk` universal + por ABI) + `SHA256SUMS.txt` + GitHub Release |
+| `android-release.yml` | Manual o tag `v*-avix.*` | Tests + APKs release firmadas (`Nuvio-Eibyx-Release.apk` universal + por ABI) + `SHA256SUMS.txt` + GitHub Release |
 | `upstream-watch.yml` | Lunes 06:17 UTC, manual | Propone PRs de sincronización con Luqman y el original hacia `integration/avix` (nunca los fusiona); informa de commits nuevos de Yesnt10 y de versiones nuevas de las bibliotecas multimedia |
 
 `versionCode` en CI: `100000 + número de ejecución` (debug) y `200000 + número de ejecución` (release). `versionName`: la versión de upstream integrada (`iosApp/Configuration/Version.xcconfig`); en release, `X.Y.Z-avix.<versionCode>` (ver [docs/RELEASE.md](docs/RELEASE.md)).

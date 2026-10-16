@@ -151,7 +151,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.avix.nuvio"
+        applicationId = "com.eibyx.nuvio"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = releaseAppVersionCode
@@ -237,7 +237,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
-        variant.applicationId.set("com.avix.nuvio.debug")
+        variant.applicationId.set("com.eibyx.nuvio.debug")
     }
 }
 

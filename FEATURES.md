@@ -8,13 +8,13 @@ Lo heredado de Luqman/original aparece como **COMPILADA**: su código está y co
 
 | Característica | Estado | Archivos | Pruebas / limitaciones |
 |---|---|---|---|
-| `applicationId` `com.avix.nuvio` / `com.avix.nuvio.debug` | COMPILADA | `androidApp/build.gradle.kts` | Instalación conjunta pendiente en dispositivo |
+| `applicationId` `com.eibyx.nuvio` / `com.eibyx.nuvio.debug` (antes `com.avix.nuvio`, D-13) | COMPILADA | `androidApp/build.gradle.kts` | Instalación conjunta pendiente en dispositivo |
 | Nombre «Nuvio», icono/logo/splash originales | COMPILADA | `res/values/strings.xml` | Sin recursos nuevos (ver nota de marca en README) |
 | Esquema `avixnuvio://` (deep links, OAuth, Infuse) | COMPILADA | `core/deeplink/AppScheme.kt`, `AndroidManifest.xml` | `AppUrlBridgeTest`, `InfusePlaybackTest` PASS. OAuth requiere apps propias registradas |
 | AniList/WeTrakr `CLIENT_ID` configurable | COMPILADA | `AniListConfig.kt`, `WeTrakrConfig.kt` | Sin cliente propio → no disponible |
 | Actualizador → `Eibyx/NuvioMobileEnhanced` | COMPILADA | `AppUpdaterRepository.kt` | Aún no hay releases publicadas |
 | Ajustes exclusivos solo locales (D-5) | COMPILADA | `core/avix/AvixLocalStore*`, `PlayerSettingsStorage.*` | Prueba cruzada con Nuvio original: NOT RUN |
-| CI (tests + `Nuvio-Avix-Debug.apk`) | COMPILADA | `.github/workflows/ci.yml` | «Unit tests» (1781 tests, 0 fallos), «Debug APK» y «mpvRx engine tests» en verde en el mismo commit (`e35e81d5`, CI #24, mpvRx #15) |
+| CI (tests + `Nuvio-Eibyx-Debug.apk`) | COMPILADA | `.github/workflows/ci.yml` | «Unit tests» (1781 tests, 0 fallos), «Debug APK» y «mpvRx engine tests» en verde en el mismo commit (`e35e81d5`, CI #24, mpvRx #15) |
 | Pruebas del motor en emulador | COMPILADA | `mpvrx-tests.yml`, `MpvRxEngineSmokeTest.kt` | PASS en emulador de CI (ejecuciones #5–#9); dispositivo real NOT RUN |
 | Release firmada + SHA-256 | IMPLEMENTADA | `android-release.yml` | Requiere secretos `AVIX_RELEASE_*` |
 | Vigilancia de upstreams y bibliotecas | IMPLEMENTADA | `upstream-watch.yml`, `.github/upstreams.json` | Programado solo desde la rama por defecto |

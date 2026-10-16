@@ -1,6 +1,10 @@
-# Changelog de Nuvio (Avix)
+# Changelog de Nuvio Eibyx
 
 ## Sin publicar — `integration/avix`
+
+### Nuvio Eibyx
+- Nuevo paquete `com.eibyx.nuvio` (debug `com.eibyx.nuvio.debug`) y nombre visible «Nuvio Eibyx». Se instala junto a la versión anterior (`com.avix.nuvio`) y no hereda sus datos locales: hay que iniciar sesión y reconectar los servicios (docs/RELEASE.md, D-13). Iconos sin cambios; redirects `avixnuvio://` sin cambios.
+- APK: `Nuvio-Eibyx-Debug.apk`, `Nuvio-Eibyx-Release.apk` y `Nuvio-Eibyx-Release-<abi>.apk`.
 
 ### Fase 1–3 — Repositorio, base Luqman e identidad Avix
 - Estado inicial de Eibyx/NuvioMobileEnhanced: `cmp-rewrite` = `808272dc` (= NuvioMedia/NuvioMobile).

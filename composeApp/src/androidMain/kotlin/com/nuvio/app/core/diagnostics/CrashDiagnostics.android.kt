@@ -76,7 +76,7 @@ actual object CrashDiagnostics {
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z", Locale.US).format(Date(timestamp))
         val details = sanitizeCrashText(
             buildString {
-                appendLine("Nuvio Avix local crash report")
+                appendLine("Nuvio Eibyx local crash report")
                 appendLine("Time: $time")
                 appendLine("Package: ${context.packageName}")
                 appendLine("Version: ${AppVersionConfig.VERSION_NAME} (${AppVersionConfig.VERSION_CODE})")

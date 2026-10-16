@@ -149,7 +149,7 @@ jobs:
               echo "::error::${apk} is signed with a debug certificate"; exit 1
             fi
             variant=$(basename "${apk}" | sed -E 's/^androidApp-full-//; s/-release(-unsigned)?\.apk$//')
-            if [ "${variant}" = "universal" ]; then name="Nuvio-Avix-Release.apk"; else name="Nuvio-Avix-Release-${variant}.apk"; fi
+            if [ "${variant}" = "universal" ]; then name="Nuvio-Eibyx-Release.apk"; else name="Nuvio-Eibyx-Release-${variant}.apk"; fi
             cp "${apk}" "dist/${name}"
           done
           (cd dist && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
@@ -157,7 +157,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: Nuvio-Avix-Release-${{ steps.version.outputs.code }}
+          name: Nuvio-Eibyx-Release-${{ steps.version.outputs.code }}
           path: dist/
           retention-days: 30
 
@@ -172,6 +172,6 @@ jobs:
           fi
           gh release create "${{ steps.version.outputs.tag }}" dist/* \
             --target "${GITHUB_SHA}" \
-            --title "Nuvio Avix ${{ steps.version.outputs.base }} (${{ steps.version.outputs.code }})" \
+            --title "Nuvio Eibyx ${{ steps.version.outputs.base }} (${{ steps.version.outputs.code }})" \
             --notes-file CHANGELOG.md \
             ${prerelease_flag}

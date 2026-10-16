@@ -49,7 +49,7 @@ object AiAssistantService {
                     put("Authorization", "Bearer $apiKey")
                     if (provider == AiProvider.OPENROUTER) {
                         put("HTTP-Referer", "https://github.com/Eibyx/NuvioMobileEnhanced")
-                        put("X-Title", "Nuvio Avix")
+                        put("X-Title", "Nuvio Eibyx")
                     }
                 },
                 body = buildOpenAiChatBody(model, prompt, history).toString(),

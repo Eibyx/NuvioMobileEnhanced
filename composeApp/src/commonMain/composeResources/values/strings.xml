@@ -2835,7 +2835,7 @@
     <string name="settings_appearance_theme_mode_system">System</string>
     <string name="settings_appearance_theme_mode_dark">Dark</string>
     <string name="settings_appearance_theme_mode_light">Light</string>
-    <string name="auth_error_not_configured">This build of Nuvio Avix has no connection to the Nuvio account server configured (NUVIO_SUPABASE_URL / NUVIO_SUPABASE_ANON_KEY were missing when it was built). Install an APK built with the configuration, or continue without an account.</string>
+    <string name="auth_error_not_configured">This build of Nuvio Eibyx has no connection to the Nuvio account server configured (NUVIO_SUPABASE_URL / NUVIO_SUPABASE_ANON_KEY were missing when it was built). Install an APK built with the configuration, or continue without an account.</string>
     <string name="auth_error_network">Couldn\'t reach the Nuvio server. Check your internet connection and try again.</string>
     <string name="auth_error_invalid_credentials">Incorrect email or password.</string>
     <string name="auth_error_email_not_confirmed">Confirm your email address before signing in.</string>
@@ -2853,14 +2853,14 @@
     <string name="settings_avix_subtitle_font_reset">Use the default subtitle font</string>
     <string name="settings_avix_subtitle_font_error_too_large">The font file is too large (maximum 30 MB).</string>
     <string name="settings_avix_subtitle_font_error_invalid">That file is not a valid TrueType/OpenType font.</string>
-    <string name="settings_avix_backup_section">Nuvio Avix settings on this device</string>
+    <string name="settings_avix_backup_section">Nuvio Eibyx settings on this device</string>
     <string name="settings_avix_backup_export">Export Avix settings</string>
     <string name="settings_avix_backup_import">Import Avix settings</string>
     <string name="settings_avix_backup_description">Saves or restores appearance, player engine, end time, remembered choices, subtitle font and favorite people. Your Nuvio account settings are not included or changed.</string>
     <string name="settings_avix_backup_exported">Settings exported.</string>
     <string name="settings_avix_backup_export_failed">Could not save the file.</string>
     <string name="settings_avix_backup_imported">%1$d settings restored.</string>
-    <string name="settings_avix_backup_import_failed">That file is not a valid Nuvio Avix settings backup.</string>
+    <string name="settings_avix_backup_import_failed">That file is not a valid Nuvio Eibyx settings backup.</string>
     <string name="settings_avix_gradient_theme">Avix gradients</string>
     <string name="settings_avix_gradient_theme_description">Replaces the colours of the theme above on this device only. Your Nuvio account keeps its theme.</string>
     <string name="settings_avix_gradient_theme_none">None</string>
