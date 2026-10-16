@@ -252,6 +252,8 @@ open class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingAppIntent(intent: Intent?) {
+        // Avix (Yesnt10 port): M3U playlists, direct video links and magnet links.
+        if (intent != null && com.nuvio.app.features.livetv.handleSharedSourceIntent(intent, contentResolver)) return
         val appUrl = intent?.dataString?.trim().orEmpty()
         if (appUrl.isBlank()) return
         handleAppUrl(appUrl)

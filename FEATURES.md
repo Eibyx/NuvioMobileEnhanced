@@ -87,3 +87,5 @@ Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha prob
 | Opciones del destacado (estilo, datos, valoración, sinopsis, póster) | COMPILADA | `AvixHomeLayoutPreferences.kt`, `HomeHeroSection.kt` | `AvixHomeLayoutPreferencesTest` PASS |
 | Deslizar para recargar Inicio (opcional) | COMPILADA | `AvixHomePullToRefresh.kt` | Dispositivo NOT RUN |
 | Filtro Vistos / No vistos en catálogos de biblioteca | COMPILADA | `CatalogWatchedFilter.kt` | `CatalogWatchedFilterTest` PASS |
+| Abrir/compartir M3U, vídeo y magnet | COMPILADA | `IncomingSharedSource*.kt`, `SharedSourceIntents.android.kt`, manifest | `IncomingSharedSourceTest` PASS; dispositivo NOT RUN |
+| Recuento de temporadas y episodios | COMPILADA | `MetaSeriesStats.kt` | `MetaSeriesStatsTest` PASS |

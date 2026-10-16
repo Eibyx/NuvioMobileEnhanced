@@ -2951,4 +2951,13 @@
     <string name="catalog_filter_all">All (%1$d)</string>
     <string name="catalog_filter_watched">Watched (%1$d)</string>
     <string name="catalog_filter_unwatched">Unwatched (%1$d)</string>
+    <string name="shared_source_add_playlist_title">Add to Live TV?</string>
+    <string name="shared_source_add_playlist_message">Add the playlist “%1$s” to Live TV?</string>
+    <string name="shared_source_add">Add</string>
+    <string name="shared_source_cancel">Cancel</string>
+    <string name="shared_source_p2p_disabled">Turn on P2P playback in Settings to open magnet links.</string>
+    <plurals name="details_episode_count">
+        <item quantity="one">%1$d Episode</item>
+        <item quantity="other">%1$d Episodes</item>
+    </plurals>
 </resources>

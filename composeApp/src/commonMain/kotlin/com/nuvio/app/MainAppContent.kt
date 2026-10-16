@@ -1464,6 +1464,49 @@ internal fun MainAppContent(
             }
         }
 
+        // Avix (Yesnt10 port): M3U playlists, video links and magnet links opened from other apps.
+        com.nuvio.app.features.livetv.IncomingSharedSourceHandler(
+            onPlayDirect = { url, title ->
+                val launchId = PlayerLaunchStore.put(
+                    PlayerLaunch(
+                        profileId = activePlaybackProfileId,
+                        title = title,
+                        sourceUrl = url,
+                        streamTitle = title,
+                        providerName = "Shared",
+                        providerAddonId = "shared-stream",
+                        contentType = "shared-stream",
+                        videoId = "shared:$url",
+                        parentMetaId = "shared:$url",
+                        parentMetaType = "shared-stream",
+                    ),
+                )
+                navController.navigate(PlayerRoute(launchId = launchId))
+            },
+            onPlayMagnet = { magnet ->
+                val title = magnet.name ?: "Magnet"
+                val launchId = PlayerLaunchStore.put(
+                    PlayerLaunch(
+                        profileId = activePlaybackProfileId,
+                        title = title,
+                        sourceUrl = "torrent://${magnet.infoHash}",
+                        streamTitle = title,
+                        streamSubtitle = magnet.infoHash,
+                        providerName = "Magnet",
+                        providerAddonId = "shared-magnet",
+                        contentType = "shared-stream",
+                        videoId = magnet.infoHash,
+                        parentMetaId = magnet.infoHash,
+                        parentMetaType = "shared-stream",
+                        torrentInfoHash = magnet.infoHash,
+                        torrentTrackers = magnet.trackers,
+                    ),
+                )
+                navController.navigate(PlayerRoute(launchId = launchId))
+            },
+            onOpenLiveTv = { handleRootTabClick(AppScreenTab.LiveTv) },
+        )
+
         AppUpdaterHost(
             controller = appUpdaterController,
             modifier = Modifier.fillMaxSize(),

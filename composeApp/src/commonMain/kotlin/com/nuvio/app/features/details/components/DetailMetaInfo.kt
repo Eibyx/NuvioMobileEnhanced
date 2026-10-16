@@ -26,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.nuvio.app.features.details.mainSeriesStats
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -87,6 +88,7 @@ fun DetailMetaInfo(
         val validImdbRating = meta.imdbRating
             ?.takeIf { showOverallRatings && !isMdbListActive }
             ?.takeIf { raw -> raw.toDoubleOrNull()?.let { it > 0.0 } == true }
+        val seriesStats = remember(meta.videos) { meta.mainSeriesStats() }
         val hasMetaRow = releaseLine != null ||
             runtimeText != null ||
             ageBadge != null ||
@@ -136,6 +138,14 @@ fun DetailMetaInfo(
                     }
                 }
             }
+        }
+        seriesStats?.let { stats ->
+            Text(
+                text = seriesStatsLabel(stats),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium,
+            )
         }
 
         AnimatedVisibility(
@@ -407,3 +417,18 @@ private fun formatOneDecimal(value: Double): String {
 private fun formatWhole(value: Double): String = value.roundToInt().toString()
 
 private fun formatPercent(value: Double): String = "${value.roundToInt()}%"
+
+@Composable
+internal fun seriesStatsLabel(stats: com.nuvio.app.features.details.MetaSeriesStats): String {
+    val seasons = org.jetbrains.compose.resources.pluralStringResource(
+        nuvio.composeapp.generated.resources.Res.plurals.details_season_count,
+        stats.seasonCount,
+        stats.seasonCount,
+    )
+    val episodes = org.jetbrains.compose.resources.pluralStringResource(
+        nuvio.composeapp.generated.resources.Res.plurals.details_episode_count,
+        stats.episodeCount,
+        stats.episodeCount,
+    )
+    return "$seasons · $episodes"
+}

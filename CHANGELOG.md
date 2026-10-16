@@ -35,6 +35,8 @@
 - Destacado de Inicio: estilos Cinematográfico / Equilibrado / Detallado, datos compactos, mostrar u ocultar valoración y sinopsis, y arte de póster (Ajustes → Inicio → Diseño).
 - Deslizar para recargar Inicio con vibración (opcional).
 - Catálogos de biblioteca: filtros Todos / Vistos / No vistos con recuento.
+- Abrir o compartir con Nuvio listas M3U (se añaden a TV en directo tras confirmar), enlaces de vídeo y enlaces magnet (con P2P activado).
+- Fichas de series: «N temporadas · M episodios».
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

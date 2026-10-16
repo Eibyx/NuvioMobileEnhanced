@@ -60,7 +60,7 @@ import com.nuvio.app.features.details.formatRuntimeForDisplay
 import com.nuvio.app.features.player.MiniPlayerController
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.detail_logo_content_description
-import nuvio.composeapp.generated.resources.details_season_count
+import com.nuvio.app.features.details.mainSeriesStats
 import nuvio.composeapp.generated.resources.details_director
 import nuvio.composeapp.generated.resources.details_writer
 import org.jetbrains.compose.resources.pluralStringResource
@@ -389,12 +389,10 @@ fun TabletDetailHero(
 @Composable
 private fun TabletHeroMetaRow(meta: MetaDetails, showImdbRating: Boolean) {
     val colorScheme = MaterialTheme.colorScheme
-    val seasonCount = remember(meta.videos) {
-        meta.videos.mapNotNull { it.season }.filter { it > 0 }.toSet().size
-    }
+    val seriesStats = remember(meta.videos) { meta.mainSeriesStats() }
     val metaItems = buildList {
         meta.releaseInfo?.let(::extractReleaseYearForDisplay)?.let { add(it.toString()) }
-        if (seasonCount > 0) add(pluralStringResource(Res.plurals.details_season_count, seasonCount, seasonCount))
+        seriesStats?.let { add(seriesStatsLabel(it)) }
         formatRuntimeForDisplay(meta.runtime)?.let(::add)
     }
     val validImdbRating = meta.imdbRating

@@ -2495,4 +2495,17 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="catalog_filter_all">Todos (%1$d)</string>
     <string name="catalog_filter_watched">Vistos (%1$d)</string>
     <string name="catalog_filter_unwatched">No vistos (%1$d)</string>
+    <string name="shared_source_add_playlist_title">¿Añadir a TV en directo?</string>
+    <string name="shared_source_add_playlist_message">¿Añadir la lista «%1$s» a TV en directo?</string>
+    <string name="shared_source_add">Añadir</string>
+    <string name="shared_source_cancel">Cancelar</string>
+    <string name="shared_source_p2p_disabled">Activa la reproducción P2P en Ajustes para abrir enlaces magnet.</string>
+    <plurals name="details_episode_count">
+        <item quantity="one">%1$d episodio</item>
+        <item quantity="other">%1$d episodios</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d temporada</item>
+        <item quantity="other">%1$d temporadas</item>
+    </plurals>
 </resources>
