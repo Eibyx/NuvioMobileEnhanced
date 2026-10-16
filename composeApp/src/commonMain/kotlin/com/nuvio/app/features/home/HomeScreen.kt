@@ -158,6 +158,8 @@ fun HomeScreen(
     val collections by CollectionRepository.collections.collectAsStateWithLifecycle()
     val continueWatchingPreferences by ContinueWatchingPreferencesRepository.uiState.collectAsStateWithLifecycle()
     val watchedUiState by WatchedRepository.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { AvixHomeLayoutPreferences.ensureLoaded() }
+    val avixHomeLayout by AvixHomeLayoutPreferences.layout.collectAsStateWithLifecycle()
     val fullyWatchedSeriesKeys by WatchedRepository.fullyWatchedSeriesKeys.collectAsStateWithLifecycle()
     val watchProgressUiState by WatchProgressRepository.uiState.collectAsStateWithLifecycle()
     val effectiveWatchProgressSource = watchProgressUiState.source
@@ -1041,6 +1043,7 @@ fun HomeScreen(
                                 trailerStartUnmuted = homeSettingsUiState.heroTrailerStartUnmuted,
                                 onItemClick = onPosterClick,
                                 onActiveArtworkChange = onActiveHeroArtworkChange,
+                                autoScrollEnabled = avixHomeLayout.heroAutoScroll,
                             )
 
                             else -> HomeHeroReservedSpace(
@@ -1200,12 +1203,14 @@ fun HomeScreen(
                                 val section = sectionsMap[settingsItem.key]
                                 if (section != null && section.items.isNotEmpty()) {
                                     item(key = keyedSettingsItem.lazyKey) {
+                                        val shelfPreviewLimit = homeShelfPreviewLimit(HOME_CATALOG_PREVIEW_LIMIT, avixHomeLayout.shelfRows)
                                         HomeCatalogRowSection(
                                             section = section,
-                                            entries = section.items.take(HOME_CATALOG_PREVIEW_LIMIT),
+                                            entries = section.items.take(shelfPreviewLimit),
                                             modifier = Modifier.padding(bottom = 12.dp),
                                             sectionPadding = homeSectionPadding,
-                                            onViewAllClick = if (section.canOpenCatalog(HOME_CATALOG_PREVIEW_LIMIT)) {
+                                            rowCount = avixHomeLayout.shelfRows,
+                                            onViewAllClick = if (section.canOpenCatalog(shelfPreviewLimit)) {
                                                 onCatalogClick?.let { { it(section) } }
                                             } else {
                                                 null

@@ -25,6 +25,7 @@ fun HomeCatalogRowSection(
     onViewAllClick: (() -> Unit)? = null,
     onPosterClick: ((MetaPreview) -> Unit)? = null,
     onPosterLongClick: ((MetaPreview) -> Unit)? = null,
+    rowCount: Int = 1,
 ) {
     if (sectionPadding != null) {
         HomeCatalogRowSectionContent(
@@ -37,6 +38,7 @@ fun HomeCatalogRowSection(
             onViewAllClick = onViewAllClick,
             onPosterClick = onPosterClick,
             onPosterLongClick = onPosterLongClick,
+            rowCount = rowCount,
         )
     } else {
         BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -50,6 +52,7 @@ fun HomeCatalogRowSection(
                 onViewAllClick = onViewAllClick,
                 onPosterClick = onPosterClick,
                 onPosterLongClick = onPosterLongClick,
+                rowCount = rowCount,
             )
         }
     }
@@ -66,6 +69,7 @@ private fun HomeCatalogRowSectionContent(
     onViewAllClick: (() -> Unit)?,
     onPosterClick: ((MetaPreview) -> Unit)?,
     onPosterLongClick: ((MetaPreview) -> Unit)?,
+    rowCount: Int,
 ) {
     val posterCardStyle = rememberPosterCardStyleUiState()
 
@@ -78,6 +82,7 @@ private fun HomeCatalogRowSectionContent(
         onViewAllClick = onViewAllClick,
         viewAllPillSize = NuvioViewAllPillSize.Compact,
         key = { item -> item.stableKey() },
+        rowCount = rowCount,
     ) { item ->
         HomePosterCard(
             item = item,

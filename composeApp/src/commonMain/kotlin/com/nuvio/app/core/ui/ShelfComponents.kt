@@ -74,11 +74,31 @@ fun <T> NuvioShelfSection(
     key: ((T) -> Any)? = null,
     animatePlacement: Boolean = false,
     state: LazyListState = rememberLazyListState(),
+    rowCount: Int = 1,
     itemContent: @Composable (T) -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
     ScreenActivityEffect(state) { active ->
         if (!active) state.stopScroll()
+    }
+    if (rowCount > 1) {
+        // Avix (Yesnt10 port): several poster rows scrolling together, filled column by column.
+        NuvioMultiRowShelfSection(
+            title = title,
+            entries = entries,
+            rowCount = rowCount.coerceAtMost(4),
+            modifier = modifier,
+            headerHorizontalPadding = headerHorizontalPadding,
+            rowContentPadding = rowContentPadding,
+            rowModifier = rowModifier,
+            itemSpacing = itemSpacing,
+            onViewAllClick = onViewAllClick,
+            viewAllPillSize = viewAllPillSize,
+            key = key,
+            state = state,
+            itemContent = itemContent,
+        )
+        return
     }
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -269,6 +289,59 @@ fun NuvioPosterCard(
             }
         } else {
             Box(modifier = Modifier.height(NuvioTokens.Space.none))
+        }
+    }
+}
+
+@Composable
+private fun <T> NuvioMultiRowShelfSection(
+    title: String,
+    entries: List<T>,
+    rowCount: Int,
+    modifier: Modifier,
+    headerHorizontalPadding: Dp,
+    rowContentPadding: PaddingValues,
+    rowModifier: Modifier,
+    itemSpacing: Dp,
+    onViewAllClick: (() -> Unit)?,
+    viewAllPillSize: NuvioViewAllPillSize,
+    key: ((T) -> Any)?,
+    state: LazyListState,
+    itemContent: @Composable (T) -> Unit,
+) {
+    val tokens = MaterialTheme.nuvio
+    val columns = remember(entries, rowCount, key) {
+        if (key != null) {
+            entries.withDuplicateSafeLazyKeys(key).chunked(rowCount).map { column ->
+                column.joinToString("|") { it.lazyKey.toString() } to column.map { it.value }
+            }
+        } else {
+            entries.chunked(rowCount).mapIndexed { index, column -> index.toString() to column }
+        }
+    }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(tokens.spacing.controlGap + NuvioTokens.Space.s2),
+    ) {
+        if (title.isNotBlank()) {
+            NuvioShelfSectionHeader(
+                title = title,
+                modifier = Modifier.padding(horizontal = headerHorizontalPadding),
+                onViewAllClick = onViewAllClick,
+                viewAllPillSize = viewAllPillSize,
+            )
+        }
+        LazyRow(
+            modifier = rowModifier,
+            state = state,
+            contentPadding = rowContentPadding,
+            horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+        ) {
+            items(items = columns, key = { column -> column.first }) { column ->
+                Column(verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
+                    column.second.forEach { entry -> itemContent(entry) }
+                }
+            }
         }
     }
 }

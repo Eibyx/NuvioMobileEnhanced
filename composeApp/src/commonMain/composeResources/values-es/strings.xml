@@ -2435,4 +2435,14 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="player_status_network_offline">Sin conexión</string>
     <string name="settings_avix_status_overlay">Barra de estado en el reproductor</string>
     <string name="settings_avix_status_overlay_description">Con los controles ocultos, muestra la hora, la batería, la red y la hora de fin en la parte superior del reproductor.</string>
+    <string name="settings_avix_home_layout_section">Diseño (este dispositivo)</string>
+    <string name="settings_avix_shelf_rows">Filas por catálogo</string>
+    <string name="settings_avix_shelf_rows_description">Número de filas de pósteres en cada catálogo de Inicio.</string>
+    <string name="settings_avix_catalog_columns">Columnas del catálogo</string>
+    <string name="settings_avix_catalog_columns_description">Columnas en las cuadrículas de «Ver todo». Automático se adapta al ancho de la pantalla.</string>
+    <string name="settings_avix_catalog_columns_auto">Automático</string>
+    <string name="settings_avix_hide_release_dates">Ocultar fechas de estreno</string>
+    <string name="settings_avix_hide_release_dates_description">No mostrar la fecha bajo los pósteres en Inicio y en los catálogos.</string>
+    <string name="settings_avix_hero_auto_scroll">Desplazamiento automático del destacado</string>
+    <string name="settings_avix_hero_auto_scroll_description">Pasar solo al siguiente título destacado.</string>
 </resources>

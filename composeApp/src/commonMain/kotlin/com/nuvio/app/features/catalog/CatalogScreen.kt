@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -165,7 +166,13 @@ fun CatalogScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        val columns = remember(maxWidth) { catalogGridColumnsForWidth(maxWidth) }
+        val avixHomeLayout by com.nuvio.app.features.home.AvixHomeLayoutPreferences.layout.collectAsState()
+        val columns = remember(maxWidth, avixHomeLayout.catalogColumns) {
+            com.nuvio.app.features.home.resolveCatalogColumns(
+                preferred = avixHomeLayout.catalogColumns,
+                automatic = catalogGridColumnsForWidth(maxWidth),
+            )
+        }
 
         Box(modifier = Modifier.fillMaxSize()) {
             LazyVerticalGrid(

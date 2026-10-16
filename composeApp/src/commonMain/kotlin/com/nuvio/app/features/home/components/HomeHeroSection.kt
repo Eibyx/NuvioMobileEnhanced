@@ -203,6 +203,7 @@ internal fun HomeHeroSection(
     trailerStartUnmuted: Boolean = false,
     onItemClick: ((MetaPreview) -> Unit)? = null,
     onActiveArtworkChange: ((String?) -> Unit)? = null,
+    autoScrollEnabled: Boolean = true,
 ) {
     if (items.isEmpty()) return
 
@@ -234,8 +235,8 @@ internal fun HomeHeroSection(
         }
     }
 
-    ScreenActivityEffect(autoScrollPage, items.size, effectiveTrailerPlaybackEnabled) { active ->
-        if (!active || items.size <= 1 || effectiveTrailerPlaybackEnabled) return@ScreenActivityEffect
+    ScreenActivityEffect(autoScrollPage, items.size, effectiveTrailerPlaybackEnabled, autoScrollEnabled) { active ->
+        if (!active || !autoScrollEnabled || items.size <= 1 || effectiveTrailerPlaybackEnabled) return@ScreenActivityEffect
         delay(HERO_AUTO_SCROLL_INTERVAL_MS)
         while (pagerState.isScrollInProgress) {
             delay(100L)

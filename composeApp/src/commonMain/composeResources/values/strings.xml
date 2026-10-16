@@ -2891,4 +2891,14 @@
     <string name="player_status_network_offline">Offline</string>
     <string name="settings_avix_status_overlay">Status bar in the player</string>
     <string name="settings_avix_status_overlay_description">While the controls are hidden, show the clock, battery, network and end time at the top of the player.</string>
+    <string name="settings_avix_home_layout_section">Layout (this device)</string>
+    <string name="settings_avix_shelf_rows">Rows per catalog</string>
+    <string name="settings_avix_shelf_rows_description">Number of poster rows in each Home catalog.</string>
+    <string name="settings_avix_catalog_columns">Catalog columns</string>
+    <string name="settings_avix_catalog_columns_description">Columns in the “View all” catalog grids. Automatic adapts to the screen width.</string>
+    <string name="settings_avix_catalog_columns_auto">Automatic</string>
+    <string name="settings_avix_hide_release_dates">Hide release dates</string>
+    <string name="settings_avix_hide_release_dates_description">Do not show the date under posters on Home and in catalogs.</string>
+    <string name="settings_avix_hero_auto_scroll">Hero auto-scroll</string>
+    <string name="settings_avix_hero_auto_scroll_description">Move to the next featured title automatically.</string>
 </resources>

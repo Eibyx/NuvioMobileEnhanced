@@ -28,6 +28,7 @@
 - Live TV: los perfiles que usan los addons del perfil principal comparten sus listas, favoritos y guía (EPG); al cambiar de perfil se recargan los datos de Live TV.
 - «Siguiente episodio» tras ver un especial (temporada 0) que no figura en la lista del addon: ahora propone el primer episodio principal publicado en lugar de nada.
 - Barra de estado en el reproductor (opcional, desactivada por defecto): con los controles ocultos muestra hora, batería, red y hora de fin (Ajustes de reproducción).
+- Inicio y catálogos (Ajustes → Inicio → «Diseño (este dispositivo)»): 1–4 filas por catálogo, columnas fijas (2–6) o automáticas en «Ver todo», ocultar fechas bajo los pósteres y desactivar el desplazamiento automático del destacado. Solo en el dispositivo.
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

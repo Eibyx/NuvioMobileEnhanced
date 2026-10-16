@@ -187,6 +187,9 @@ internal fun LazyListScope.homescreenSettingsContent(
         }
     }
     item {
+        AvixHomeLayoutSettingsSection(isTablet = isTablet)
+    }
+    item {
         val catalogOnlyItems = items.filter { !it.isCollection }
         if (heroEnabled && catalogOnlyItems.isNotEmpty()) {
             val settingsUiState by remember {
