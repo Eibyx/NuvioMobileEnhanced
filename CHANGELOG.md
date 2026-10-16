@@ -30,6 +30,8 @@
 - Barra de estado en el reproductor (opcional, desactivada por defecto): con los controles ocultos muestra hora, batería, red y hora de fin (Ajustes de reproducción).
 - Inicio y catálogos (Ajustes → Inicio → «Diseño (este dispositivo)»): 1–4 filas por catálogo, columnas fijas (2–6) o automáticas en «Ver todo», ocultar fechas bajo los pósteres y desactivar el desplazamiento automático del destacado. Solo en el dispositivo.
 - «Preparar los streams por adelantado» (opcional, desactivado por defecto): con la ficha abierta se buscan en segundo plano los streams del botón Reproducir para que la reproducción empiece antes.
+- Avatares GIF: «Buscar GIF» al editar un perfil (GIPHY con tu propia clave, que solo se guarda en el dispositivo).
+- Asistente de IA en las fichas (opcional, desactivado por defecto): pregunta sobre el título con tu propia clave de Groq, Cerebras, Gemini u OpenRouter; búsqueda web opcional con Tavily. Las claves se guardan cifradas solo en el dispositivo.
 
 ### Apariencia
 - Tema **Claro / Oscuro / Sistema** (Ajustes → Apariencia), sin reiniciar y guardado solo en el dispositivo; por defecto Oscuro. Paleta clara derivada de cada tema (acentos, personalizados y degradados se conservan) con contraste WCAG garantizado; reproductor, mini reproductor y tráileres siempre oscuros; barras del sistema según el modo; AMOLED desactivado en modo claro.

@@ -31,6 +31,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import nuvio.composeapp.generated.resources.ai_assistant_open
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.rounded.AutoAwesome
+import com.nuvio.app.features.ai.toAiTitleContext
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
@@ -1471,6 +1476,36 @@ fun MetaDetailsScreen(
                             onBack = onBackFromDetails,
                             onToggleSaved = toggleSaved,
                         )
+
+                        // Avix (Yesnt10 port): optional AI assistant, only when enabled with a key.
+                        val aiSettings by remember {
+                            com.nuvio.app.features.ai.AiAssistantSettingsRepository.ensureLoaded()
+                            com.nuvio.app.features.ai.AiAssistantSettingsRepository.settings
+                        }.collectAsStateWithLifecycle()
+                        var showAiAssistant by remember(meta.id) { mutableStateOf(false) }
+                        if (aiSettings.isReady) {
+                            androidx.compose.material3.SmallFloatingActionButton(
+                                onClick = { showAiAssistant = true },
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 18.dp, bottom = 18.dp)
+                                    .navigationBarsPadding()
+                                    .zIndex(3f),
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AutoAwesome,
+                                    contentDescription = stringResource(Res.string.ai_assistant_open),
+                                )
+                            }
+                        }
+                        if (showAiAssistant) {
+                            com.nuvio.app.features.ai.AiAssistantSheet(
+                                title = remember(meta) { meta.toAiTitleContext() },
+                                onDismiss = { showAiAssistant = false },
+                            )
+                        }
 
                         selectedEpisodeForActions
                             ?.takeIf { selectedEpisodeZoomAnchor == null }

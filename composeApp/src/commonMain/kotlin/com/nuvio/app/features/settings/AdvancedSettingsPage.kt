@@ -184,6 +184,9 @@ internal fun LazyListScope.advancedSettingsContent(
         AvixLocalSettingsBackupSection(isTablet = isTablet)
     }
     item {
+        AvixAiAssistantSettingsSection(isTablet = isTablet)
+    }
+    item {
         AvixLastCrashReportSection(isTablet = isTablet)
     }
     item {

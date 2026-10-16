@@ -58,3 +58,10 @@ Cada entrada documenta una divergencia deliberada frente a una fuente, para reso
 - `MPVLib` es un singleton (el anterior `MPV` era por instancia): `LibmpvInstanceGuard` garantiza una sola instancia viva y espera a que la anterior se destruya antes de crear otra.
 - Sin Anime4K, sin shaders, sin filtros visuales de mpvRx, sin copiar su UI y sin abrir mpvRx como app externa.
 - ExoPlayer se mantiene y sigue siendo el motor «Automático» por defecto con fallback a libmpv. Durante la validación, el motor anterior se puede recuperar compilando con `-Pavix.legacyLibmpv=true` (ver MPVRX_INTEGRATION.md).
+
+## D-11 Claves del usuario para servicios de terceros
+- Avix no incluye claves de API de terceros en la APK (se pueden extraer). Las funciones que las necesitan (avatares GIF con GIPHY, asistente de IA, búsqueda web Tavily) piden la clave propia del usuario y están desactivadas o vacías por defecto.
+- Las claves se guardan cifradas con una clave AES-GCM del Android Keystore (`core/avix/AvixSecretStore`, alias `com.avix.nuvio.secrets.v1`), fuera de `AvixLocalStore`, sin sincronizar y fuera de la copia de ajustes locales. En iOS no hay almacén seguro en v1: esas funciones se ocultan.
+- Una clave ilegible (p. ej. tras restaurar el dispositivo) se descarta y el usuario la vuelve a introducir.
+- Los datos enviados al proveedor se limitan a la pregunta y los datos públicos del título; solo al proveedor elegido.
+

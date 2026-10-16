@@ -82,3 +82,5 @@ Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha prob
 | Barra de estado en el reproductor | COMPILADA | `PlayerDeviceStatus*.kt` | `PlayerDeviceStatusTest` PASS |
 | Diseño de Inicio y catálogos (filas, columnas, fechas, auto-scroll del hero) | COMPILADA | `AvixHomeLayoutPreferences.kt`, `ShelfComponents.kt` | `AvixHomeLayoutPreferencesTest` PASS |
 | Preparar streams por adelantado (desactivado por defecto) | COMPILADA | `StreamPrefetchPreference.kt`, `MetaDetailsScreen.kt` | `StreamPrefetchTargetTest` PASS |
+| Búsqueda de avatares GIF (GIPHY, clave del usuario) | COMPILADA | `GifAvatarSearch.kt`, `GifAvatarSearchDialog.kt` | `GifAvatarSearchTest` PASS |
+| Asistente de IA (desactivado por defecto, claves del usuario cifradas) | COMPILADA | `features/ai/*`, `AvixSecretStore*` | `AiAssistantServiceTest` PASS; con proveedor real NOT RUN |
