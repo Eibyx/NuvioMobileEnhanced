@@ -108,11 +108,17 @@ internal fun AppEnvironment(content: @Composable () -> Unit) {
     val darkTheme = themeMode.isDark()
     com.nuvio.app.core.ui.PlatformSystemBarsAppearance(darkTheme = darkTheme)
 
+    val gradientTheme by remember {
+        com.nuvio.app.core.ui.AvixGradientThemeRepository.ensureLoaded()
+        com.nuvio.app.core.ui.AvixGradientThemeRepository.selected
+    }.collectAsStateWithLifecycle()
+
     NuvioTheme(
         darkTheme = darkTheme,
         appTheme = selectedTheme,
         amoled = amoledEnabled,
         customThemeColors = customThemeColors,
+        paletteOverride = gradientTheme?.palette,
     ) {
         content()
     }

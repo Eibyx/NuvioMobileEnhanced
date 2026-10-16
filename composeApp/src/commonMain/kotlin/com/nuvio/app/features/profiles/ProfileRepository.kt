@@ -202,6 +202,8 @@ object ProfileRepository {
         TmdbSettingsRepository.onProfileChanged()
         MdbListSettingsRepository.onProfileChanged()
         SearchHistoryRepository.onProfileChanged()
+        // Avix: device-local favorite people are stored per profile.
+        com.nuvio.app.features.details.FavoritePeopleRepository.onProfileChanged(profileIndex)
         SearchRepository.reset()
         CollectionRepository.onProfileChanged()
         CollectionMobileSettingsRepository.onProfileChanged()

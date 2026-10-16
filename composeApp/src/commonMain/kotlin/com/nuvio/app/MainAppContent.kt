@@ -1621,6 +1621,7 @@ internal fun MainAppContent(
                                 onLiveTvChannelClick = onLiveTvChannelClick,
                                 onSwitchProfile = onSwitchProfile,
                                 onEditProfile = pushEditProfile,
+                                onFavoritePersonClick = navController::openFavoritePerson,
                                 onSettingsPageClick = if (useNativeNavigation && !isTabletLayout) {
                                     { pageName, title ->
                                         navController.navigate(SettingsPageRoute(pageName, title))

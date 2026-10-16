@@ -113,6 +113,7 @@ import com.nuvio.app.core.ui.NuvioAsyncImage
 import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaLookupOutcome
 import com.nuvio.app.features.details.MetaDetails
+import com.nuvio.app.features.details.FavoritePerson
 import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.library.LibraryItem
 import com.nuvio.app.features.library.LibraryRepository
@@ -170,6 +171,7 @@ internal fun LazyListScope.profileInsightsContent(
     onEditProfile: (() -> Unit)?,
     onPosterClick: ((MetaPreview) -> Unit)?,
     onBack: (() -> Unit)? = null,
+    onFavoritePersonClick: ((FavoritePerson) -> Unit)? = null,
 ) {
     item {
         ProfileInsightsBody(
@@ -178,6 +180,7 @@ internal fun LazyListScope.profileInsightsContent(
             onEditProfile = onEditProfile,
             onPosterClick = onPosterClick,
             onBack = onBack,
+            onFavoritePersonClick = onFavoritePersonClick,
         )
     }
 }
@@ -189,6 +192,7 @@ private fun ProfileInsightsBody(
     onEditProfile: (() -> Unit)?,
     onPosterClick: ((MetaPreview) -> Unit)?,
     onBack: (() -> Unit)? = null,
+    onFavoritePersonClick: ((FavoritePerson) -> Unit)? = null,
 ) {
     val profileState by ProfileRepository.state.collectAsStateWithLifecycle()
     val avatars by AvatarRepository.avatars.collectAsStateWithLifecycle()
@@ -398,6 +402,14 @@ private fun ProfileInsightsBody(
                 onRefresh = ProfileInsightsRefresher::refresh,
             )
             ProfileWatchTimeRow(stats = stats)
+            // Avix: favorite people (device-local, per profile).
+            if (onFavoritePersonClick != null) {
+                ProfileFavoritePeopleSection(
+                    profileId = activeProfileIndex,
+                    isTablet = isTablet,
+                    onPersonClick = onFavoritePersonClick,
+                )
+            }
             SettingsSection(
                 title = stringResource(Res.string.profile_insights_section_taste),
                 isTablet = isTablet,

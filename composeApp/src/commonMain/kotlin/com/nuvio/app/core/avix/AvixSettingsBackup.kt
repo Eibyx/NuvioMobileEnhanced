@@ -27,9 +27,15 @@ class AvixBackupException(message: String) : Exception(message)
 
 object AvixSettingsBackup {
     /** Key prefixes that belong to Avix device-local preferences. */
-    internal val allowedPrefixes = listOf("player.", "ui.", "subtitles.")
+    internal val allowedPrefixes = listOf("player.", "ui.", "subtitles.", "favorites.")
     private const val MAX_ENTRIES = 5_000
     private const val MAX_VALUE_LENGTH = 4_096
+
+    /** Avix: favorites are stored as one JSON list per profile, so they need a larger limit. */
+    private const val MAX_LIST_VALUE_LENGTH = 512 * 1_024
+
+    private fun maxValueLength(key: String): Int =
+        if (key.startsWith("favorites.")) MAX_LIST_VALUE_LENGTH else MAX_VALUE_LENGTH
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
 
     internal fun isAllowedKey(key: String): Boolean =
@@ -51,7 +57,7 @@ object AvixSettingsBackup {
         if (file.format != AvixSettingsBackupFile.FORMAT) throw AvixBackupException("not a Nuvio Avix settings backup")
         if (file.version > AvixSettingsBackupFile.VERSION) throw AvixBackupException("backup from a newer version")
         if (file.preferences.size > MAX_ENTRIES) throw AvixBackupException("backup too large")
-        return file.preferences.filter { (key, value) -> isAllowedKey(key) && value.length <= MAX_VALUE_LENGTH }
+        return file.preferences.filter { (key, value) -> isAllowedKey(key) && value.length <= maxValueLength(key) }
     }
 
     /** Current device-local preferences that a backup would contain. */

@@ -6,8 +6,8 @@ import kotlin.test.assertTrue
 /** Avix: WCAG contrast of the light theme for every built-in palette. */
 class LightPaletteContrastTest {
     private val palettes = AppTheme.entries.map { theme ->
-        theme to LightPalette.of(ThemeColors.getColorPalette(theme, CustomThemeColors.Default))
-    }
+        theme.name to LightPalette.of(ThemeColors.getColorPalette(theme, CustomThemeColors.Default))
+    } + AvixGradientTheme.entries.map { it.name to LightPalette.of(it.palette) }
 
     @Test
     fun accentIsVisibleOnLightBackgrounds() = palettes.forEach { (theme, p) ->

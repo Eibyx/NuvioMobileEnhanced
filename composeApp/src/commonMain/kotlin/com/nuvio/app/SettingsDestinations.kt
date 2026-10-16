@@ -11,6 +11,7 @@ import com.nuvio.app.features.collection.CollectionManagementScreen
 import com.nuvio.app.features.collection.CollectionRepository
 import com.nuvio.app.features.collection.FolderDetailRepository
 import com.nuvio.app.features.collection.FolderDetailScreen
+import com.nuvio.app.features.details.FavoritePerson
 import com.nuvio.app.features.home.HomeCatalogSection
 import com.nuvio.app.features.settings.SettingsScreen
 import com.nuvio.app.navigation.AppRoute
@@ -20,7 +21,19 @@ import com.nuvio.app.navigation.CollectionsRoute
 import com.nuvio.app.navigation.DetailRoute
 import com.nuvio.app.navigation.FolderDetailRoute
 import com.nuvio.app.navigation.NuvioNavigator
+import com.nuvio.app.navigation.PersonDetailRoute
 import com.nuvio.app.navigation.SettingsPageRoute
+
+/** Avix: opens a favorite person's detail screen. */
+internal fun NuvioNavigator.openFavoritePerson(person: FavoritePerson) {
+    navigate(
+        PersonDetailRoute(
+            personId = person.tmdbId,
+            personName = person.name,
+            personPhoto = person.photo,
+        ),
+    )
+}
 
 @Composable
 internal fun SettingsDestination(
@@ -58,6 +71,7 @@ internal fun SettingsRootDestination(
         onPosterClick = { meta ->
             navController.navigate(DetailRoute(type = meta.type, id = meta.id, title = meta.name))
         },
+        onFavoritePersonClick = navController::openFavoritePerson,
         onCollectionsClick = {
             navController.navigate(CollectionsRoute(collectionsTitle))
         },

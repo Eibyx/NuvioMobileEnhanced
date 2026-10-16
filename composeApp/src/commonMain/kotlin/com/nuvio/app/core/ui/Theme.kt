@@ -35,6 +35,7 @@ private data class NuvioThemeConfig(
     val appTheme: AppTheme,
     val amoled: Boolean,
     val customThemeColors: CustomThemeColors,
+    val paletteOverride: ThemeColorPalette? = null,
 )
 
 private val LocalNuvioThemeConfig = staticCompositionLocalOf {
@@ -230,10 +231,12 @@ fun NuvioTheme(
     appTheme: AppTheme = AppTheme.WHITE,
     amoled: Boolean = false,
     customThemeColors: CustomThemeColors = CustomThemeColors.Default,
+    /** Avix: device-local gradient palette that replaces [appTheme]'s colours (see AvixGradientThemes.kt). */
+    paletteOverride: ThemeColorPalette? = null,
     content: @Composable () -> Unit,
 ) {
-    val palette = remember(appTheme, customThemeColors, darkTheme) {
-        ThemeColors.getColorPalette(appTheme, customThemeColors)
+    val palette = remember(appTheme, customThemeColors, darkTheme, paletteOverride) {
+        (paletteOverride ?: ThemeColors.getColorPalette(appTheme, customThemeColors))
             .let { if (darkTheme) it else LightPalette.of(it) }
     }
     val colorScheme = if (darkTheme) buildColorScheme(palette, amoled = amoled) else buildLightColorScheme(palette)
@@ -251,7 +254,7 @@ fun NuvioTheme(
         LocalAppTheme provides appTheme,
         LocalThemePalette provides palette,
         LocalNuvioIsDark provides darkTheme,
-        LocalNuvioThemeConfig provides NuvioThemeConfig(appTheme, amoled, customThemeColors),
+        LocalNuvioThemeConfig provides NuvioThemeConfig(appTheme, amoled, customThemeColors, paletteOverride),
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -278,6 +281,7 @@ fun NuvioForceDarkTheme(content: @Composable () -> Unit) {
         appTheme = config.appTheme,
         amoled = config.amoled,
         customThemeColors = config.customThemeColors,
+        paletteOverride = config.paletteOverride,
         content = content,
     )
 }

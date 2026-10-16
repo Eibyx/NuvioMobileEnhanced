@@ -2400,9 +2400,19 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="settings_avix_backup_section">Ajustes de Nuvio Avix en este dispositivo</string>
     <string name="settings_avix_backup_export">Exportar ajustes de Avix</string>
     <string name="settings_avix_backup_import">Importar ajustes de Avix</string>
-    <string name="settings_avix_backup_description">Guarda o restaura apariencia, motor del reproductor, hora de fin, elecciones recordadas y fuente de subtítulos. Los ajustes de tu cuenta de Nuvio no se incluyen ni se modifican.</string>
+    <string name="settings_avix_backup_description">Guarda o restaura apariencia, motor del reproductor, hora de fin, elecciones recordadas, fuente de subtítulos y personas favoritas. Los ajustes de tu cuenta de Nuvio no se incluyen ni se modifican.</string>
     <string name="settings_avix_backup_exported">Ajustes exportados.</string>
     <string name="settings_avix_backup_export_failed">No se pudo guardar el archivo.</string>
     <string name="settings_avix_backup_imported">%1$d ajustes restaurados.</string>
     <string name="settings_avix_backup_import_failed">Ese archivo no es una copia de ajustes de Nuvio Avix válida.</string>
+    <string name="settings_avix_gradient_theme">Degradados de Avix</string>
+    <string name="settings_avix_gradient_theme_description">Sustituye los colores del tema de arriba solo en este dispositivo. Tu cuenta de Nuvio conserva su tema.</string>
+    <string name="settings_avix_gradient_theme_none">Ninguno</string>
+    <string name="person_add_favorite">Añadir a personas favoritas</string>
+    <string name="person_remove_favorite">Quitar de personas favoritas</string>
+    <string name="profile_insights_favorite_people_title">Personas favoritas</string>
+    <string name="profile_insights_favorite_people_see_all">Ver todas</string>
+    <string name="profile_insights_favorite_people_hint">Las personas fijadas se muestran primero. Solo se guardan en este dispositivo.</string>
+    <string name="profile_insights_favorite_people_pin">Fijar</string>
+    <string name="profile_insights_favorite_people_unpin">Desfijar</string>
 </resources>

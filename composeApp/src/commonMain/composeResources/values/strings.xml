@@ -2856,9 +2856,19 @@
     <string name="settings_avix_backup_section">Nuvio Avix settings on this device</string>
     <string name="settings_avix_backup_export">Export Avix settings</string>
     <string name="settings_avix_backup_import">Import Avix settings</string>
-    <string name="settings_avix_backup_description">Saves or restores appearance, player engine, end time, remembered choices and subtitle font. Your Nuvio account settings are not included or changed.</string>
+    <string name="settings_avix_backup_description">Saves or restores appearance, player engine, end time, remembered choices, subtitle font and favorite people. Your Nuvio account settings are not included or changed.</string>
     <string name="settings_avix_backup_exported">Settings exported.</string>
     <string name="settings_avix_backup_export_failed">Could not save the file.</string>
     <string name="settings_avix_backup_imported">%1$d settings restored.</string>
     <string name="settings_avix_backup_import_failed">That file is not a valid Nuvio Avix settings backup.</string>
+    <string name="settings_avix_gradient_theme">Avix gradients</string>
+    <string name="settings_avix_gradient_theme_description">Replaces the colours of the theme above on this device only. Your Nuvio account keeps its theme.</string>
+    <string name="settings_avix_gradient_theme_none">None</string>
+    <string name="person_add_favorite">Add to favorite people</string>
+    <string name="person_remove_favorite">Remove from favorite people</string>
+    <string name="profile_insights_favorite_people_title">Favorite people</string>
+    <string name="profile_insights_favorite_people_see_all">See all</string>
+    <string name="profile_insights_favorite_people_hint">Pinned people are shown first. Stored on this device only.</string>
+    <string name="profile_insights_favorite_people_pin">Pin</string>
+    <string name="profile_insights_favorite_people_unpin">Unpin</string>
 </resources>
