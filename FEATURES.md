@@ -89,3 +89,4 @@ Todos guardan su configuración solo en el dispositivo (D-5). Ninguno se ha prob
 | Filtro Vistos / No vistos en catálogos de biblioteca | COMPILADA | `CatalogWatchedFilter.kt` | `CatalogWatchedFilterTest` PASS |
 | Abrir/compartir M3U, vídeo y magnet | COMPILADA | `IncomingSharedSource*.kt`, `SharedSourceIntents.android.kt`, manifest | `IncomingSharedSourceTest` PASS; dispositivo NOT RUN |
 | Recuento de temporadas y episodios | COMPILADA | `MetaSeriesStats.kt` | `MetaSeriesStatsTest` PASS |
+| MyAnimeList: seguimiento automático (port de AKRusso) | COMPILADA | `features/mal/*`, `MalProviderCard.kt` | `MalTrackingTest` 18/18 PASS; con cuenta real NOT RUN (requiere `MAL_CLIENT_ID`) |
