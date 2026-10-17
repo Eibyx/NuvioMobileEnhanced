@@ -190,7 +190,7 @@ jobs:
           apk=$(ls androidApp/build/outputs/apk/full/debug/*.apk | head -1)
           name=Nuvio-Eibyx-Debug.apk
           if [[ "$GITHUB_REF" == "refs/heads/fix/avix-artwork-root-cause" ]]; then
-            name=NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk
+            name=NuvioEibyx-Artwork-Diagnostics-ARM64-Debug.apk
             python3 - "$apk" <<'PYVERIFY'
           import sys, zipfile
           with zipfile.ZipFile(sys.argv[1]) as z:

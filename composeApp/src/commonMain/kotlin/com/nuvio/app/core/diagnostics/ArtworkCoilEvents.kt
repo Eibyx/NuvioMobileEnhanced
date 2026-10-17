@@ -14,15 +14,24 @@ import coil3.size.Size
 import coil3.size.SizeResolver
 import kotlinx.atomicfu.atomic
 
-internal class ArtworkCoilEvents(private val loaderId: Long = 0) : EventListener() {
+internal class ArtworkCoilEvents(private val loaderId: Long = 0, private val tag: ArtworkRequestTag? = null) : EventListener() {
     private val id = ArtworkDiagnostics.nextId()
     private val finished = atomic(false)
-    private fun record(name: String, fields: String = "") =
-        ArtworkDiagnostics.event(name) { "loader=$loaderId request=$id $fields" }
+    private val epoch = ArtworkDiagnostics.epoch()
+    private val identity = tag?.identity ?: "none"
+    private var started = false
+    private fun record(name: String, fields: String = "") {
+        if (epoch != ArtworkDiagnostics.epoch()) return
+        ArtworkDiagnostics.event(name) { "loader=$loaderId request=$id load=${tag?.loadId} identity=$identity purpose=${ArtworkDiagnostics.purpose(tag)} $fields" }
+    }
 
     override fun onStart(request: ImageRequest) {
-        record("coil.start", "resource=${ArtworkDiagnostics.token(request.data)} active=${active.incrementAndGet()} " +
-            "memory=${request.memoryCachePolicy} disk=${request.diskCachePolicy}")
+        if (!ArtworkDiagnostics.enabled) return
+        ArtworkDiagnostics.watchHash(identity)
+        started = true
+        val concurrent = active.incrementAndGet()
+        record("coil.start", "resource=${ArtworkDiagnostics.token(request.data)} active=$concurrent " +
+            "memory=${request.memoryCachePolicy} disk=${request.diskCachePolicy} urlSource=${ArtworkDiagnostics.source(request.data as? String, tag?.source.orEmpty())}")
     }
     override fun resolveSizeStart(request: ImageRequest, sizeResolver: SizeResolver) { record("coil.size.start") }
     override fun resolveSizeEnd(request: ImageRequest, size: Size) { record("coil.size", "requested=$size") }
@@ -48,7 +57,7 @@ internal class ArtworkCoilEvents(private val loaderId: Long = 0) : EventListener
     }
     override fun onCancel(request: ImageRequest) { finish("coil.cancel") }
     private fun finish(name: String, fields: String = "") {
-        if (finished.compareAndSet(false, true)) record(name, "$fields active=${active.decrementAndGet()}")
+        if (started && finished.compareAndSet(false, true)) record(name, "$fields active=${active.decrementAndGet()}")
     }
     companion object { private val active = atomic(0) }
 }

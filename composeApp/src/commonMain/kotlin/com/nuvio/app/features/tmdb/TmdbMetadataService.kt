@@ -805,6 +805,7 @@ object TmdbMetadataService {
         var updated = meta
 
         if (enrichment != null && settings.useArtwork) {
+            ArtworkDiagnostics.resolved("${meta.type}:${meta.id}", enrichment.backdrop, "TMDB")
             updated = updated.copy(
                 background = enrichment.backdrop ?: updated.background,
                 poster = enrichment.poster ?: updated.poster,
@@ -1206,6 +1207,7 @@ object TmdbMetadataService {
     ): T? {
         val apiKey = TmdbSettingsRepository.effectiveApiKey().takeIf(String::isNotBlank) ?: return null
         val url = buildTmdbUrl(endpoint = endpoint, apiKey = apiKey, query = query)
+        val traceIdentity = kotlinx.coroutines.currentCoroutineContext()[com.nuvio.app.core.diagnostics.ArtworkMetadataContext]?.identity
         ArtworkDiagnostics.event("tmdb.http.start") {
             val stage = when {
                 "/season/" in endpoint -> "season"
@@ -1214,16 +1216,16 @@ object TmdbMetadataService {
                 endpoint.endsWith("videos") -> "videos"
                 else -> "details-or-secondary"
             }
-            "endpointKey=${ArtworkDiagnostics.token(endpoint)} stage=$stage"
+            "identity=$traceIdentity endpointKey=${ArtworkDiagnostics.token(endpoint)} stage=$stage"
         }
         return runCatching {
             val payload = httpGetText(url)
-            ArtworkDiagnostics.event("tmdb.network.end") { "endpointKey=${ArtworkDiagnostics.token(endpoint)}" }
+            ArtworkDiagnostics.event("tmdb.network.end") { "identity=$traceIdentity endpointKey=${ArtworkDiagnostics.token(endpoint)}" }
             json.decodeFromString<T>(payload)
         }.onFailure { error ->
             log.w { "TMDB request failed for $endpoint: ${error.message}" }
         }.also { result ->
-            ArtworkDiagnostics.event("tmdb.http.end") { "endpointKey=${ArtworkDiagnostics.token(endpoint)} success=${result.isSuccess}" }
+            ArtworkDiagnostics.event("tmdb.http.end") { "identity=$traceIdentity endpointKey=${ArtworkDiagnostics.token(endpoint)} success=${result.isSuccess}" }
         }.getOrNull()
     }
 

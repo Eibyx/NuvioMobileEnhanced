@@ -216,13 +216,15 @@ fun MetaDetailsScreen(
         shuffleWasInactive = !active
     }
     val uiState by MetaDetailsRepository.uiState.collectAsStateWithLifecycle()
+    val artworkCaptureEpoch by ArtworkDiagnostics.generation.collectAsStateWithLifecycle()
     val displayedMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
         ?: MetaDetailsRepository.peek(type, id)
     com.nuvio.app.core.diagnostics.ArtworkScreenProbe("details", "$type:$id")
     if (ArtworkDiagnostics.enabled) {
-        LaunchedEffect(type, id, displayedMeta?.background, displayedMeta?.poster) {
+        LaunchedEffect(type, id, displayedMeta?.background, displayedMeta?.poster, artworkCaptureEpoch) {
+            ArtworkDiagnostics.event("metadata.available") { "identity=${ArtworkDiagnostics.content("$type:$id")} available=${displayedMeta != null}" }
             ArtworkDiagnostics.event("details.url") {
-                "identity=${ArtworkDiagnostics.token("$type:$id")} resource=${ArtworkDiagnostics.token(displayedMeta?.background ?: displayedMeta?.poster)}"
+                "identity=${ArtworkDiagnostics.content("$type:$id")} resource=${ArtworkDiagnostics.token(displayedMeta?.background ?: displayedMeta?.poster)} origin=${ArtworkDiagnostics.source(displayedMeta?.background ?: displayedMeta?.poster, "METADATA_UNKNOWN")}"
             }
         }
     }
@@ -1150,11 +1152,11 @@ fun MetaDetailsScreen(
                 }
                 val listState = rememberLazyListState()
                 if (ArtworkDiagnostics.enabled) {
-                    LaunchedEffect(listState) {
+                    LaunchedEffect(listState, artworkCaptureEpoch) {
                         androidx.compose.runtime.snapshotFlow {
-                            listState.firstVisibleItemIndex to listState.isScrollInProgress
-                        }.collect { (index, scrolling) ->
-                            ArtworkDiagnostics.event("details.scroll") { "firstItem=$index scrolling=$scrolling" }
+                            Triple(listState.firstVisibleItemIndex, listState.isScrollInProgress, listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0)
+                        }.collect { (index, scrolling, atTop) ->
+                            ArtworkDiagnostics.event("details.scroll") { "identity=${ArtworkDiagnostics.content("$type:$id")} firstItem=$index scrolling=$scrolling atTop=$atTop" }
                         }
                     }
                 }
@@ -1270,10 +1272,14 @@ fun MetaDetailsScreen(
                             } else when (backgroundMode) {
                                 MetaScreenBackgroundMode.Normal -> Unit
                                 MetaScreenBackgroundMode.Cinematic -> if (deferredMetaWorkAllowed && backdropUrl != null) {
+                                    val cinematicProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.cinematic", backdropUrl, "${meta.type}:${meta.id}", "METADATA")
                                     AsyncImage(
-                                        model = backdropUrl,
+                                        model = com.nuvio.app.core.diagnostics.artworkDiagnosticModel(backdropUrl, "${meta.type}:${meta.id}", "DETAILS_CINEMATIC", "METADATA"),
                                         contentDescription = null,
-                                        modifier = Modifier
+                                        onLoading = cinematicProbe?.let { it::state },
+                                        onSuccess = cinematicProbe?.let { it::state },
+                                        onError = cinematicProbe?.let { it::state },
+                                        modifier = (cinematicProbe?.modifier(Modifier) ?: Modifier)
                                             .fillMaxSize()
                                             .blur(30.dp),
                                         contentScale = ContentScale.Crop,

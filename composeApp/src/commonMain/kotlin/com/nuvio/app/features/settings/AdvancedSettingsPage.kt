@@ -133,6 +133,7 @@ internal fun LazyListScope.advancedSettingsContent(
             }
         }
     }
+    item(key = "artwork-diagnostics") { ArtworkDiagnosticsSection(isTablet) }
     item {
         SettingsSection(
             title = stringResource(Res.string.settings_advanced_section_cache),

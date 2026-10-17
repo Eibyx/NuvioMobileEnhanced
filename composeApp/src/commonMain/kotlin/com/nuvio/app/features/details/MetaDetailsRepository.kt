@@ -64,7 +64,8 @@ object MetaDetailsRepository {
     fun load(type: String, id: String) {
         log.d { "load() called — type=$type id=$id" }
         InAppLogger.info("Metadata/MetaDetailsRepository", "Loading meta type=$type id=$id")
-        ArtworkDiagnostics.event("metadata.load") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+        if (ArtworkDiagnostics.enabled) ArtworkDiagnostics.watch("$type:$id")
+        ArtworkDiagnostics.event("metadata.load") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
         val requestKey = "$type:$id"
         ServerItemRef.parse(id)?.let { ref ->
             loadServerMeta(requestKey, ref)
@@ -138,11 +139,12 @@ object MetaDetailsRepository {
         _uiState.value = MetaDetailsUiState(isLoading = true)
 
         scope.launch {
-            ArtworkDiagnostics.event("metadata.identity.start") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+            ArtworkDiagnostics.event("metadata.identity.start") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
             val metaLookupId = resolveMetaLookupId(itemId = id, itemType = type)
-            ArtworkDiagnostics.event("metadata.identity.end") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+            ArtworkDiagnostics.alias("$type:$metaLookupId", "$type:$id")
+            ArtworkDiagnostics.event("metadata.identity.end") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
             val manifests = findReadyMetaManifests(type = type, id = metaLookupId)
-            ArtworkDiagnostics.event("metadata.manifests.ready") { "count=${manifests.size}" }
+            ArtworkDiagnostics.event("metadata.manifests.ready") { "identity=${ArtworkDiagnostics.content("$type:$id")} count=${manifests.size}" }
             InAppLogger.info("Metadata/MetaDetailsRepository", "Resolved meta lookup id=$metaLookupId manifests=${manifests.size} originalId=$id")
 
             if (manifests.isEmpty()) {
@@ -407,22 +409,26 @@ object MetaDetailsRepository {
             TmdbSettingsRepository.ensureLoaded()
             log.d { "Fetching meta from: $url" }
             InAppLogger.info("Metadata/AddonFetch", "Fetching meta type=$type id=$id url=${InAppLogger.redactUrl(url)}")
-            ArtworkDiagnostics.event("metadata.addon.start") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+            ArtworkDiagnostics.event("metadata.addon.start") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
             val payload = fetchAddonResponseText(url)
-            ArtworkDiagnostics.event("metadata.addon.end") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+            ArtworkDiagnostics.event("metadata.addon.end") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
             log.d { "Raw payload length=${payload.length}, first 500 chars: ${payload.take(500)}" }
             InAppLogger.debug("Metadata/AddonFetch", "Meta payload length=${payload.length} type=$type id=$id")
             val result = withContext(Dispatchers.Default) { MetaDetailsParser.parse(payload) }
-            ArtworkDiagnostics.event("metadata.basic") { "identity=${ArtworkDiagnostics.token("$type:$id")} resource=${ArtworkDiagnostics.token(result.background ?: result.poster)}" }
-            ArtworkDiagnostics.event("metadata.tmdb.start") { "identity=${ArtworkDiagnostics.token("$type:$id")}" }
+            ArtworkDiagnostics.alias("${result.type}:${result.id}", "$type:$id")
+            ArtworkDiagnostics.resolved("$type:$id", result.background ?: result.poster, "ADDON")
+            ArtworkDiagnostics.event("metadata.basic") { "identity=${ArtworkDiagnostics.content("$type:$id")} resource=${ArtworkDiagnostics.token(result.background ?: result.poster)}" }
+            ArtworkDiagnostics.event("metadata.tmdb.start") { "identity=${ArtworkDiagnostics.content("$type:$id")}" }
             val tmdbEnriched = withTimeoutOrNull(TMDB_ENRICH_TIMEOUT_MS) {
-                TmdbMetadataService.enrichMeta(
-                    meta = result,
-                    fallbackItemId = id,
-                    settings = TmdbSettingsRepository.snapshot(),
-                )
+                com.nuvio.app.core.diagnostics.traceArtworkMetadata("$type:$id") {
+                    TmdbMetadataService.enrichMeta(
+                        meta = result,
+                        fallbackItemId = id,
+                        settings = TmdbSettingsRepository.snapshot(),
+                    )
+                }
             } ?: result
-            ArtworkDiagnostics.event("metadata.tmdb.end") { "identity=${ArtworkDiagnostics.token("$type:$id")} resource=${ArtworkDiagnostics.token(tmdbEnriched.background ?: tmdbEnriched.poster)}" }
+            ArtworkDiagnostics.event("metadata.tmdb.end") { "identity=${ArtworkDiagnostics.content("$type:$id")} resource=${ArtworkDiagnostics.token(tmdbEnriched.background ?: tmdbEnriched.poster)}" }
             val enriched = if (includeMdbList) {
                 MdbListSettingsRepository.ensureLoaded()
                 withTimeoutOrNull(MDBLIST_ENRICH_TIMEOUT_MS) {
@@ -502,12 +508,15 @@ object MetaDetailsRepository {
     private suspend fun tryFetchTmdbFallbackMeta(type: String, id: String): MetaDetails? {
         InAppLogger.info("Metadata/TMDB", "Fetching standalone fallback meta type=$type id=$id")
         val result = withTimeoutOrNull(TMDB_ENRICH_TIMEOUT_MS) {
-            TmdbMetadataService.fetchStandaloneMeta(
-                type = type,
-                id = id,
-                settings = TmdbSettingsRepository.snapshot(),
-            )
+            com.nuvio.app.core.diagnostics.traceArtworkMetadata("$type:$id") {
+                TmdbMetadataService.fetchStandaloneMeta(
+                    type = type,
+                    id = id,
+                    settings = TmdbSettingsRepository.snapshot(),
+                )
+            }
         }
+        if (result != null) ArtworkDiagnostics.resolved("$type:$id", result.background ?: result.poster, "TMDB")
         if (result == null) {
             InAppLogger.warn("Metadata/TMDB", "Standalone fallback returned empty type=$type id=$id")
         } else {
@@ -524,7 +533,7 @@ object MetaDetailsRepository {
         mdbListSettings: com.nuvio.app.features.mdblist.MdbListSettings,
         metaScreenSettingsFingerprint: String,
     ) {
-        ArtworkDiagnostics.event("metadata.publish") { "identity=${ArtworkDiagnostics.token(requestKey)} resource=${ArtworkDiagnostics.token(meta.background ?: meta.poster)}" }
+        ArtworkDiagnostics.event("metadata.publish") { "identity=${ArtworkDiagnostics.content(requestKey)} resource=${ArtworkDiagnostics.token(meta.background ?: meta.poster)}" }
         val cachedEntry = CachedMetaEntry(baseMeta = meta)
         cachedMetaByRequestKey[requestKey] = cachedEntry
 

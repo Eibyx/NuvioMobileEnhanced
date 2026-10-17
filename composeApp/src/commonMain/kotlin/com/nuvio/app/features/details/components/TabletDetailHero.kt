@@ -159,10 +159,10 @@ private fun BackdropArtwork(
             .background(gradientColor),
     ) {
         val imageUrl = meta.background ?: meta.poster
-        val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.tablet.backdrop.$blur", imageUrl)
+        val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.tablet.backdrop.$blur", imageUrl, "${meta.type}:${meta.id}", "METADATA")
         if (imageUrl != null) {
             AsyncImage(
-                model = imageUrl,
+                model = com.nuvio.app.core.diagnostics.artworkDiagnosticModel(imageUrl, "${meta.type}:${meta.id}", if (blur) "DETAILS_TABLET_BLURRED" else "DETAILS_TABLET_BACKDROP", "METADATA"),
                 contentDescription = meta.name,
                 modifier = artworkProbe?.modifier(artworkModifier) ?: artworkModifier,
                 alignment = BiasAlignment(0f, BackdropVerticalBias),

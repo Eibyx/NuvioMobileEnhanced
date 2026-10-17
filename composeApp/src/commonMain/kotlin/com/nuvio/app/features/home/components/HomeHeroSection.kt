@@ -1,6 +1,7 @@
 package com.nuvio.app.features.home.components
 
 import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+import com.nuvio.app.core.diagnostics.artworkTag
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -209,6 +210,7 @@ internal fun HomeHeroSection(
     autoScrollEnabled: Boolean = true,
     heroOptions: com.nuvio.app.features.home.AvixHeroOptions = com.nuvio.app.features.home.AvixHeroOptions(),
 ) {
+    val artworkCaptureEpoch by ArtworkDiagnostics.generation.collectAsStateWithLifecycle()
     if (items.isEmpty()) return
 
     val pagerState = key(items.size) {
@@ -332,11 +334,16 @@ internal fun HomeHeroSection(
                     .map { page -> HeroPageLayer(page = page, itemIndex = page % items.size) }
             }
             val currentItem = items[currentPage % items.size]
+            ArtworkDiagnostics.heroPage(currentPage)
             if (ArtworkDiagnostics.enabled) {
-                LaunchedEffect(pagerState) {
+                LaunchedEffect(pagerState, items, effectiveArtworkSource, artworkCaptureEpoch) {
                     androidx.compose.runtime.snapshotFlow {
                         Triple(pagerState.currentPage, pagerState.settledPage, pagerState.targetPage)
                     }.collect { (current, settled, target) ->
+                        val selected = items[current % items.size]
+                        ArtworkDiagnostics.selected("hero", "${selected.type}:${selected.id}")
+                        ArtworkDiagnostics.event("hero.metadata.basic") { "identity=${ArtworkDiagnostics.content("${selected.type}:${selected.id}")} available=true origin=CATALOG" }
+                        ArtworkDiagnostics.event("hero.url") { "identity=${ArtworkDiagnostics.content("${selected.type}:${selected.id}")} resource=${ArtworkDiagnostics.token(heroArtworkUrl(selected, effectiveArtworkSource))} origin=CATALOG" }
                         ArtworkDiagnostics.event("home.pager") { "current=$current settled=$settled target=$target" }
                     }
                 }
@@ -364,7 +371,8 @@ internal fun HomeHeroSection(
                 neighbours.forEach { item ->
                     listOfNotNull(heroArtworkUrl(item, effectiveArtworkSource), item.logo?.takeIf { it.isNotBlank() })
                         .forEach { url ->
-                            imageLoader.enqueue(ImageRequest.Builder(platformContext).data(url).build())
+                            imageLoader.enqueue(ImageRequest.Builder(platformContext).data(url)
+                                .artworkTag("${item.type}:${item.id}", if (url == item.logo) "NEIGHBOUR_LOGO_PREFETCH" else "NEIGHBOUR_ARTWORK_PREFETCH", "CATALOG").build())
                         }
                 }
                 neighbours.forEach { item ->
@@ -459,10 +467,10 @@ internal fun HomeHeroSection(
                             val item = items[layer.itemIndex]
                             val artworkUrl = heroArtworkUrl(item, effectiveArtworkSource)
                             val isCurrentLayer = layer.page == currentPage
-                            val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("home.hero.${layer.page}", artworkUrl)
+                            val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("home.hero.${layer.page}", artworkUrl, "${item.type}:${item.id}", "CATALOG")
                             key(effectiveArtworkSource, item.type, item.id, artworkUrl) {
                                 AsyncImage(
-                                    model = artworkUrl,
+                                    model = com.nuvio.app.core.diagnostics.artworkDiagnosticModel(artworkUrl, "${item.type}:${item.id}", "HERO_LAYER_${layer.page}", "CATALOG"),
                                     contentDescription = item.name,
                                     onLoading = artworkProbe?.let { it::state },
                                     onSuccess = artworkProbe?.let { it::state },
@@ -820,6 +828,7 @@ private fun HeroContentBlock(
         mutableStateOf(false)
     }
     val logoUrl = item.logo?.takeIf { it.isNotBlank() }
+    val logoProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("hero.logo", logoUrl, "${item.type}:${item.id}", "CATALOG")
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -827,7 +836,7 @@ private fun HeroContentBlock(
     ) {
         if (logoUrl != null && !logoLoadError) {
             AsyncImage(
-                model = logoUrl,
+                model = com.nuvio.app.core.diagnostics.artworkDiagnosticModel(logoUrl, "${item.type}:${item.id}", "HERO_LOGO", "CATALOG"),
                 contentDescription = item.name,
                 modifier = Modifier
                     .fillMaxWidth(layout.logoWidthFraction)
@@ -838,7 +847,9 @@ private fun HeroContentBlock(
                     },
                 alignment = if (layout.isTablet) Alignment.CenterStart else Alignment.Center,
                 contentScale = ContentScale.Fit,
-                onError = { logoLoadError = true },
+                onLoading = logoProbe?.let { it::state },
+                onSuccess = logoProbe?.let { it::state },
+                onError = { logoProbe?.state(it); logoLoadError = true },
             )
         } else {
             Text(
@@ -873,6 +884,11 @@ private fun HeroContentBlock(
             }
         }
         val details = detailsState.value
+        if (ArtworkDiagnostics.available) {
+            LaunchedEffect(details, item.type, item.id, ArtworkDiagnostics.generation.collectAsStateWithLifecycle().value) {
+                ArtworkDiagnostics.event("hero.metadata.enriched") { "identity=${ArtworkDiagnostics.content("${item.type}:${item.id}")} available=${details != null}" }
+            }
+        }
         val rating = (item.imdbRating ?: details?.imdbRating)
             ?.takeIf { options.showRatings }
             ?.takeIf { raw -> raw.toDoubleOrNull()?.let { it > 0.0 } == true }

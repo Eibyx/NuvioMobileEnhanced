@@ -1,5 +1,6 @@
 package com.nuvio.app.core.diagnostics
 
+import coil3.Extras
 import coil3.network.NetworkClient
 import coil3.network.NetworkHeaders
 import coil3.network.NetworkRequest
@@ -22,6 +23,7 @@ class ArtworkDiagnosticNetworkClientTest {
         val request = NetworkRequest(
             url = "https://username:password@example.com/private/secret?api_key=secret",
             headers = NetworkHeaders.Builder().add("If-None-Match", "private-etag").build(),
+            extras = Extras.Builder().apply { this[artworkRequestTagKey] = ArtworkRequestTag("abc", "DETAILS_BACKDROP", "METADATA") }.build(),
         )
         val response = NetworkResponse(code = 304, headers = NetworkHeaders.Builder().add("ETag", "private-etag").build())
         val client = ArtworkDiagnosticNetworkClient(object : NetworkClient {
@@ -44,7 +46,7 @@ class ArtworkDiagnosticNetworkClientTest {
                 throw CancellationException("private reason")
             }
         })
-        assertFailsWith<CancellationException> { client.executeRequest(NetworkRequest("https://example.com")) { it } }
+        assertFailsWith<CancellationException> { client.executeRequest(NetworkRequest("https://example.com", extras = Extras.Builder().apply { this[artworkRequestTagKey] = ArtworkRequestTag("abc", "HERO_VISIBLE", "CATALOG") }.build())) { it } }
         assertTrue(events.last().contains("active=0"))
         assertEquals(2, events.size)
         assertFalse(events.any { "private reason" in it })

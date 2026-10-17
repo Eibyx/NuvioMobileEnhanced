@@ -27,12 +27,17 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
     }
 
     override fun newImageLoader(context: android.content.Context): ImageLoader {
-        val diagnosticLoaderId = if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled)
+        val diagnosticLoaderId = if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.available)
             com.nuvio.app.core.diagnostics.ArtworkDiagnostics.nextId() else 0L
         return ImageLoader.Builder(context)
             .apply {
-                if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled) {
-                    eventListenerFactory { com.nuvio.app.core.diagnostics.ArtworkCoilEvents(diagnosticLoaderId) }
+                if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.available) {
+                    eventListenerFactory { request ->
+                        val tag = request.extras[com.nuvio.app.core.diagnostics.artworkRequestTagKey]
+                        if (tag != null && com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled)
+                            com.nuvio.app.core.diagnostics.ArtworkCoilEvents(diagnosticLoaderId, tag)
+                        else coil3.EventListener.NONE
+                    }
                 }
             }
             .crossfade(true)
@@ -42,7 +47,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 add(CustomPosterFallbackInterceptor())
                 add(SvgDecoder.Factory())
                 add(
-                    if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled) {
+                    if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.available) {
                         coil3.network.NetworkFetcher.Factory(
                             networkClient = { com.nuvio.app.core.diagnostics.ArtworkDiagnosticNetworkClient() },
                             cacheStrategy = { CacheControlCacheStrategy() },

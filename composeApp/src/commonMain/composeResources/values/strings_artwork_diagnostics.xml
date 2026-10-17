@@ -1,0 +1,12 @@
+<resources>
+    <string name="artwork_diagnostics_title">Image diagnostics</string>
+    <string name="artwork_diagnostics_start">Enable diagnostics</string>
+    <string name="artwork_diagnostics_stop">Disable diagnostics</string>
+    <string name="artwork_diagnostics_description">Only Hero and Details artwork. Local capture up to 1 MiB; no upload. Reproduce after enabling; clear records to start an empty log.</string>
+    <string name="artwork_diagnostics_clear">Clear records</string>
+    <string name="artwork_diagnostics_copy">Copy diagnostic summary</string>
+    <string name="artwork_diagnostics_export">Export diagnostic (.txt)</string>
+    <string name="artwork_diagnostics_copied">Summary copied</string>
+    <string name="artwork_diagnostics_cleared">Records and private export cleared</string>
+    <string name="artwork_diagnostics_export_failed">Could not open Android sharing</string>
+</resources>

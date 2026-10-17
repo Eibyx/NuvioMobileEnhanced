@@ -9,4 +9,5 @@
     <files-path
         name="nuvio_downloads"
         path="downloads/" />
+    <cache-path name="nuvio_artwork_diagnostics" path="artwork-diagnostics/" />
 </paths>

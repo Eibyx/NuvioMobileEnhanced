@@ -11,6 +11,9 @@ import coil3.SingletonImageLoader
 import coil3.PlatformContext
 import coil3.compose.LocalPlatformContext
 import coil3.compose.asPainter
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+import com.nuvio.app.core.diagnostics.ArtworkRequestTag
+import com.nuvio.app.core.diagnostics.artworkRequestTagKey
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import com.kmpalette.extensions.painter.rememberPainterDominantColorState
@@ -99,6 +102,11 @@ private suspend fun sampleArtworkDominantColor(
     val request = ImageRequest.Builder(platformContext)
         .data(url)
         .size(PALETTE_SAMPLE_PX, PALETTE_SAMPLE_PX)
+        .apply {
+            if (ArtworkDiagnostics.available) extras[artworkRequestTagKey] = ArtworkRequestTag(
+                ArtworkDiagnostics.owner(url) ?: ArtworkDiagnostics.token("color:$url"), "COLOR_SAMPLE", "ARTWORK",
+            )
+        }
         .build()
     val result = SingletonImageLoader.get(platformContext).execute(request) as? SuccessResult ?: return null
     val bitmap = loadedBackdropImageBitmap(result)

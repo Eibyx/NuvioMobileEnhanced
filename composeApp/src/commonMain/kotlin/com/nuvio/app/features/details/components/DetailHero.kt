@@ -121,10 +121,10 @@ fun DetailHero(
                 contentAlignment = Alignment.BottomCenter,
             ) {
                 val imageUrl = meta.background ?: meta.poster
-                val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.backdrop", imageUrl)
+                val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.backdrop", imageUrl, "${meta.type}:${meta.id}", "METADATA")
                 if (imageUrl != null) {
                     AsyncImage(
-                        model = imageUrl,
+                        model = com.nuvio.app.core.diagnostics.artworkDiagnosticModel(imageUrl, "${meta.type}:${meta.id}", "DETAILS_BACKDROP", "METADATA"),
                         contentDescription = meta.name,
                         modifier = (artworkProbe?.modifier(Modifier) ?: Modifier)
                             .align(Alignment.TopCenter)

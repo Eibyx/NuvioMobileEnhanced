@@ -1,0 +1,12 @@
+<resources>
+    <string name="artwork_diagnostics_title">Diagnóstico de imágenes</string>
+    <string name="artwork_diagnostics_start">Activar diagnóstico</string>
+    <string name="artwork_diagnostics_stop">Desactivar diagnóstico</string>
+    <string name="artwork_diagnostics_description">Sólo Hero y fondos de Details. Captura local hasta 1 MiB, sin envío automático. Reproduce el fallo después de activar; limpia los registros para comenzar uno vacío.</string>
+    <string name="artwork_diagnostics_clear">Limpiar registros</string>
+    <string name="artwork_diagnostics_copy">Copiar diagnóstico</string>
+    <string name="artwork_diagnostics_export">Exportar diagnóstico (.txt)</string>
+    <string name="artwork_diagnostics_copied">Resumen copiado</string>
+    <string name="artwork_diagnostics_cleared">Registros y archivo privado eliminados</string>
+    <string name="artwork_diagnostics_export_failed">No se pudo abrir el menú Compartir de Android</string>
+</resources>
