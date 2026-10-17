@@ -92,3 +92,22 @@ El workflow CI existente, sobre `fix/avix-artwork-root-cause`, genera la misma v
 - APK **local**, fuera de Git: 93.846.215 bytes; SHA-256 `27b8b7d29997124f0bc74f713a38f1ee1852f902c0e58d9faa7b4b9bfa2cd8a0`. ZIP íntegro; ID independiente correcto; firma Android Debug v2 verificada; 20 bibliotecas ELF64/AArch64, únicamente arm64-v8a, incluyendo mpvRx/ASS/C++. El runtime C++ coincide byte a byte con mpvlib 1.1.3. Esta cifra no debe confundirse con el checksum del APK posterior de CI, que usa otra configuración/firma.
 
 No hay dispositivo/emulador utilizable. **Instalación, menú Compartir en un teléfono real, secuencia visual del fallo y rendimiento siguen pendientes.** No hay mediciones reales antes/después ni una causa funcional demostrada. La APK no se presenta como reparación.
+
+## APK de GitHub para instalar
+
+**[Descargar artefacto Nuvio-Eibyx-Debug-41](https://github.com/Eibyx/NuvioMobileEnhanced/actions/runs/39059209494/artifacts/12110549223)**. Puede requerir iniciar sesión en GitHub. Extraer el ZIP e instalar `NuvioEibyx-Artwork-Diagnostics-ARM64-Debug.apk`. El artefacto vence el **31-10-2026** y contiene `SHA256SUMS` y `COMMIT.txt`.
+
+- Fuente: `b945abb6775f62b43322d0b836a7b0334feef4af`, CI [39059209494](https://github.com/Eibyx/NuvioMobileEnhanced/actions/runs/39059209494), pruebas y FullDebug correctos. Los commits posteriores sólo amplían la verificación CI y esta documentación, sin cambios de aplicación/pruebas.
+- APK **de CI**: **92.147.382 bytes**; SHA-256 **`e5b34e6756bf610f7a7073320ed828bc36816e2e59f263797f20ae6f3c44ed3c`**. Preferir este archivo y este checksum al APK local anterior.
+- ID `com.eibyx.nuvio.artworkfix.debug`, exclusivamente `arm64-v8a`; 20 bibliotecas ELF64/AArch64, incluidos mpvRx/ASS; C++ coincide con mpvlib 1.1.3. Firma Android Debug v2 válida; certificado público SHA-256 `418e59b76559a947900eb9beac3e5c63c5b5eb01a3241e3d249607dfa37a5fb1`.
+- El proxy de este entorno bloqueó la descarga desde el almacenamiento Blob con `403 CONNECT`. Para comprobar **el artefacto real**, se descargó y verificó en un runner de GitHub con el modo manual de verificación del CI existente, sin recompilar, publicar otra APK ni usar secretos de producción.
+- Verificación independiente del archivo: [run 39060099258](https://github.com/Eibyx/NuvioMobileEnhanced/actions/runs/39060099258). Verifica ZIP, firma, ID, flag de capacidad, ABI/ELF, C++, checksum interno y commit; publica una anotación `Verified diagnostic APK` con los metadatos. Esta verificación no ejecuta otra vez los tests ni los omite de la suite: utiliza la APK de la ejecución completa anterior.
+
+Para repetir sólo la verificación del mismo artefacto:
+
+```bash
+gh workflow run ci.yml --repo Eibyx/NuvioMobileEnhanced \
+  --ref fix/avix-artwork-root-cause -f verify_artifact_run=39059209494
+```
+
+La configuración de cuenta está presente en la ejecución CI (el artefacto no lleva `-sin-cuenta`); OAuth y la selección de app para los deep links siguen pendientes de comprobación en el teléfono. La captura no depende de iniciar sesión y no registra credenciales. No se cambió autenticación para el ID experimental.
