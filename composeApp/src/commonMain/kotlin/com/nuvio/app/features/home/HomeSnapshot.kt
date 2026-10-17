@@ -65,6 +65,7 @@ private data class SnapshotPayload(
     val savedAtMillis: Long,
     val sections: List<SnapshotSection> = emptyList(),
     val heroItems: List<SnapshotMeta> = emptyList(),
+    val artworkLanguage: String? = null,
 )
 
 internal class HomeSnapshot(
@@ -101,7 +102,9 @@ internal object HomeSnapshotStore {
                     hasMore = section.hasMore,
                 )
             },
-            heroItems = decoded.heroItems.map { it.toMetaPreview() },
+            heroItems = decoded.heroItems.takeIf {
+                shouldRestoreHeroArtwork(decoded.artworkLanguage, com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot().language)
+            }.orEmpty().map { it.toMetaPreview() },
         )
     }.getOrNull()
 
@@ -110,6 +113,7 @@ internal object HomeSnapshotStore {
         savedAtMillis: Long,
         sections: List<Pair<String, HomeCatalogSection>>,
         heroItems: List<MetaPreview>,
+        artworkLanguage: String = com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot().language,
     ) {
         runCatching {
             val payload = SnapshotPayload(
@@ -130,6 +134,7 @@ internal object HomeSnapshotStore {
                     )
                 },
                 heroItems = heroItems.map { it.toSnapshotMeta() },
+                artworkLanguage = artworkLanguage,
             )
             AppFileCache.write(pathFor(profileKey), homeSnapshotJson.encodeToString(payload))
         }
@@ -211,3 +216,7 @@ private fun SnapshotTarget.toTarget(): CatalogTarget? = when (kind) {
     )
     else -> null
 }
+
+internal fun shouldRestoreHeroArtwork(savedLanguage: String?, currentLanguage: String): Boolean =
+    savedLanguage == null || com.nuvio.app.features.tmdb.normalizeTmdbLanguage(savedLanguage) ==
+        com.nuvio.app.features.tmdb.normalizeTmdbLanguage(currentLanguage)

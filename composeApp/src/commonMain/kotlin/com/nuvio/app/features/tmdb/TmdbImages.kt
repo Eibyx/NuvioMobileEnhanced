@@ -30,6 +30,7 @@ private val defaultLanguageRegions = mapOf(
 
 @Serializable
 internal data class TmdbImagesResponse(
+    val posters: List<TmdbImage> = emptyList(),
     val logos: List<TmdbImage> = emptyList(),
     val backdrops: List<TmdbImage> = emptyList(),
 )
@@ -39,4 +40,16 @@ internal data class TmdbImage(
     @SerialName("file_path") val filePath: String? = null,
     @SerialName("iso_639_1") val iso6391: String? = null,
     @SerialName("iso_3166_1") val iso31661: String? = null,
+    @SerialName("vote_average") val voteAverage: Double? = null,
+    @SerialName("vote_count") val voteCount: Int? = null,
 )
+
+/** Textless backdrops are preferred, as in yesnt10; poster/logo selection remains localized. */
+internal fun List<TmdbImage>.selectBestTextlessImagePath(language: String): String? =
+    filter { !it.filePath.isNullOrBlank() }.sortedWith(
+        compareByDescending<TmdbImage> { it.iso6391 == null }
+            .thenByDescending { it.iso6391 == language.substringBefore("-") }
+            .thenByDescending { it.iso6391 == "en" }
+            .thenByDescending { it.voteAverage ?: 0.0 }
+            .thenByDescending { it.voteCount ?: 0 },
+    ).firstOrNull()?.filePath?.trim()

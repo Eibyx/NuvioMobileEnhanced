@@ -266,10 +266,11 @@ object MetaDetailsRepository {
 
     private val backgroundBackoffUntilByHost = mutableMapOf<String, Long>()
 
-    internal suspend fun fetchLightweight(type: String, id: String): MetaLookupOutcome {
+    internal suspend fun fetchLightweight(type: String, id: String, includeTmdbFallback: Boolean = true): MetaLookupOutcome {
         val metaLookupId = resolveMetaLookupId(itemId = id, itemType = type)
         val manifests = findReadyMetaManifests(type = type, id = metaLookupId)
         if (manifests.isEmpty()) {
+            if (!includeTmdbFallback) return MetaLookupOutcome.Unavailable
             return tryFetchTmdbFallbackMeta(type = type, id = id)
                 ?.let { meta -> MetaLookupOutcome.Loaded(meta) }
                 ?: MetaLookupOutcome.Unavailable

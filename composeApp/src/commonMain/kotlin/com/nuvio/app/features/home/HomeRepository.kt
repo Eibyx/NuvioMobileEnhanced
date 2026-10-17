@@ -6,6 +6,7 @@ import com.nuvio.app.features.addons.enabledAddons
 import com.nuvio.app.features.catalog.CatalogTarget
 import com.nuvio.app.features.catalog.fetchCatalogPage
 import com.nuvio.app.core.poster.CustomPosterUrlRepository
+import com.nuvio.app.core.poster.reapplyCustomPosterUrl
 import com.nuvio.app.core.poster.reapplyCustomPosterUrls
 import com.nuvio.app.core.poster.withCustomPosterUrls
 import com.nuvio.app.features.collection.Collection
@@ -43,6 +44,8 @@ object HomeRepository {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val resolvedHeroArtwork = MutableStateFlow<Map<String, MetaPreview>>(emptyMap())
+
     private var activeJob: Job? = null
     private var activeRequestKey: String? = null
     private var currentRequestKey: String? = null
@@ -59,6 +62,17 @@ object HomeRepository {
     private var snapshotSaveJob: Job? = null
     private var lastRefreshAddonSignature: List<String>? = null
     private var collectionHeroResolving: Boolean = false
+    private var localizedHeroJob: Job? = null
+    private var localizedHeroKey: String? = null
+
+    internal fun recordHeroArtwork(item: MetaPreview, profileKey: String, language: String) {
+        if (HomeSnapshotStore.currentProfileKey().orEmpty() != profileKey ||
+            com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot().language != language) return
+        val key = "$profileKey|$language|${item.stableKey()}"
+        resolvedHeroArtwork.update { (it + (key to item)).entries.toList().takeLast(32).associate { it.toPair() } }
+        _uiState.update { state -> state.copy(heroItems = state.heroItems.map { if (it.stableKey() == item.stableKey()) item else it }) }
+        scheduleSnapshotSave()
+    }
 
     fun preloadSnapshot() {
         val profileKey = HomeSnapshotStore.currentProfileKey() ?: return
@@ -66,6 +80,11 @@ object HomeRepository {
     }
 
     fun refresh(addons: List<ManagedAddon>, force: Boolean = false) {
+        if (force) {
+            localizedHeroJob?.cancel()
+            localizedHeroKey = null
+            resolvedHeroArtwork.value = emptyMap()
+        }
         val activeAddons = addons.enabledAddons()
         lastRefreshAddonSignature = buildAddonCatalogRefreshSignature(addons)
         val requests = buildHomeCatalogDefinitions(activeAddons)
@@ -85,6 +104,8 @@ object HomeRepository {
             activeRequestKey = null
             cachedSections = emptyMap()
             lastErrorMessage = null
+            val settings = HomeCatalogSettingsRepository.snapshot()
+            collectionHeroResolving = settings.heroEnabled && enabledCollectionsForHero(settings).isNotEmpty()
             publishCurrentState(
                 isLoading = false,
                 requestKey = requestKey,
@@ -180,6 +201,10 @@ object HomeRepository {
     }
 
     fun clear() {
+        localizedHeroJob?.cancel()
+        localizedHeroJob = null
+        localizedHeroKey = null
+        resolvedHeroArtwork.value = emptyMap()
         activeJob?.cancel()
         activeJob = null
         activeRequestKey = null
@@ -212,13 +237,13 @@ object HomeRepository {
         }
         scope.launch {
             val loaded = HomeSnapshotStore.load(profileKey) ?: return@launch
-            if (generation != snapshotGeneration || cachedSections.isNotEmpty()) return@launch
+            if (generation != snapshotGeneration || cachedSections.isNotEmpty() || HomeSnapshotStore.currentProfileKey() != profileKey) return@launch
             applySnapshot(loaded)
         }
     }
 
     private fun applySnapshot(snapshot: HomeSnapshot) {
-        if (snapshot.sections.isEmpty()) return
+        if (snapshot.sections.isEmpty() && snapshot.heroItems.isEmpty()) return
         cachedSections = snapshot.sections.toMap()
         _uiState.value = HomeUiState(
             isLoading = true,
@@ -230,16 +255,20 @@ object HomeRepository {
     private fun scheduleSnapshotSave() {
         val profileKey = HomeSnapshotStore.currentProfileKey() ?: return
         val entries = lastPublishedEntries
-        if (entries.isEmpty()) return
         val heroItems = _uiState.value.heroItems
+        val language = com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot().language
+        if (entries.isEmpty() && heroItems.isEmpty()) return
         snapshotSaveJob?.cancel()
         snapshotSaveJob = scope.launch {
             delay(HOME_SNAPSHOT_SAVE_DELAY_MS)
+            if (HomeSnapshotStore.currentProfileKey() != profileKey ||
+                com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot().language != language) return@launch
             HomeSnapshotStore.save(
                 profileKey = profileKey,
                 savedAtMillis = Clock.System.now().toEpochMilliseconds(),
                 sections = entries,
                 heroItems = heroItems,
+                artworkLanguage = language,
             )
         }
     }
@@ -305,12 +334,58 @@ object HomeRepository {
             emptyList()
         }
 
+        val localizedItems = resolveLocalizedHeroArtwork(heroItems, requestKey)
         _uiState.value = HomeUiState(
             isLoading = isLoading,
-            heroItems = heroItems,
+            heroItems = localizedItems,
             sections = sections,
             errorMessage = if (sections.isEmpty()) lastErrorMessage else null,
         )
+    }
+
+    /** yesnt10's bounded initial artwork window, preserving Eibyx snapshots and providers.
+     * Warm snapshots remain visible while a fresh catalogue resolves. Cold items are published
+     * as each small batch completes; timeout/error always falls back to its own preview.
+     */
+    private fun resolveLocalizedHeroArtwork(items: List<MetaPreview>, requestKey: String?): List<MetaPreview> {
+        val settings = com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot()
+        if (!settings.enabled || !settings.useArtwork ||
+            com.nuvio.app.features.tmdb.TmdbSettingsRepository.effectiveApiKey().isBlank()) {
+            localizedHeroJob?.cancel()
+            localizedHeroKey = null
+            return items
+        }
+        val profile = HomeSnapshotStore.currentProfileKey().orEmpty()
+        val prefix = "$profile|${settings.language}|"
+        val key = "$prefix|${settings.hashCode()}|$requestKey|${items.joinToString { it.stableKey() }}"
+        val ready = items.mapNotNull { resolvedHeroArtwork.value[prefix + it.stableKey()] }
+        if (localizedHeroKey != key) {
+            localizedHeroJob?.cancel()
+            localizedHeroKey = key
+            localizedHeroJob = scope.launch {
+                val distinctItems = items.distinctBy(MetaPreview::stableKey)
+                val batches = listOf(distinctItems.take(1), distinctItems.drop(1).take(2)) + distinctItems.drop(3).chunked(3)
+                batches.filter { it.isNotEmpty() }.forEachIndexed { batch, entries ->
+                    val resolved = entries.map { item -> async {
+                        val cached = resolvedHeroArtwork.value[prefix + item.stableKey()]
+                        cached ?: (heroAttempt(if (batch == 0) 1_500L else 4_000L) {
+                            com.nuvio.app.features.tmdb.TmdbMetadataService.resolveHeroArtwork(item, settings, profile)
+                        }?.applyTo(item, settings.useBasicInfo) ?: item)
+                    } }.awaitAll()
+                    if (localizedHeroKey != key || HomeSnapshotStore.currentProfileKey().orEmpty() != profile ||
+                        com.nuvio.app.features.tmdb.TmdbSettingsRepository.snapshot() != settings) return@launch
+                    resolvedHeroArtwork.update { previous ->
+                        (previous + resolved.associateBy { prefix + it.stableKey() })
+                            .entries.toList().takeLast(32).associate { it.toPair() }
+                    }
+                    publishCurrentState(_uiState.value.isLoading, currentRequestKey)
+                    scheduleSnapshotSave()
+                }
+            }
+        }
+        // Snapshot items already contain reusable resolved URLs. Never hide them for a refresh.
+        return ready.ifEmpty { _uiState.value.heroItems.filter { old -> items.any { it.stableKey() == old.stableKey() } } }
+            .reapplyCustomPosterUrls(CustomPosterUrlRepository.patternForScreen(com.nuvio.app.core.poster.CustomPosterScreen.HOME))
     }
 
     private fun isHeroResolutionPending(isLoading: Boolean): Boolean {

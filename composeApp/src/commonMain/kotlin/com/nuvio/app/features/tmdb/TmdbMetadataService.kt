@@ -681,6 +681,67 @@ object TmdbMetadataService {
         }
     }
 
+    private val heroArtworkScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+    private val heroArtworkRequests = com.nuvio.app.features.home.HeroRequestCoordinator<TmdbPreviewArtwork>(
+        heroArtworkScope, capacity = 128, retainCompleted = false,
+    )
+    private val heroArtworkPermits = Semaphore(3)
+
+    internal suspend fun resolveHeroArtwork(item: MetaPreview, settings: TmdbSettings, profileKey: String): TmdbPreviewArtwork? {
+        if (!settings.enabled || !settings.useArtwork) return null
+        return heroArtworkRequests.get(previewArtworkKey(profileKey, normalizeMetaType(item.type), item.id, settings.language)) {
+            com.nuvio.app.features.home.heroAttempt(8_000L) {
+                heroArtworkPermits.withPermit { fetchHeroArtwork(item, settings, profileKey) }
+            }
+        }
+    }
+
+    /** yesnt10 preview path: details + images only; credits and seasons never gate Hero artwork. */
+    private suspend fun fetchHeroArtwork(
+        item: MetaPreview,
+        settings: TmdbSettings,
+        profileKey: String,
+    ): TmdbPreviewArtwork? = withContext(Dispatchers.Default) {
+        if (!settings.enabled || !settings.useArtwork || TmdbSettingsRepository.effectiveApiKey().isBlank()) {
+            return@withContext null
+        }
+        val type = normalizeMetaType(item.type)
+        if (type !in setOf("movie", "tv")) return@withContext null
+        val language = normalizeTmdbLanguage(settings.language)
+        val key = previewArtworkKey(profileKey, type, item.id, language)
+        TmdbPreviewArtworkStorage.load(key)?.let { return@withContext it }
+        val tmdbId = TmdbService.ensureTmdbId(item.id, type)?.toIntOrNull() ?: return@withContext null
+        val (details, images) = coroutineScope {
+            val detail = async { fetch<TmdbDetailsResponse>("$type/$tmdbId", mapOf("language" to language)) }
+            val image = async { fetch<TmdbImagesResponse>("$type/$tmdbId/images", mapOf("include_image_language" to tmdbImageLanguages(language))) }
+            detail.await() to image.await()
+        }
+        details ?: return@withContext null
+        val artwork = TmdbPreviewArtwork(
+            localizedTitle = (details.title ?: details.name)?.trim()?.takeIf(String::isNotBlank),
+            description = details.overview?.trim()?.takeIf(String::isNotBlank),
+            poster = buildImageUrl(images?.posters.orEmpty().selectBestLocalizedImagePath(language), "w780")
+                ?: buildImageUrl(details.posterPath, "w500"),
+            backdrop = buildImageUrl(images?.backdrops.orEmpty().selectBestTextlessImagePath(language), "w1280")
+                ?: buildImageUrl(details.backdropPath, "w1280"),
+            logo = buildImageUrl(images?.logos.orEmpty().selectBestLocalizedImagePath(language), "w500"),
+            releaseInfo = details.releaseDate ?: details.firstAirDate,
+            runtime = details.runtime?.formatRuntime() ?: details.episodeRunTime.firstOrNull()?.formatRuntime(),
+            tmdbRating = details.voteAverage?.takeIf { it > 0.0 },
+        )
+        TmdbPreviewArtworkStorage.save(key, artwork)
+        artwork
+    }
+
+    /** Top-level trailers for the active show; never enumerate its seasons to render a preview. */
+    internal suspend fun fetchHeroTrailers(item: MetaPreview, settings: TmdbSettings): List<MetaTrailer> {
+        if (!settings.enabled || !settings.useTrailers) return emptyList()
+        val type = normalizeMetaType(item.type)
+        val id = TmdbService.ensureTmdbId(item.id, type)?.toIntOrNull() ?: return emptyList()
+        return fetchTmdbVideos("$type/$id/videos", normalizeTmdbLanguage(settings.language))
+            .map { it.toMetaTrailer(seasonNumber = null, displayName = it.name) }
+    }
+
     suspend fun enrichMeta(
         meta: MetaDetails,
         fallbackItemId: String,
@@ -1207,6 +1268,7 @@ object TmdbMetadataService {
         return runCatching {
             json.decodeFromString<T>(httpGetText(url))
         }.onFailure { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
             log.w { "TMDB request failed for $endpoint: ${error.message}" }
         }.getOrNull()
     }
