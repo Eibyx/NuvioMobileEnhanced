@@ -2945,7 +2945,7 @@
     <string name="settings_avix_hero_overview">Show synopsis</string>
     <string name="settings_avix_hero_overview_description">Show the synopsis in the featured banner.</string>
     <string name="settings_avix_hero_poster">Poster artwork</string>
-    <string name="settings_avix_hero_poster_description">On phones in portrait, fill the full-width banner with the poster instead of the backdrop.</string>
+    <string name="settings_avix_hero_poster_description">Use the Poster Art layout instead of StreamingShowcase. Your saved artwork preferences are retained.</string>
     <string name="settings_avix_home_pull_refresh">Pull down to refresh Home</string>
     <string name="settings_avix_home_pull_refresh_description">Reload the catalogs by pulling down at the top of Home (with a vibration). Replaces the stretch effect of the featured banner.</string>
     <string name="catalog_filter_all">All (%1$d)</string>

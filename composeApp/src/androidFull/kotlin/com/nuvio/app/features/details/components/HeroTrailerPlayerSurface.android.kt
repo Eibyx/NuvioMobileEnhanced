@@ -106,18 +106,14 @@ actual fun HeroTrailerPlayerSurface(
             playerContainer?.alpha = 0f
         }
 
+        var disposed = false
         val listener = object : Player.Listener {
             private var readyReported = false
             private var endedReported = false
 
             override fun onPlaybackStateChanged(playbackState: Int) {
+                if (disposed) return
                 when (playbackState) {
-                    Player.STATE_READY -> {
-                        if (!readyReported) {
-                            readyReported = true
-                            latestOnReady.value()
-                        }
-                    }
                     Player.STATE_ENDED -> {
                         if (!endedReported) {
                             endedReported = true
@@ -133,10 +129,16 @@ actual fun HeroTrailerPlayerSurface(
             }
 
             override fun onRenderedFirstFrame() {
+                if (disposed) return
                 hasRenderedFirstFrame = true
+                if (!readyReported) {
+                    readyReported = true
+                    latestOnReady.value()
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
+                if (disposed) return
                 detachVideoSurface()
                 latestOnError.value()
             }
@@ -160,6 +162,7 @@ actual fun HeroTrailerPlayerSurface(
         exoPlayer.addListener(listener)
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
+            disposed = true
             lifecycleOwner.lifecycle.removeObserver(observer)
             exoPlayer.removeListener(listener)
             latestOnPositionUpdate.value(exoPlayer.currentPosition)

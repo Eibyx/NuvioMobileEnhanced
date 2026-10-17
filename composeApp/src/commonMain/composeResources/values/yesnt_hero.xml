@@ -1,0 +1,11 @@
+<resources>
+    <string name="home_hero_type_movie">Movie</string>
+    <string name="home_hero_type_series">Series</string>
+    <string name="home_hero_my_list">Save</string>
+    <string name="home_hero_preview_mute">Mute preview</string>
+    <string name="home_hero_preview_unmute">Unmute preview</string>
+    <string name="home_hero_season_count">%1$d seasons</string>
+    <string name="home_hero_season_count_one">1 season</string>
+    <string name="settings_yesnt_hero_motion">Cinematic Hero motion</string>
+    <string name="settings_yesnt_hero_motion_description">Animate the artwork in StreamingShowcase and Poster Art.</string>
+</resources>

@@ -70,6 +70,7 @@ internal fun HomeSkeletonHero(
     viewportHeight: Dp? = null,
     mobileBelowSectionHeightHint: Dp? = null,
     heroStyle: HomeHeroStyle = HomeHeroStyle.FULL_BLEED,
+    posterArtHeroEnabled: Boolean = false,
 ) {
     val brush = rememberHomeSkeletonBrush()
     val isCardStyle = heroStyle == HomeHeroStyle.CARD
@@ -109,8 +110,10 @@ internal fun HomeSkeletonHero(
                 viewportHeight = viewportHeight,
                 isTablet = layout.isTablet,
             )
+        } else if (posterArtHeroEnabled) {
+            posterArtHeroHeight(maxWidth.value, viewportHeight?.value, layout)
         } else {
-            layout.heroHeight
+            streamingShowcaseHeroHeight(maxWidth.value, viewportHeight?.value, layout)
         }
 
         Box(

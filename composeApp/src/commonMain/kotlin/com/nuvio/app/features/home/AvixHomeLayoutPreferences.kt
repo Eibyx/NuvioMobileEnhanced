@@ -43,6 +43,7 @@ data class AvixHeroOptions(
     val showOverview: Boolean = true,
     /** Full-bleed hero uses the portrait poster instead of the backdrop on portrait phones. */
     val posterArtwork: Boolean = false,
+    val motionPreview: Boolean = true,
 )
 
 /** Alpha stops of the full-bleed hero's darkening overlay (top to bottom). */
@@ -75,6 +76,7 @@ object AvixHomeLayoutPreferences {
     private const val KEY_HERO_COMPACT = "ui.home.hero_compact_metadata"
     private const val KEY_HERO_RATINGS = "ui.home.hero_show_ratings"
     private const val KEY_HERO_OVERVIEW = "ui.home.hero_show_overview"
+    private const val KEY_HERO_MOTION = "ui.home.hero_motion"
     private const val KEY_HERO_POSTER = "ui.home.hero_poster_artwork"
 
     private val _layout = MutableStateFlow(AvixHomeLayout())
@@ -102,6 +104,7 @@ object AvixHomeLayoutPreferences {
                 compactMetadata = AvixLocalStore.getBoolean(KEY_HERO_COMPACT) ?: false,
                 showRatings = AvixLocalStore.getBoolean(KEY_HERO_RATINGS) ?: true,
                 showOverview = AvixLocalStore.getBoolean(KEY_HERO_OVERVIEW) ?: true,
+                motionPreview = AvixLocalStore.getBoolean(KEY_HERO_MOTION) ?: true,
                 posterArtwork = AvixLocalStore.getBoolean(KEY_HERO_POSTER) ?: false,
             ),
         )
@@ -142,6 +145,9 @@ object AvixHomeLayoutPreferences {
 
     fun setHeroShowOverview(value: Boolean) =
         update(KEY_HERO_OVERVIEW, value.toString()) { it.copy(hero = it.hero.copy(showOverview = value)) }
+
+    fun setHeroMotionPreview(value: Boolean) =
+        update(KEY_HERO_MOTION, value.toString()) { it.copy(hero = it.hero.copy(motionPreview = value)) }
 
     fun setHeroPosterArtwork(value: Boolean) =
         update(KEY_HERO_POSTER, value.toString()) { it.copy(hero = it.hero.copy(posterArtwork = value)) }

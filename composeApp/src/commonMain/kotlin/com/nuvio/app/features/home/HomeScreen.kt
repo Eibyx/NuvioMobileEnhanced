@@ -145,6 +145,8 @@ fun HomeScreen(
         HomeCatalogSettingsRepository.snapshot()
         HomeCatalogSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
+    val heroTmdbSettings by com.nuvio.app.features.tmdb.TmdbSettingsRepository.uiState.collectAsStateWithLifecycle()
+    val heroLibraryState by com.nuvio.app.features.library.LibraryRepository.uiState.collectAsStateWithLifecycle()
     val homeListState = rememberLazyListState()
     val continueWatchingListState = rememberLazyListState()
     val upcomingListState = rememberLazyListState()
@@ -1023,12 +1025,14 @@ fun HomeScreen(
             ) {
                 if (showHeroSlot) {
                     item {
+                        com.nuvio.app.core.ui.NuvioForceDarkTheme {
                         when {
                             showHeroSkeleton -> HomeSkeletonHero(
                                 modifier = Modifier,
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 heroStyle = homeSettingsUiState.heroStyle,
+                                posterArtHeroEnabled = avixHomeLayout.hero.posterArtwork,
                             )
 
                             homeUiState.heroItems.isNotEmpty() -> HomeHeroSection(
@@ -1047,9 +1051,16 @@ fun HomeScreen(
                                 trailerStartDelaySeconds = homeSettingsUiState.heroTrailerStartDelaySeconds,
                                 trailerStartUnmuted = homeSettingsUiState.heroTrailerStartUnmuted,
                                 onItemClick = onPosterClick,
+                                onPlayClick = onPosterClick,
                                 onActiveArtworkChange = onActiveHeroArtworkChange,
                                 autoScrollEnabled = avixHomeLayout.heroAutoScroll,
                                 heroOptions = avixHomeLayout.hero,
+                                metadataRefreshKey = "${profileState.activeProfile?.userId}|${profileState.activeProfile?.id}|$activeProfileId|${heroTmdbSettings.language}|${heroTmdbSettings.enabled}|${heroTmdbSettings.useArtwork}|${heroTmdbSettings.useBasicInfo}|${heroTmdbSettings.hashCode()}|${networkStatusUiState.condition}",
+                                // Keep Eibyx's provider-aware list picker and removal confirmations.
+                                onSaveClick = onPosterLongClick,
+                                isSaved = { item ->
+                                    heroLibraryState.let { com.nuvio.app.features.library.LibraryRepository.isSaved(item.id, item.type) }
+                                },
                             )
 
                             else -> HomeHeroReservedSpace(
@@ -1057,7 +1068,10 @@ fun HomeScreen(
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 heroStyle = homeSettingsUiState.heroStyle,
+                                posterArtHeroEnabled = avixHomeLayout.hero.posterArtwork,
+                                streamingShowcaseHeroEnabled = !avixHomeLayout.hero.posterArtwork,
                             )
+                        }
                         }
                     }
                 }

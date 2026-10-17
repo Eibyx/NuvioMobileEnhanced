@@ -1,0 +1,11 @@
+<resources>
+    <string name="settings_yesnt_hero_motion">Movimiento cinematográfico del Hero</string>
+    <string name="settings_yesnt_hero_motion_description">Animar el artwork de StreamingShowcase y Poster Art.</string>
+    <string name="home_hero_type_movie">PELÍCULA</string>
+    <string name="home_hero_type_series">SERIE</string>
+    <string name="home_hero_my_list">Mi lista</string>
+    <string name="home_hero_preview_mute">Silenciar vista previa</string>
+    <string name="home_hero_preview_unmute">Activar sonido de vista previa</string>
+    <string name="home_hero_season_count">%1$d temporadas</string>
+    <string name="home_hero_season_count_one">1 temporada</string>
+</resources>

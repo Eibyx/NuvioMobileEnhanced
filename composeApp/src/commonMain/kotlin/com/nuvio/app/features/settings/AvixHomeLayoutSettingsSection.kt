@@ -132,6 +132,14 @@ internal fun AvixHomeLayoutSettingsSection(isTablet: Boolean) {
             )
             SettingsGroupDivider(isTablet = isTablet)
             SettingsSwitchRow(
+                title = stringResource(Res.string.settings_yesnt_hero_motion),
+                description = stringResource(Res.string.settings_yesnt_hero_motion_description),
+                checked = layout.hero.motionPreview,
+                isTablet = isTablet,
+                onCheckedChange = AvixHomeLayoutPreferences::setHeroMotionPreview,
+            )
+            SettingsGroupDivider(isTablet = isTablet)
+            SettingsSwitchRow(
                 title = stringResource(Res.string.settings_avix_hero_poster),
                 description = stringResource(Res.string.settings_avix_hero_poster_description),
                 checked = layout.hero.posterArtwork,

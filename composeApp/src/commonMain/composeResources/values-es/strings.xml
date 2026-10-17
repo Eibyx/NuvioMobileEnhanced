@@ -2489,7 +2489,7 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="settings_avix_hero_overview">Mostrar sinopsis</string>
     <string name="settings_avix_hero_overview_description">Mostrar la sinopsis en el destacado.</string>
     <string name="settings_avix_hero_poster">Arte de póster</string>
-    <string name="settings_avix_hero_poster_description">En móviles en vertical, llenar el destacado a pantalla completa con el póster en lugar del fondo.</string>
+    <string name="settings_avix_hero_poster_description">Usar el diseño Poster Art en lugar de StreamingShowcase. Se conservan tus preferencias de artwork.</string>
     <string name="settings_avix_home_pull_refresh">Deslizar para recargar Inicio</string>
     <string name="settings_avix_home_pull_refresh_description">Recarga los catálogos al deslizar hacia abajo en la parte superior de Inicio (con vibración). Sustituye al efecto de estiramiento del destacado.</string>
     <string name="catalog_filter_all">Todos (%1$d)</string>
