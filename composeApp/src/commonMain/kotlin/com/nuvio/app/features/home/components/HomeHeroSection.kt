@@ -1,5 +1,7 @@
 package com.nuvio.app.features.home.components
 
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -330,6 +332,15 @@ internal fun HomeHeroSection(
                     .map { page -> HeroPageLayer(page = page, itemIndex = page % items.size) }
             }
             val currentItem = items[currentPage % items.size]
+            if (ArtworkDiagnostics.enabled) {
+                LaunchedEffect(pagerState) {
+                    androidx.compose.runtime.snapshotFlow {
+                        Triple(pagerState.currentPage, pagerState.settledPage, pagerState.targetPage)
+                    }.collect { (current, settled, target) ->
+                        ArtworkDiagnostics.event("home.pager") { "current=$current settled=$settled target=$target" }
+                    }
+                }
+            }
 
             val activeArtworkUrl = heroArtworkUrl(items[pagerState.targetPage % items.size], effectiveArtworkSource)
             LaunchedEffect(onActiveArtworkChange, activeArtworkUrl) {
@@ -448,11 +459,15 @@ internal fun HomeHeroSection(
                             val item = items[layer.itemIndex]
                             val artworkUrl = heroArtworkUrl(item, effectiveArtworkSource)
                             val isCurrentLayer = layer.page == currentPage
+                            val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("home.hero.${layer.page}", artworkUrl)
                             key(effectiveArtworkSource, item.type, item.id, artworkUrl) {
                                 AsyncImage(
                                     model = artworkUrl,
                                     contentDescription = item.name,
-                                    modifier = Modifier
+                                    onLoading = artworkProbe?.let { it::state },
+                                    onSuccess = artworkProbe?.let { it::state },
+                                    onError = artworkProbe?.let { it::state },
+                                    modifier = (artworkProbe?.modifier(Modifier) ?: Modifier)
                                         .fillMaxSize()
                                         .graphicsLayer {
                                             val offset = heroPageOffset(pagerState, layer.page)
@@ -818,6 +833,7 @@ private fun HeroContentBlock(
                     .fillMaxWidth(layout.logoWidthFraction)
                     .aspectRatio(2.6f)
                     .clickable(enabled = onItemClick != null) {
+                        ArtworkDiagnostics.event("home.click") { "identity=${ArtworkDiagnostics.token("${item.type}:${item.id}")}" }
                         onItemClick?.invoke(item)
                     },
                 alignment = if (layout.isTablet) Alignment.CenterStart else Alignment.Center,
@@ -830,6 +846,7 @@ private fun HeroContentBlock(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(enabled = onItemClick != null) {
+                        ArtworkDiagnostics.event("home.click") { "identity=${ArtworkDiagnostics.token("${item.type}:${item.id}")}" }
                         onItemClick?.invoke(item)
                     },
                 style = if (layout.isTablet) {

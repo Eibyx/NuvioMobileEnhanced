@@ -207,6 +207,7 @@ open class MainActivity : AppCompatActivity() {
     }
 
     private fun showContent() {
+        com.nuvio.app.core.diagnostics.ArtworkDiagnostics.event("activity.setContent")
         handleIncomingAppIntent(intent)
         setContent {
             val sheetHazeState = rememberHazeState()

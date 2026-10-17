@@ -225,7 +225,17 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            manifestPlaceholders["artworkDiagnostics"] = providers.gradleProperty("avix.artworkDiagnostics")
+                .map(String::toBooleanStrict).getOrElse(false).toString()
+            providers.gradleProperty("avix.debug.abis").orNull?.let { value ->
+                val abis = value.split(',').map(String::trim)
+                require(abis.isNotEmpty() && abis.all { it in avixSupportedAbis })
+                ndk { abiFilters += abis }
+            }
+        }
         getByName("release") {
+            manifestPlaceholders["artworkDiagnostics"] = "false"
             val minifyRelease = providers.gradleProperty("releaseMinifyEnabled")
                 .map(String::toBooleanStrict)
                 .getOrElse(true)
@@ -251,7 +261,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
-        variant.applicationId.set("com.eibyx.nuvio.debug")
+        variant.applicationId.set(providers.gradleProperty("avix.debug.applicationId").getOrElse("com.eibyx.nuvio.debug"))
     }
 }
 

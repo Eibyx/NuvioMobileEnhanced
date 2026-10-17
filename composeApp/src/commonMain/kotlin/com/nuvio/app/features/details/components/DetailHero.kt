@@ -82,6 +82,13 @@ fun DetailHero(
         modifier = modifier.fillMaxWidth(),
     ) {
         val heroHeight = detailHeroHeight(maxWidth, isTablet)
+        if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled) {
+            LaunchedEffect(heroTrailerSourceUrl, heroTrailerReady) {
+                com.nuvio.app.core.diagnostics.ArtworkDiagnostics.event("details.trailer.surface") {
+                    "present=${heroTrailerSourceUrl != null} ready=$heroTrailerReady"
+                }
+            }
+        }
         val trailerAlpha by animateFloatAsState(
             targetValue = if (heroTrailerReady) 1f else 0f,
             animationSpec = tween(durationMillis = 300),
@@ -114,11 +121,12 @@ fun DetailHero(
                 contentAlignment = Alignment.BottomCenter,
             ) {
                 val imageUrl = meta.background ?: meta.poster
+                val artworkProbe = com.nuvio.app.core.diagnostics.rememberArtworkProbe("details.backdrop", imageUrl)
                 if (imageUrl != null) {
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = meta.name,
-                        modifier = Modifier
+                        modifier = (artworkProbe?.modifier(Modifier) ?: Modifier)
                             .align(Alignment.TopCenter)
                             .fillMaxWidth()
                             .height(heroHeight)
@@ -130,7 +138,10 @@ fun DetailHero(
                         },
                         alignment = if (isTablet) Alignment.TopCenter else Alignment.Center,
                         contentScale = ContentScale.Crop,
+                        onLoading = artworkProbe?.let { it::state },
+                        onError = artworkProbe?.let { it::state },
                         onSuccess = { state ->
+                            artworkProbe?.state(state)
                             onBackdropLoaded(
                                 state.painter,
                                 loadedBackdropImageBitmap(state.result),

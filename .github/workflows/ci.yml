@@ -7,7 +7,7 @@ name: CI
 
 on:
   push:
-    branches: [cmp-rewrite, "integration/**", "experiment/**"]
+    branches: [cmp-rewrite, "integration/**", "experiment/**", "fix/avix-artwork-root-cause"]
   pull_request:
   workflow_dispatch:
 
@@ -170,20 +170,42 @@ jobs:
           done
 
       - name: Build debug APK
-        run: >
-          ./gradlew --stacktrace
-          :androidApp:assembleFullDebug
-          -Pnuvio.android.distribution=full
-          -Pnuvio.ios.distribution=appstore
-          -Pavix.versionCode=$((100000 + GITHUB_RUN_NUMBER))
+        shell: bash
+        run: |
+          args=()
+          if [[ "$GITHUB_REF" == "refs/heads/fix/avix-artwork-root-cause" ]]; then
+            args+=(-Pavix.artworkDiagnostics=true
+                   -Pavix.debug.applicationId=com.eibyx.nuvio.artworkfix.debug
+                   -Pavix.debug.abis=arm64-v8a)
+          else
+            args+=(-Pavix.versionCode=$((100000 + GITHUB_RUN_NUMBER)))
+          fi
+          ./gradlew --stacktrace :androidApp:assembleFullDebug \
+            -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore "${args[@]}"
 
       - name: Rename debug APK
         shell: bash
         run: |
           mkdir -p dist
           apk=$(ls androidApp/build/outputs/apk/full/debug/*.apk | head -1)
-          cp "$apk" dist/Nuvio-Eibyx-Debug.apk
-          (cd dist && sha256sum Nuvio-Eibyx-Debug.apk | tee Nuvio-Eibyx-Debug.apk.sha256)
+          name=Nuvio-Eibyx-Debug.apk
+          if [[ "$GITHUB_REF" == "refs/heads/fix/avix-artwork-root-cause" ]]; then
+            name=NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk
+            python3 - "$apk" <<'PYVERIFY'
+          import sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              assert z.testzip() is None
+              native = [n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')]
+              assert native and {n.split('/')[1] for n in native} == {'arm64-v8a'}
+              assert {'libmpv.so', 'libplayer.so', 'libc++_shared.so', 'libass.so'} <= {n.split('/')[-1] for n in native}
+              for n in native:
+                  h = z.read(n)[:20]
+                  assert h[:5] == b'\x7fELF\x02' and int.from_bytes(h[18:20], 'little') == 183
+          PYVERIFY
+          fi
+          cp "$apk" "dist/$name"
+          git rev-parse HEAD > dist/COMMIT.txt
+          (cd dist && sha256sum "$name" > SHA256SUMS)
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7

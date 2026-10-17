@@ -1,5 +1,7 @@
 package com.nuvio.app.features.home
 
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+
 import com.nuvio.app.features.addons.ManagedAddon
 import com.nuvio.app.features.addons.AddonRepository
 import com.nuvio.app.features.addons.enabledAddons
@@ -63,9 +65,11 @@ object HomeRepository {
     fun preloadSnapshot() {
         val profileKey = HomeSnapshotStore.currentProfileKey() ?: return
         preloadedSnapshot = HomeSnapshotStore.load(profileKey)
+        ArtworkDiagnostics.event("home.snapshot.read") { "found=${preloadedSnapshot != null}" }
     }
 
     fun refresh(addons: List<ManagedAddon>, force: Boolean = false) {
+        ArtworkDiagnostics.event("home.refresh") { "force=$force" }
         val activeAddons = addons.enabledAddons()
         lastRefreshAddonSignature = buildAddonCatalogRefreshSignature(addons)
         val requests = buildHomeCatalogDefinitions(activeAddons)
@@ -218,6 +222,7 @@ object HomeRepository {
     }
 
     private fun applySnapshot(snapshot: HomeSnapshot) {
+        ArtworkDiagnostics.event("home.snapshot.apply") { "sections=${snapshot.sections.size} hero=${snapshot.heroItems.size} accepted=${snapshot.sections.isNotEmpty()}" }
         if (snapshot.sections.isEmpty()) return
         cachedSections = snapshot.sections.toMap()
         _uiState.value = HomeUiState(
@@ -305,6 +310,7 @@ object HomeRepository {
             emptyList()
         }
 
+        ArtworkDiagnostics.event("home.publish") { "sections=${sections.size} hero=${heroItems.size} loading=$isLoading" }
         _uiState.value = HomeUiState(
             isLoading = isLoading,
             heroItems = heroItems,

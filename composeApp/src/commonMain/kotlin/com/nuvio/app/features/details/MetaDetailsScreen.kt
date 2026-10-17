@@ -1,5 +1,7 @@
 package com.nuvio.app.features.details
 
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -216,6 +218,14 @@ fun MetaDetailsScreen(
     val uiState by MetaDetailsRepository.uiState.collectAsStateWithLifecycle()
     val displayedMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
         ?: MetaDetailsRepository.peek(type, id)
+    com.nuvio.app.core.diagnostics.ArtworkScreenProbe("details", "$type:$id")
+    if (ArtworkDiagnostics.enabled) {
+        LaunchedEffect(type, id, displayedMeta?.background, displayedMeta?.poster) {
+            ArtworkDiagnostics.event("details.url") {
+                "identity=${ArtworkDiagnostics.token("$type:$id")} resource=${ArtworkDiagnostics.token(displayedMeta?.background ?: displayedMeta?.poster)}"
+            }
+        }
+    }
     val metaScreenSettingsUiState by remember {
         MetaScreenSettingsRepository.ensureLoaded()
         MetaScreenSettingsRepository.uiState
@@ -1139,6 +1149,15 @@ fun MetaDetailsScreen(
                     )
                 }
                 val listState = rememberLazyListState()
+                if (ArtworkDiagnostics.enabled) {
+                    LaunchedEffect(listState) {
+                        androidx.compose.runtime.snapshotFlow {
+                            listState.firstVisibleItemIndex to listState.isScrollInProgress
+                        }.collect { (index, scrolling) ->
+                            ArtworkDiagnostics.event("details.scroll") { "firstItem=$index scrolling=$scrolling" }
+                        }
+                    }
+                }
                 val episodeNavigator = rememberEpisodeNavigatorState(meta.id)
                 val heroStretchState = rememberHeroStretchState(listState)
                 val density = LocalDensity.current

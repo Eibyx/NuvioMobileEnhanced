@@ -21,8 +21,20 @@ import com.nuvio.app.core.poster.CustomPosterFallbackInterceptor
  */
 class NuvioApplication : Application(), SingletonImageLoader.Factory {
 
+    override fun onCreate() {
+        super.onCreate()
+        com.nuvio.app.core.diagnostics.initializeArtworkDiagnostics(this)
+    }
+
     override fun newImageLoader(context: android.content.Context): ImageLoader {
+        val diagnosticLoaderId = if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled)
+            com.nuvio.app.core.diagnostics.ArtworkDiagnostics.nextId() else 0L
         return ImageLoader.Builder(context)
+            .apply {
+                if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled) {
+                    eventListenerFactory { com.nuvio.app.core.diagnostics.ArtworkCoilEvents(diagnosticLoaderId) }
+                }
+            }
             .crossfade(true)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
@@ -30,9 +42,14 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 add(CustomPosterFallbackInterceptor())
                 add(SvgDecoder.Factory())
                 add(
-                    KtorNetworkFetcherFactory(
-                        cacheStrategy = { CacheControlCacheStrategy() },
-                    ),
+                    if (com.nuvio.app.core.diagnostics.ArtworkDiagnostics.enabled) {
+                        coil3.network.NetworkFetcher.Factory(
+                            networkClient = { com.nuvio.app.core.diagnostics.ArtworkDiagnosticNetworkClient() },
+                            cacheStrategy = { CacheControlCacheStrategy() },
+                        )
+                    } else {
+                        KtorNetworkFetcherFactory(cacheStrategy = { CacheControlCacheStrategy() })
+                    },
                 )
                 if (Build.VERSION.SDK_INT >= 28) {
                     add(AnimatedImageDecoder.Factory())
@@ -40,6 +57,10 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                     add(GifDecoder.Factory())
                 }
             }
-            .build()
+            .build().also { loader ->
+                com.nuvio.app.core.diagnostics.ArtworkDiagnostics.event("loader.created") {
+                    "loader=$diagnosticLoaderId memoryLimit=${loader.memoryCache?.maxSize} diskLimit=${loader.diskCache?.maxSize}"
+                }
+            }
     }
 }

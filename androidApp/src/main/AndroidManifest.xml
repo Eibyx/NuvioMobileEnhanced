@@ -22,6 +22,7 @@
         android:localeConfig="@xml/locale_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.Nuvio">
+        <meta-data android:name="com.eibyx.nuvio.ARTWORK_DIAGNOSTICS" android:value="${artworkDiagnostics}" />
         <meta-data
             android:name="io.sentry.auto-init"
             android:value="false" />

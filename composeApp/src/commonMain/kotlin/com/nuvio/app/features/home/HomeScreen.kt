@@ -127,6 +127,7 @@ fun HomeScreen(
     onFolderClick: ((collectionId: String, folderId: String) -> Unit)? = null,
     onFirstCatalogRendered: (() -> Unit)? = null,
 ) {
+    com.nuvio.app.core.diagnostics.ArtworkScreenProbe("home")
     LaunchedEffect(Unit) {
         AddonRepository.initialize()
         CollectionRepository.initialize()

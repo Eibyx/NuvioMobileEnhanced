@@ -1,5 +1,7 @@
 package com.nuvio.app.core.startup
 
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+
 import com.nuvio.app.core.logging.InAppLogger
 import com.nuvio.app.features.details.MetaScreenSettingsRepository
 import com.nuvio.app.features.home.HomeRepository
@@ -62,12 +64,15 @@ object StartupPreloader {
     }.also { job = it }
 
     private inline fun step(name: String, block: () -> Unit) {
+        ArtworkDiagnostics.event("startup.step.start") { "step=$name" }
         try {
             block()
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Throwable) {
             InAppLogger.warn(LogTag, "$name failed: ${error::class.simpleName}: ${error.message}")
+        } finally {
+            ArtworkDiagnostics.event("startup.step.end") { "step=$name" }
         }
     }
 }

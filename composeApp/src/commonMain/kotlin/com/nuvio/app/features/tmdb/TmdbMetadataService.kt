@@ -1,5 +1,7 @@
 package com.nuvio.app.features.tmdb
 
+import com.nuvio.app.core.diagnostics.ArtworkDiagnostics
+
 import co.touchlab.kermit.Logger
 import com.nuvio.app.features.addons.httpGetText
 import com.nuvio.app.features.details.MetaCompany
@@ -1204,10 +1206,24 @@ object TmdbMetadataService {
     ): T? {
         val apiKey = TmdbSettingsRepository.effectiveApiKey().takeIf(String::isNotBlank) ?: return null
         val url = buildTmdbUrl(endpoint = endpoint, apiKey = apiKey, query = query)
+        ArtworkDiagnostics.event("tmdb.http.start") {
+            val stage = when {
+                "/season/" in endpoint -> "season"
+                "credits" in endpoint -> "credits"
+                endpoint.endsWith("images") -> "images"
+                endpoint.endsWith("videos") -> "videos"
+                else -> "details-or-secondary"
+            }
+            "endpointKey=${ArtworkDiagnostics.token(endpoint)} stage=$stage"
+        }
         return runCatching {
-            json.decodeFromString<T>(httpGetText(url))
+            val payload = httpGetText(url)
+            ArtworkDiagnostics.event("tmdb.network.end") { "endpointKey=${ArtworkDiagnostics.token(endpoint)}" }
+            json.decodeFromString<T>(payload)
         }.onFailure { error ->
             log.w { "TMDB request failed for $endpoint: ${error.message}" }
+        }.also { result ->
+            ArtworkDiagnostics.event("tmdb.http.end") { "endpointKey=${ArtworkDiagnostics.token(endpoint)} success=${result.isSuccess}" }
         }.getOrNull()
     }
 
