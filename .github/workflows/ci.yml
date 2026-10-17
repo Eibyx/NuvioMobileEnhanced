@@ -10,6 +10,12 @@ on:
     branches: [cmp-rewrite, "integration/**", "experiment/**", "fix/avix-artwork-root-cause"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      verify_artifact_run:
+        description: "Optional: verify an existing artwork diagnostic CI artifact without rebuilding"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,6 +26,7 @@ permissions:
 
 jobs:
   tests:
+    if: ${{ !inputs.verify_artifact_run }}
     name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -86,6 +93,7 @@ jobs:
           retention-days: 7
 
   apk:
+    if: ${{ !inputs.verify_artifact_run }}
     name: Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -214,4 +222,80 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  verify-diagnostic-artifact:
+    name: Verify existing diagnostic APK
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.verify_artifact_run != '' && github.ref == 'refs/heads/fix/avix-artwork-root-cause' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: ${{ inputs.verify_artifact_run }}
+    steps:
+      - name: Download the successful diagnostic run's artifact
+        shell: bash
+        run: |
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > source-run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" > source-artifacts.json
+          artifact_name=$(python3 - <<'PY'
+          import json, re
+          run = json.load(open('source-run.json'))
+          assert run['head_branch'] == 'fix/avix-artwork-root-cause'
+          assert run['name'] == 'CI' and run['conclusion'] == 'success'
+          artifacts = json.load(open('source-artifacts.json'))['artifacts']
+          matches = [a['name'] for a in artifacts if re.fullmatch(r'Nuvio-Eibyx-Debug-\d+(?:-sin-cuenta)?', a['name']) and not a['expired']]
+          assert len(matches) == 1
+          print(matches[0])
+          PY
+          )
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name "$artifact_name" --dir verification
+
+      - name: Verify signature, identity, checksum and ARM64 runtime
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re, subprocess, zipfile
+          from pathlib import Path
+          directory = Path('verification')
+          apks = list(directory.glob('*.apk'))
+          assert len(apks) == 1
+          apk = apks[0]
+          commit = (directory / 'COMMIT.txt').read_text().strip()
+          assert commit == json.load(open('source-run.json'))['head_sha']
+          digest = hashlib.sha256(apk.read_bytes()).hexdigest()
+          checksum, filename = (directory / 'SHA256SUMS').read_text().strip().split(maxsplit=1)
+          assert checksum == digest and filename.strip() == apk.name
+          build_tools = Path(os.environ['ANDROID_HOME']) / 'build-tools'
+          tools = sorted(p for p in build_tools.iterdir() if (p/'apksigner').exists() and (p/'aapt').exists())[-1]
+          signature = subprocess.check_output([str(tools/'apksigner'), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
+          assert 'CN=Android Debug' in signature
+          assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in signature
+          cert = re.search(r'certificate SHA-256 digest: (\w+)', signature).group(1)
+          badging = subprocess.check_output([str(tools/'aapt'), 'dump', 'badging', str(apk)], text=True)
+          assert "package: name='com.eibyx.nuvio.artworkfix.debug'" in badging
+          assert 'application-debuggable' in badging and "native-code: 'arm64-v8a'" in badging
+          manifest = subprocess.check_output([str(tools/'aapt'), 'dump', 'xmltree', str(apk), 'AndroidManifest.xml'], text=True)
+          assert re.search(r'ARTWORK_DIAGNOSTICS[^\n]*\n[^\n]*android:value[^\n]*0xffffffff', manifest)
+          with zipfile.ZipFile(apk) as z:
+              assert z.testzip() is None
+              native = [n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')]
+              assert native and {n.split('/')[1] for n in native} == {'arm64-v8a'}
+              assert {'libmpv.so','libplayer.so','libass.so','libasskt.so','libc++_shared.so'} <= {Path(n).name for n in native}
+              for n in native:
+                  h = z.read(n)[:20]
+                  assert h[:5] == b'\x7fELF\x02' and int.from_bytes(h[18:20], 'little') == 183
+              # Public checksum of the unchanged mpvlib 1.1.3 ARM64 C++ runtime.
+              cpp = hashlib.sha256(z.read('lib/arm64-v8a/libc++_shared.so')).hexdigest()
+              assert cpp == 'b5d97c38a728afe28d341cda3369f512d35eaf9c680c1b0563cd6a63e395230f'
+          report = dict(file=apk.name, bytes=apk.stat().st_size, sha256=digest, commit=commit,
+                        applicationId='com.eibyx.nuvio.artworkfix.debug', abi='arm64-v8a',
+                        elfLibraries=len(native), debugSignatureV2=True, certificateSha256=cert,
+                        zipIntegrity=True, cppRuntimeMatchesMpvRx=True, diagnosticCapability=True)
+          # Accessible through the Checks API even if the caller's network blocks Blob downloads.
+          print('::notice title=Verified diagnostic APK::' + json.dumps(report))
+          PY
 
