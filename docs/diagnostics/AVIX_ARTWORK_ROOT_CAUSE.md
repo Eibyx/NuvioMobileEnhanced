@@ -2,6 +2,8 @@
 
 Fecha de investigación: 17 de octubre de 2026. Esta rama es una **compilación de diagnóstico**, no una corrección certificada de los retrasos observados. No se importó ninguno de los dos experimentos descartados.
 
+**Actualización: diagnóstico exportable desde el teléfono.** La captura actual se activa en Ajustes avanzados y se copia/exporta mediante Compartir de Android, sin ADB ni Logcat. Véase [guía de uso y eventos](ARTWORK_DIAGNOSTICS_PHONE.md). Los resultados y APK de la primera investigación al final de este documento son históricos y no sustituyen la validación de esta nueva compilación.
+
 ## A. Resultado y nivel de certeza
 
 **Todavía no está demostrada la causa de los aproximadamente 11 segundos ni de la desaparición observada en el teléfono.** No se dispone de ejecución Android; ADB no arranca por su directorio de usuario de sólo lectura y no hay emulador instalado. Tampoco hay trazas del fallo, URL exacta, configuración TMDB/perfil ni APK de referencia identificada. No se puede convertir una diferencia estática en un resultado experimental.
@@ -140,14 +142,7 @@ Sin `avix.artworkDiagnostics=true`, no se instalan listener ni cliente de observ
 
 La APK conserva el original y debe etiquetarse **Diagnostic**, no presentarse como solución. La instalación independiente tiene datos/caché diferentes: antes de comparar hay que configurar el mismo perfil, idioma, TMDB, addons, biblioteca y preferencias. No copiar directorios privados de otra aplicación. Los esquemas OAuth existentes siguen siendo los originales; si Android pregunta qué app debe abrirlos, seleccionar la adecuada. No se ha certificado OAuth para un nuevo applicationId.
 
-Captura exclusivamente el tag nuevo, que no registra URL/credenciales:
-
-```bash
-adb install -r NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk
-adb logcat -v monotonic AvixArtwork:D '*:S' > artwork-trace.txt
-```
-
-Con la captura iniciada, forzar cierre desde Ajustes/ADB y abrir. No borrar datos salvo en el escenario frío elegido explícitamente. Grabar la pantalla al mismo tiempo para relacionar dibujo enviado con presentación visible.
+En la APK actual, abrir **Ajustes → Avanzados → Diagnóstico de imágenes**, limpiar, activar, reproducir y después detener/exportar. No cerrar el proceso antes de exportar: el búfer acotado sólo vive en memoria y la captura vuelve a estar desactivada al reiniciar. No borrar datos salvo en el escenario frío elegido explícitamente. Grabar la pantalla al mismo tiempo permite relacionar dibujo enviado con presentación visible. Los eventos anteriores a la activación no se recuperan retrospectivamente.
 
 1. Inicio limpio; luego cierre total y segunda apertura sin borrar datos.
 2. Abrir Sword Art Online, Clannad, Re:Zero u otro título afectado desde Home; anotar ID/proveedor sin credenciales y configuración TMDB.
@@ -172,7 +167,7 @@ Interpretación:
 | dispose → enter → MEMORY_CACHE | Reutilización correcta; hay recreación, no descarga | Investigar draw/alpha/superficie si sigue vacío. |
 | Success y draw.submitted, pero vídeo negro en captura | Artwork pudo dibujarse bajo otra capa | Comprobar superficie/tráiler/alpha, no aumentar caché. |
 
-`draw.submitted` es observación CPU; no certifica GPU, recorte, alpha, final de crossfade ni pantalla visible. `screen.frame.callback` sólo indica callback del frame de Compose. Content-Length es longitud declarada, **no bytes medidos en el cable**. Los spans HTTP se correlacionan por digest de recurso, no por una relación request padre inventada.
+`draw.submitted` es observación CPU; no certifica GPU, recorte, alpha, final de crossfade ni pantalla visible. `screen.frame.callback` sólo indica callback del frame de Compose. Content-Length es longitud declarada, **no bytes medidos en el cable**. Los spans HTTP se correlacionan por digest y `load` del modelo lógico; no se inventa una relación con un intento Coil si hay varios sobre el mismo modelo.
 
 ## H. Pruebas y limitaciones
 

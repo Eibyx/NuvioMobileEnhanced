@@ -104,6 +104,20 @@ class OriginalDetailHeroLifecycleTest {
     @After fun release() {
         SingletonImageLoader.reset()
         if (::loader.isInitialized) loader.shutdown()
+        com.nuvio.app.core.diagnostics.ArtworkDiagnostics.install(null)
+    }
+    @Test fun captureTogglesDoNotRestartAnAlreadyLoadedBackdrop() {
+        com.nuvio.app.core.diagnostics.ArtworkDiagnostics.configure(true)
+        show()
+        compose.waitUntil(5_000) { loaded.get() == 1 }
+        compose.runOnIdle { com.nuvio.app.core.diagnostics.ArtworkDiagnostics.start() }
+        compose.waitForIdle()
+        compose.runOnIdle { com.nuvio.app.core.diagnostics.ArtworkDiagnostics.stop() }
+        compose.waitForIdle()
+        assertEquals(1, starts.get())
+        assertEquals(listOf(DataSource.MEMORY), sources.toList())
+        assertTrue("compose.image.enter" in com.nuvio.app.core.diagnostics.ArtworkDiagnostics.report())
+        com.nuvio.app.core.diagnostics.ArtworkDiagnostics.install(null)
     }
     @Test fun loadedBackdropReturnsFromMemoryAfterLazyItemDisposal() {
         show()
