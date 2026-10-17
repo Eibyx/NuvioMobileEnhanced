@@ -65,7 +65,7 @@ Las líneas siguientes corresponden a la **base f1**, antes de añadir observaci
 - `features/details/components/DetailHero.kt:116`: selección `background ?: poster`; `:118` AsyncImage con tamaño de layout y Crop, sin transformación Coil; `:127` parallax/escala dentro de graphicsLayer. No hay un `rememberAsyncImagePainter` externo que sobreviva al item.
 - `MetaDetailsScreen.kt:1191` / `core/ui/ArtworkDominantColor.kt:98`: muestra independiente 96×96 con el mismo loader y URL. El tamaño no forma automáticamente una nueva clave de memoria; Coil comprueba si el resultado cacheado satisface la solicitud. Una variante pequeña puede reemplazar una grande bajo la misma clave; no implica que Coil sirva necesariamente la pequeña a una petición grande. Falta observar keys/dimensiones/hits reales.
 - Tablet dibuja `TabletDetailBackdrop` fuera de la lista y puede tener una segunda variante difuminada en modo cinematográfico. No extrapolar un resultado móvil a tablet.
-- El tráiler se dibuja encima del artwork. El estado ready de la pantalla y la creación/destrucción de una superficie pertenecen a ámbitos distintos; `STATE_READY` tampoco prueba primer fotograma. Es una explicación alternativa de negro durante scroll **si están activados los tráilers**, aún no reproducida aquí. No se cambia el reproductor.
+- El tráiler se dibuja encima del artwork. El estado ready de la pantalla y la creación/destrucción de una superficie pertenecen a ámbitos distintos; `STATE_READY` tampoco prueba primer fotograma. El usuario confirmó posteriormente que los tráilers automáticos están **desactivados** en el caso reportado: el filtro `heroTrailerPlaybackEnabled` deja la URL de superficie a null, por lo que el tráiler de Details queda descartado para ese síntoma. No se cambia el reproductor.
 
 ### Comparación con las referencias
 
@@ -210,3 +210,25 @@ Rama creada desde f1, sin merges ni importación de los experimentos. Dependenci
 - La comprobación HTTP de ejemplo contra `image.tmdb.org` también fue bloqueada por el proxy (403 CONNECT); no se inventan encabezados de TMDB ni se sustituyen políticas por ese bloqueo.
 
 El resultado verificable es una base original aislada, investigación trazable, reproducciones controladas y una APK de diagnóstico. **La reproducción del fallo real y su corrección quedan pendientes de evidencia del teléfono.**
+
+
+## Confirmación del usuario y artefacto de GitHub
+
+El usuario confirmó en esta sesión: **reproducción automática de tráilers desactivada** cuando desaparece el background al volver del scroll. Esto descarta la superficie de tráiler de Details como causa de ese caso concreto; no demuestra todavía si el origen está en caché, cancelación, constraints o dibujo. La APK de diagnóstico mantiene esa opción y debe probarse inicialmente desactivada.
+
+CI [39056163707](https://github.com/Eibyx/NuvioMobileEnhanced/actions/runs/39056163707) terminó **success** en sus dos jobs: Unit tests y Debug APK, sobre el commit de código/pruebas **`5b348b732d3871679540681eb80854cd2111cb2e`**. La actualización posterior de este informe no cambia código, tests ni configuración de build; no requiere repetir esas validaciones.
+
+[Descargar artefacto de GitHub](https://github.com/Eibyx/NuvioMobileEnhanced/actions/runs/39056163707/artifacts/12108844465) (`Nuvio-Eibyx-Debug-40`, puede requerir iniciar sesión en GitHub). Contiene el APK, `SHA256SUMS` y `COMMIT.txt`; extraer el ZIP antes de instalar.
+
+Se descargó y verificó también el **APK de CI**, distinto del APK local por configuración y firma Debug de la máquina:
+
+- Nombre: `NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk`.
+- Variante FullDebug; ID `com.eibyx.nuvio.artworkfix.debug`; exclusivamente arm64-v8a; versión original 0.5.10/142.
+- **92.114.927 bytes**; SHA-256 **`4a529600dfb0be682b3d4660b3654a2073282da689b42c5612f2961b60c0d6e3`**. Coincide con `SHA256SUMS` del artefacto.
+- Firma Android Debug v2 verificada. Certificado público SHA-256 `490b41d0441048ba1926a8bb077945d8a858c5ec79a9121116a5c89d5e6fd71e`.
+- ZIP íntegro, 20 bibliotecas ELF64/AArch64, mpvRx/ASS/C++ presentes. `COMMIT.txt` coincide con el commit validado.
+- Copia verificada: `/workspace/artifacts/avix-artwork-root-cause/github-ci/NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk`.
+- **Usar preferentemente esta APK de CI para las pruebas.** La local se construyó sin configuración de backend ni IDs OAuth/TMDB en entorno/local.properties; no permite asumir equivalencia de cuenta/perfil/enriquecimiento. En CI el paso backend indicó configuración presente (el nombre del artefacto no lleva el sufijo `-sin-cuenta`). No se pudieron verificar todos los IDs OAuth mediante logs, cuyo acceso fue bloqueado; la autenticación real no está ensayada.
+- Las dos APK Debug tienen certificados diferentes: elegir una. Si se intenta sustituir una por la otra con el mismo ID, Android puede exigir desinstalar primero **sólo la app de diagnóstico**, perdiendo sus datos/caché. No desinstalar la aplicación original para este procedimiento.
+
+El APK sigue siendo de diagnóstico, no una corrección del fallo. No hay mediciones reales antes/después. No se publicó una release ni se alteraron las ramas originales.
