@@ -193,3 +193,20 @@ El objetivo sigue pendiente hasta reproducir y verificar el síntoma real. No ha
 ## J. Integridad
 
 Rama creada desde f1, sin merges ni importación de los experimentos. Dependencias, versiones, Hero original, gradientes, animaciones, temas, fuentes, navegación, snapshots, Tracking, biblioteca y reproductores permanecen funcionalmente sin cambios. No se editan ExoPlayer/mpvRx/ASS/SSA. El observador no decide qué imagen mostrar, cuándo pedirla ni cuánto conservarla.
+
+## Validación ejecutada y entrega (17-10-2026)
+
+- Suite completa `:composeApp:testAndroidHostTest`: **1.806 pruebas**, 275 clases, **0 fallos, 0 errores, 0 omitidas**. Incluye las ocho pruebas nuevas. XML contados desde `composeApp/build/test-results/testAndroidHostTest/TEST-*.xml`.
+- Las tres reproducciones con el DetailHero original pasan. El retorno caliente produce fuentes `MEMORY` (fetcher controlado) y después `MEMORY_CACHE`, con un único fetch. La carga cancelada vuelve a iniciarse al regresar. La expulsión explícita de memoria requiere otro fetch. Esto no prueba rendimiento visual ni descargas HTTP en el teléfono.
+- FullDebug compiló en la misma invocación que la suite; Gradle terminó `BUILD SUCCESSFUL`. `verifyMpvlibChecksum` verificó el AAR original y `verifyAvixCxxRuntimeFullDebug` confirmó la copia correcta de C++.
+- `processFullReleaseMainManifest` también pasó con la propiedad de diagnóstico=true, verificando que Release mantiene `com.eibyx.nuvio` y fuerza el flag a false. **No se compiló ni firmó una APK Release en esta tarea.**
+- APK local FullDebug: **92.116.172 bytes** (87,85 MiB), ID **`com.eibyx.nuvio.artworkfix.debug`**, minSdk24, versión original 0.5.10/142 sin cambios. ZIP íntegro; exclusivamente **arm64-v8a**, 20 bibliotecas verificadas como ELF64/AArch64, incluyendo mpvRx (`libmpv.so`, `libplayer.so`), C++ y ASS (`libass.so`, `libasskt.so`).
+- Firma verificada con apksigner: **Android Debug, esquema v2**. SHA-256 del certificado público: `7d14683756bf59cd6a2665233c9758f35cc905a83bbc0233f02792018f25e3fa`.
+- SHA-256 del APK local: `83c58b7b9ff3676f046a0d9491676019623551f9ad55355d128139dd8a9e0fc9`.
+- Archivo conservado fuera del checkout: `/workspace/artifacts/avix-artwork-root-cause/NuvioEibyx-Original-Artwork-Diagnostic-ARM64-Debug.apk`. El manifiesto de entrega externo registra el commit correspondiente. No se incluye la APK en Git.
+- También se validaron sintaxis YAML y todos los scripts bash del workflow CI modificado, y `git diff --check`/`git diff --cached --check`.
+- Fallos intermedios corregidos **del diagnóstico/pruebas**: inserción inicial que separaba una expresión Elvis; fetcher simulado inicialmente registrado para String cuando Coil mapea a Uri. No se clasifican como defectos del original. No se eliminaron ni desactivaron pruebas.
+- ADB abortó: `Cannot mkdir '/home/agent/.android': Read-only file system`. No hay emulador instalado; no se ejecutó ni instaló la app en Android real. No se certifican aspecto, ausencia de ghosting, funcionamiento audiovisual, OAuth del ID experimental ni mejora de los 11 segundos.
+- La comprobación HTTP de ejemplo contra `image.tmdb.org` también fue bloqueada por el proxy (403 CONNECT); no se inventan encabezados de TMDB ni se sustituyen políticas por ese bloqueo.
+
+El resultado verificable es una base original aislada, investigación trazable, reproducciones controladas y una APK de diagnóstico. **La reproducción del fallo real y su corrección quedan pendientes de evidencia del teléfono.**
