@@ -69,6 +69,17 @@ val avixRequestedAbis = providers.gradleProperty("avix.abis").orNull
     ?.takeIf { it.isNotEmpty() }
     ?.onEach { abi -> require(abi in avixSupportedAbis) { "avix.abis: unknown ABI '$abi' (use ${avixSupportedAbis.joinToString()})" } }
 
+// Opt-in experimental Debug identity/ABI selection. Production identity and Release splits are unchanged.
+val avixDebugApplicationId = providers.gradleProperty("avix.debug.applicationId").orNull?.also {
+    require(it.matches(Regex("[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+")) && it.endsWith(".debug")) {
+        "avix.debug.applicationId must be a valid application ID ending in .debug"
+    }
+}
+val avixDebugAbis = providers.gradleProperty("avix.debug.abis").orNull
+    ?.split(',')?.map(String::trim)?.also { abis ->
+        require(abis.isNotEmpty() && abis.all { it in avixSupportedAbis }) { "Invalid avix.debug.abis" }
+    }
+
 
 // Avix: several AARs ship lib/<abi>/libc++_shared.so (ass-kt 0.5.1 with an older NDK, mpvlib 1.1.3
 // with a newer one). The inherited pickFirsts rule let the older copy win, and libmpv.so then fails
@@ -225,6 +236,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            avixDebugAbis?.let { selected -> ndk { abiFilters.addAll(selected) } }
+        }
         getByName("release") {
             val minifyRelease = providers.gradleProperty("releaseMinifyEnabled")
                 .map(String::toBooleanStrict)
@@ -251,7 +265,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
-        variant.applicationId.set("com.eibyx.nuvio.debug")
+        variant.applicationId.set(avixDebugApplicationId ?: "com.eibyx.nuvio.debug")
     }
 }
 

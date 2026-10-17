@@ -1,0 +1,71 @@
+name: Yesnt10 Hero experimental APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yesnt10-hero-debug-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    if: github.repository == 'Eibyx/NuvioMobileEnhanced' && github.ref == 'refs/heads/experiment/yesnt10-hero'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g
+      LOCAL_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL || 'https://api.nuvio.tv' }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
+      ANILIST_CLIENT_ID: ${{ secrets.ANILIST_CLIENT_ID }}
+      MAL_CLIENT_ID: ${{ secrets.MAL_CLIENT_ID }}
+      TRAKT_CLIENT_ID: ${{ secrets.TRAKT_CLIENT_ID }}
+      SIMKL_CLIENT_ID: ${{ secrets.SIMKL_CLIENT_ID }}
+      MDBLIST_CLIENT_ID: ${{ secrets.MDBLIST_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Optional integration configuration
+        shell: bash
+        run: |
+          if [ -n "$LOCAL_PROPERTIES_BASE64" ]; then
+            printf '%s' "$LOCAL_PROPERTIES_BASE64" | base64 --decode > local.properties
+          fi
+      - name: FullDebug ARM64 (standard development signature)
+        run: >-
+          ./gradlew :androidApp:assembleFullDebug
+          -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore
+          -Pavix.debug.applicationId=com.eibyx.nuvio.yesnthero.debug
+          -Pavix.debug.abis=arm64-v8a --stacktrace
+      - name: Verify and collect APK
+        shell: bash
+        run: |
+          mkdir -p hero-artifact
+          cp androidApp/build/outputs/apk/full/debug/*.apk hero-artifact/NuvioEibyx-YesntHero-FullDebug-arm64.apk
+          SDK_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$SDK_TOOLS/apksigner" verify --verbose hero-artifact/*.apk
+          "$SDK_TOOLS/aapt" dump badging hero-artifact/*.apk > hero-artifact/badging.txt
+          grep -q "package: name='com.eibyx.nuvio.yesnthero.debug'" hero-artifact/badging.txt
+          python3 - <<'PY'
+          import glob, zipfile
+          with zipfile.ZipFile(glob.glob('hero-artifact/*.apk')[0]) as apk:
+              assert apk.testzip() is None
+              libraries = [p for p in apk.namelist() if p.startswith('lib/') and p.endswith('.so')]
+              assert {p.split('/')[1] for p in libraries} == {'arm64-v8a'}
+              assert all('lib/arm64-v8a/' + name in libraries for name in ('libmpv.so', 'libplayer.so', 'libc++_shared.so'))
+          PY
+          git rev-parse HEAD > hero-artifact/COMMIT.txt
+          sha256sum hero-artifact/*.apk > hero-artifact/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: NuvioEibyx-YesntHero-FullDebug-arm64-${{ github.run_number }}
+          path: hero-artifact/
+          retention-days: 14
+          if-no-files-found: error

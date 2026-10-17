@@ -170,12 +170,16 @@ jobs:
           done
 
       - name: Build debug APK
+        env:
+          # Only the isolated Hero branch opts into an independent, ARM64-only Debug APK.
+          HERO_DEBUG_ARGS: ${{ github.ref == 'refs/heads/experiment/yesnt10-hero' && '-Pavix.debug.applicationId=com.eibyx.nuvio.yesnthero.debug -Pavix.debug.abis=arm64-v8a' || '' }}
         run: >
           ./gradlew --stacktrace
           :androidApp:assembleFullDebug
           -Pnuvio.android.distribution=full
           -Pnuvio.ios.distribution=appstore
           -Pavix.versionCode=$((100000 + GITHUB_RUN_NUMBER))
+          $HERO_DEBUG_ARGS
 
       - name: Rename debug APK
         shell: bash
@@ -183,12 +187,13 @@ jobs:
           mkdir -p dist
           apk=$(ls androidApp/build/outputs/apk/full/debug/*.apk | head -1)
           cp "$apk" dist/Nuvio-Eibyx-Debug.apk
+          git rev-parse HEAD > dist/COMMIT.txt
           (cd dist && sha256sum Nuvio-Eibyx-Debug.apk | tee Nuvio-Eibyx-Debug.apk.sha256)
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: Nuvio-Eibyx-Debug-${{ github.run_number }}${{ steps.backend.outputs.configured != 'true' && '-sin-cuenta' || '' }}
+          name: Nuvio-Eibyx-${{ github.ref == 'refs/heads/experiment/yesnt10-hero' && 'YesntHero-FullDebug-arm64-' || 'Debug-' }}${{ github.run_number }}${{ steps.backend.outputs.configured != 'true' && '-sin-cuenta' || '' }}
           path: dist/
           if-no-files-found: error
           retention-days: 14
