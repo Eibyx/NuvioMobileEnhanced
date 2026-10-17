@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.nuvio.app.core.ui.artworkDrawMarker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +70,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
@@ -78,7 +78,6 @@ import com.nuvio.app.core.build.TrailerPlaybackMode
 import com.nuvio.app.core.format.formatReleaseDateForDisplay
 import com.nuvio.app.core.ui.LocalDynamicArtworkBackgroundColor
 import com.nuvio.app.core.ui.rememberDynamicArtworkBackgroundEnabled
-import com.nuvio.app.core.ui.PrefetchArtworkDominantColors
 import com.nuvio.app.core.ui.heroStretchHeight
 import com.nuvio.app.core.ui.ScreenActivityEffect
 import com.nuvio.app.core.ui.heroStretchZoom
@@ -136,12 +135,16 @@ internal object HomeHeroTrailerPlaybackController {
 }
 
 private object HomeHeroTrailerPlaybackPositionStore {
-    private val positions = mutableMapOf<String, Long>()
+    private val positions = linkedMapOf<String, Long>()
 
     fun get(key: String): Long = positions[key] ?: 0L
 
     fun set(key: String, positionMs: Long) {
-        if (positionMs > 0L) positions[key] = positionMs
+        if (positionMs > 0L) {
+            positions.remove(key)
+            positions[key] = positionMs
+            if (positions.size > 32) positions.remove(positions.keys.first())
+        }
     }
 
     fun clear(key: String) {
@@ -189,6 +192,23 @@ internal data class HomeHeroLayout(
     val bottomFadeHeight: Dp,
     val logoWidthFraction: Float,
 )
+
+@Composable
+internal fun rememberHeroArtworkContinuityAllowed(url: String?, complete: Boolean, failed: Boolean): Boolean {
+    var allowed by remember(url) { mutableStateOf(!failed) }
+    LaunchedEffect(url, complete, failed) {
+        allowed = !failed
+        // Only a pending replacement expires. A valid current image can underlay a
+        // later transition even after the user has left this page idle for a while.
+        if (!complete && !failed) {
+            delay(15_000)
+            allowed = false
+        }
+    }
+    // Readiness is immediately usable during this composition, without waiting for
+    // the effect to reset an expired pending-request allowance on the next frame.
+    return !failed && (complete || allowed)
+}
 
 @Composable
 internal fun HomeHeroSection(
@@ -322,46 +342,95 @@ internal fun HomeHeroSection(
             }
             val currentPage = pagerState.currentPage
             val visiblePages = remember(currentPage, pagerState.pageCount, items.size) {
-                listOf(
-                    (currentPage - 1).coerceAtLeast(0),
-                    (currentPage + 1).coerceAtMost(pagerState.pageCount - 1),
-                    currentPage,
-                ).distinct()
+                heroVisiblePages(currentPage, pagerState.pageCount)
                     .map { page -> HeroPageLayer(page = page, itemIndex = page % items.size) }
             }
             val currentItem = items[currentPage % items.size]
 
-            val activeArtworkUrl = heroArtworkUrl(items[pagerState.targetPage % items.size], effectiveArtworkSource)
+            // The composed neighbours are the prefetch: never enqueue ORIGINAL-sized duplicates.
+            val platformContext = LocalPlatformContext.current
+            var fallbackMeta by remember(currentItem.type, currentItem.id) {
+                mutableStateOf(MetaDetailsRepository.peek(currentItem.type, currentItem.id))
+            }
+            val catalogArtworkUrl = heroArtworkUrl(currentItem, effectiveArtworkSource)
+            LaunchedEffect(currentItem.type, currentItem.id, catalogArtworkUrl) {
+                if (catalogArtworkUrl == null) {
+                    fallbackMeta = try {
+                        MetaDetailsRepository.fetch(currentItem.type, currentItem.id, includeEpisodes = false)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Throwable) { null }
+                }
+            }
+            fun artworkFor(item: MetaPreview): String? = heroArtworkUrl(item, effectiveArtworkSource)
+                ?: fallbackMeta?.takeIf { item.type == currentItem.type && item.id == currentItem.id }
+                    ?.let { it.background?.takeIf(String::isNotBlank) ?: it.poster?.takeIf(String::isNotBlank) }
+            val currentArtworkUrl = artworkFor(currentItem)
+            val activeArtworkUrl = artworkFor(items[pagerState.targetPage % items.size])
             LaunchedEffect(onActiveArtworkChange, activeArtworkUrl) {
                 onActiveArtworkChange?.invoke(activeArtworkUrl)
             }
-            if (onActiveArtworkChange != null && rememberDynamicArtworkBackgroundEnabled()) {
-                val heroArtworkUrls = remember(items, effectiveArtworkSource) {
-                    items.mapNotNull { item -> heroArtworkUrl(item, effectiveArtworkSource) }
-                }
-                PrefetchArtworkDominantColors(heroArtworkUrls)
+            var activeArtworkComplete by remember(currentArtworkUrl) { mutableStateOf(false) }
+            var activeArtworkFailed by remember(currentArtworkUrl) { mutableStateOf(currentArtworkUrl.isNullOrBlank()) }
+            var lastValidArtwork by remember(effectiveArtworkSource) {
+                mutableStateOf<Pair<String, androidx.compose.ui.graphics.painter.Painter>?>(null)
+            }
+            val continuityAllowed = rememberHeroArtworkContinuityAllowed(currentArtworkUrl, activeArtworkComplete, activeArtworkFailed)
+            LaunchedEffect(currentArtworkUrl) {
+                com.nuvio.app.core.ui.ImagePerformance.mark("home.artworkUrl", currentArtworkUrl.orEmpty())
             }
 
-            val platformContext = LocalPlatformContext.current
-            LaunchedEffect(pagerState.settledPage, items, effectiveArtworkSource) {
-                val settled = pagerState.settledPage
-                val neighbours = listOf(settled + 1, settled - 1)
-                    .filter { page -> page >= 0 && items.size > 1 }
-                    .map { page -> items[page % items.size] }
-                    .distinct()
-                val imageLoader = SingletonImageLoader.get(platformContext)
-                neighbours.forEach { item ->
-                    listOfNotNull(heroArtworkUrl(item, effectiveArtworkSource), item.logo?.takeIf { it.isNotBlank() })
-                        .forEach { url ->
-                            imageLoader.enqueue(ImageRequest.Builder(platformContext).data(url).build())
+            val dynamicColorsEnabled = rememberDynamicArtworkBackgroundEnabled()
+            // One painter per resource, even when two visual layers show the same item.
+            val artworkPainters = mutableMapOf<String, coil3.compose.AsyncImagePainter>()
+            visiblePages.map { items[it.itemIndex] }
+                .distinctBy { artworkFor(it) }
+                .forEach { item ->
+                    val url = artworkFor(item) ?: return@forEach
+                    key(url) {
+                        var started by remember { mutableStateOf(false) }
+                        val shouldStart = started || url == currentArtworkUrl || activeArtworkComplete || activeArtworkFailed
+                        if (shouldStart) {
+                            androidx.compose.runtime.SideEffect { started = true }
+                            val request = remember(url, item.rawPosterUrl, heroWidthPx, heroHeightPx) {
+                                ImageRequest.Builder(platformContext).data(url)
+                                    .size(heroWidthPx.toInt().coerceAtLeast(1), heroHeightPx.toInt().coerceAtLeast(1))
+                                    .scale(coil3.size.Scale.FILL)
+                                    .precision(coil3.size.Precision.INEXACT)
+                                    .apply {
+                                        val fallback = item.rawPosterUrl ?: item.banner?.takeIf { it.isNotBlank() } ?: item.poster?.takeIf { it.isNotBlank() }
+                                        if (!fallback.isNullOrBlank() && fallback != url) {
+                                            extras[com.nuvio.app.core.poster.CustomPosterFallbackInterceptor.REQUEST_FALLBACK_URL] = fallback
+                                        }
+                                    }.build()
+                            }
+                            val painter = coil3.compose.rememberAsyncImagePainter(request, contentScale = ContentScale.Crop)
+                            val state by painter.state.collectAsStateWithLifecycle()
+                            val loaded = state as? coil3.compose.AsyncImagePainter.State.Success
+                            com.nuvio.app.core.ui.rememberArtworkDominantColor(
+                                url, enabled = dynamicColorsEnabled, painter = loaded?.painter,
+                                bitmap = remember(loaded, dynamicColorsEnabled) {
+                                    if (dynamicColorsEnabled) loaded?.result?.let { com.nuvio.app.features.details.components.loadedBackdropImageBitmap(it) } else null
+                                },
+                            )
+                            LaunchedEffect(state, currentArtworkUrl) {
+                                if (url == currentArtworkUrl) {
+                                    when (state) {
+                                        is coil3.compose.AsyncImagePainter.State.Success -> {
+                                            lastValidArtwork = url to loaded!!.painter
+                                            activeArtworkComplete = true
+                                        }
+                                        is coil3.compose.AsyncImagePainter.State.Error -> {
+                                            activeArtworkFailed = true
+                                            lastValidArtwork = null
+                                        }
+                                        else -> Unit
+                                    }
+                                }
+                            }
+                            artworkPainters[url] = painter
                         }
-                }
-                neighbours.forEach { item ->
-                    if (MetaDetailsRepository.peek(item.type, item.id) == null) {
-                        runCatching { MetaDetailsRepository.fetch(item.type, item.id) }
                     }
                 }
-            }
 
             val heroTrailerItemKey = "${currentItem.type}:${currentItem.id}"
             var heroTrailerPlaybackSource by remember(currentItem.type, currentItem.id) {
@@ -402,12 +471,12 @@ internal fun HomeHeroSection(
                 if (!effectiveTrailerPlaybackEnabled) return@LaunchedEffect
                 val resolvedSource = async {
                     val meta = runCatching {
-                        MetaDetailsRepository.fetch(currentItem.type, currentItem.id)
-                    }.getOrNull()
+                        MetaDetailsRepository.fetch(currentItem.type, currentItem.id, includeEpisodes = false)
+                    }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
                     val trailer = meta?.trailers?.let(::selectHeroTrailer) ?: return@async null
                     runCatching {
                         TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
-                    }.getOrNull()
+                    }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
                 }
                 if (trailerStartDelaySeconds > 0) {
                     delay(trailerStartDelaySeconds.toLong() * 1000L)
@@ -444,16 +513,39 @@ internal fun HomeHeroSection(
                             .height(layout.heroHeight)
                             .heroStretchZoom(stretchPx),
                     ) {
+                        if (!activeArtworkFailed && continuityAllowed) {
+                            lastValidArtwork?.let { (_, painter) ->
+                                androidx.compose.foundation.Image(
+                                    painter = painter, contentDescription = null,
+                                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                                        val fraction = pagerState.currentPageOffsetFraction
+                                        val incomingPage = (pagerState.currentPage + if (fraction >= 0f) 1 else -1)
+                                            .coerceIn(0, pagerState.pageCount - 1)
+                                        val incoming = artworkPainters[artworkFor(items[incomingPage % items.size])]
+                                        val pendingTransition = pagerState.isScrollInProgress &&
+                                            incoming?.state?.value !is coil3.compose.AsyncImagePainter.State.Success
+                                        alpha = if (!activeArtworkComplete || pendingTransition) 1f else 0f
+                                        translationY = if (isCardStyle) 0f else heroBackgroundScrollTranslationY(scrollOffsetPx)
+                                        scaleX = artworkBaseScale * if (isCardStyle) 1f else heroBackgroundScrollScale(scrollOffsetPx)
+                                        scaleY = scaleX
+                                    },
+                                    alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
+                                    contentScale = ContentScale.Crop,
+                                )
+                            }
+                        }
                         visiblePages.forEach { layer ->
                             val item = items[layer.itemIndex]
-                            val artworkUrl = heroArtworkUrl(item, effectiveArtworkSource)
+                            val artworkUrl = artworkFor(item)
                             val isCurrentLayer = layer.page == currentPage
-                            key(effectiveArtworkSource, item.type, item.id, artworkUrl) {
-                                AsyncImage(
-                                    model = artworkUrl,
+                            key(layer.page, effectiveArtworkSource, item.type, item.id, artworkUrl) {
+                                artworkPainters[artworkUrl]?.let { painter ->
+                                androidx.compose.foundation.Image(
+                                    painter = painter,
                                     contentDescription = item.name,
                                     modifier = Modifier
                                         .fillMaxSize()
+                                        .artworkDrawMarker(artworkUrl.orEmpty(), painter.state.value is coil3.compose.AsyncImagePainter.State.Success)
                                         .graphicsLayer {
                                             val offset = heroPageOffset(pagerState, layer.page)
                                             val visibility = (1f - abs(offset)).coerceIn(0f, 1f)
@@ -472,6 +564,7 @@ internal fun HomeHeroSection(
                                     alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
                                     contentScale = ContentScale.Crop,
                                 )
+                                }
                             }
                         }
 
@@ -503,6 +596,7 @@ internal fun HomeHeroSection(
                                         scaleX = artworkBaseScale * if (isCardStyle) 1f else heroBackgroundScrollScale(scrollOffsetPx)
                                         scaleY = artworkBaseScale * if (isCardStyle) 1f else heroBackgroundScrollScale(scrollOffsetPx)
                                     },
+                                onUnavailable = { heroTrailerReady = false },
                                 onReady = {
                                     if (!heroTrailerFinished) heroTrailerReady = true
                                 },
@@ -595,7 +689,7 @@ internal fun HomeHeroSection(
                             ) {
                                 visiblePages.forEach { layer ->
                                     val layerItem = items[layer.itemIndex]
-                                    key(layerItem.type, layerItem.id) {
+                                    key(layer.page, layerItem.type, layerItem.id) {
                                     // Neighbour pages stay composed for smooth swipes, but while they are
                                     // fully off-screen they must not expose their titles to semantics
                                     // (tests, TalkBack) — only pages that are actually on screen do.
@@ -619,6 +713,8 @@ internal fun HomeHeroSection(
                                             layout = layout,
                                             onItemClick = onItemClick,
                                             options = heroOptions,
+                                            loadMetadata = layer.page == currentPage && (activeArtworkComplete || activeArtworkFailed),
+                                            prepareLogo = activeArtworkComplete || activeArtworkFailed,
                                         )
                                     }
                                     }
@@ -716,9 +812,9 @@ private data class HeroPageLayer(
     val itemIndex: Int,
 )
 
-private fun heroArtworkUrl(item: MetaPreview, source: HomeHeroArtworkSource): String? = when (source) {
-    HomeHeroArtworkSource.POSTER -> item.poster ?: item.banner
-    HomeHeroArtworkSource.BACKDROP -> item.banner ?: item.poster
+internal fun heroArtworkUrl(item: MetaPreview, source: HomeHeroArtworkSource): String? = when (source) {
+    HomeHeroArtworkSource.POSTER -> item.poster?.takeIf { it.isNotBlank() } ?: item.banner?.takeIf { it.isNotBlank() }
+    HomeHeroArtworkSource.BACKDROP -> item.banner?.takeIf { it.isNotBlank() } ?: item.poster?.takeIf { it.isNotBlank() }
 }
 
 private fun heroPageOffset(
@@ -800,6 +896,8 @@ private fun HeroContentBlock(
     layout: HomeHeroLayout,
     onItemClick: ((MetaPreview) -> Unit)?,
     options: com.nuvio.app.features.home.AvixHeroOptions = com.nuvio.app.features.home.AvixHeroOptions(),
+    loadMetadata: Boolean = true,
+    prepareLogo: Boolean = true,
 ) {
     var logoLoadError by remember(item.type, item.id, item.logo) {
         mutableStateOf(false)
@@ -811,6 +909,7 @@ private fun HeroContentBlock(
         horizontalAlignment = if (layout.isTablet) Alignment.Start else Alignment.CenterHorizontally,
     ) {
         if (logoUrl != null && !logoLoadError) {
+            if (prepareLogo) {
             AsyncImage(
                 model = logoUrl,
                 contentDescription = item.name,
@@ -824,6 +923,9 @@ private fun HeroContentBlock(
                 contentScale = ContentScale.Fit,
                 onError = { logoLoadError = true },
             )
+            } else {
+                Spacer(Modifier.fillMaxWidth(layout.logoWidthFraction).aspectRatio(2.6f))
+            }
         } else {
             Text(
                 text = item.name,
@@ -848,11 +950,14 @@ private fun HeroContentBlock(
         val detailsState = remember(item.type, item.id) {
             mutableStateOf(MetaDetailsRepository.peek(item.type, item.id))
         }
-        LaunchedEffect(item.type, item.id) {
-            if (detailsState.value == null) {
+        val needsDetails = !options.compactMetadata ||
+            (options.showRatings && item.imdbRating.isNullOrBlank()) ||
+            (options.showOverview && item.description.isNullOrBlank()) || item.releaseInfo.isNullOrBlank()
+        LaunchedEffect(item.type, item.id, loadMetadata, needsDetails) {
+            if (loadMetadata && needsDetails && detailsState.value == null) {
                 detailsState.value = runCatching {
-                    MetaDetailsRepository.fetch(item.type, item.id)
-                }.getOrNull()
+                    MetaDetailsRepository.fetch(item.type, item.id, includeEpisodes = false)
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
             }
         }
         val details = detailsState.value
@@ -1181,3 +1286,6 @@ private fun resolveHeroTargetPage(
         else -> currentPage
     }
 }
+
+internal fun heroVisiblePages(currentPage: Int, pageCount: Int): List<Int> =
+    listOf((currentPage - 1).coerceAtLeast(0), (currentPage + 1).coerceAtMost(pageCount - 1), currentPage).distinct()

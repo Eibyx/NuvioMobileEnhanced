@@ -21,9 +21,15 @@ import com.nuvio.app.core.poster.CustomPosterFallbackInterceptor
  */
 class NuvioApplication : Application(), SingletonImageLoader.Factory {
 
+    override fun onCreate() {
+        super.onCreate()
+        com.nuvio.app.core.ui.ImagePerformance.mark("app.start")
+    }
+
     override fun newImageLoader(context: android.content.Context): ImageLoader {
         return ImageLoader.Builder(context)
             .crossfade(true)
+            .eventListenerFactory(com.nuvio.app.core.ui.ImagePerformance.listenerFactory)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .components {
@@ -31,7 +37,8 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 add(SvgDecoder.Factory())
                 add(
                     KtorNetworkFetcherFactory(
-                        cacheStrategy = { CacheControlCacheStrategy() },
+                        cacheStrategy = { com.nuvio.app.core.ui.ObservedImageCacheStrategy() },
+                        concurrentRequestStrategy = { coil3.network.DeDupeConcurrentRequestStrategy() },
                     ),
                 )
                 if (Build.VERSION.SDK_INT >= 28) {

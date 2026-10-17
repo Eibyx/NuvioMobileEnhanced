@@ -78,7 +78,9 @@ fun TabletDetailBackdrop(
     heroTrailerPlayWhenReady: () -> Boolean,
     heroTrailerMuted: Boolean,
     heroGradientColor: Color?,
+    backdropPainter: Painter? = null,
     onBackdropLoaded: (Painter, ImageBitmap?) -> Unit,
+    onHeroTrailerUnavailable: () -> Unit = {},
     onHeroTrailerReady: () -> Unit,
     onHeroTrailerFinished: () -> Unit,
 ) {
@@ -91,6 +93,7 @@ fun TabletDetailBackdrop(
     Box(modifier = Modifier.fillMaxSize()) {
         BackdropArtwork(
             meta = meta,
+            backdropPainter = backdropPainter,
             gradientColor = backgroundColor,
             blur = false,
             heroTrailerSourceUrl = heroTrailerSourceUrl,
@@ -100,11 +103,13 @@ fun TabletDetailBackdrop(
             heroTrailerMuted = heroTrailerMuted,
             onBackdropLoaded = onBackdropLoaded,
             onHeroTrailerReady = onHeroTrailerReady,
+            onHeroTrailerUnavailable = onHeroTrailerUnavailable,
             onHeroTrailerFinished = onHeroTrailerFinished,
         )
         if (cinematic) {
             BackdropArtwork(
                 meta = meta,
+                backdropPainter = backdropPainter,
                 gradientColor = backgroundColor,
                 blur = true,
                 modifier = Modifier.graphicsLayer { alpha = scrollProgress() },
@@ -132,7 +137,9 @@ private fun BackdropArtwork(
     heroTrailerReady: Boolean = false,
     heroTrailerPlayWhenReady: () -> Boolean = { false },
     heroTrailerMuted: Boolean = true,
+    backdropPainter: Painter? = null,
     onBackdropLoaded: (Painter, ImageBitmap?) -> Unit = { _, _ -> },
+    onHeroTrailerUnavailable: () -> Unit = {},
     onHeroTrailerReady: () -> Unit = {},
     onHeroTrailerFinished: () -> Unit = {},
 ) {
@@ -160,7 +167,8 @@ private fun BackdropArtwork(
     ) {
         val imageUrl = meta.background ?: meta.poster
         if (imageUrl != null) {
-            AsyncImage(
+            com.nuvio.app.core.ui.BackdropImage(
+                retainedPainter = backdropPainter,
                 model = imageUrl,
                 contentDescription = meta.name,
                 modifier = artworkModifier,
@@ -196,6 +204,7 @@ private fun BackdropArtwork(
                     alpha = trailerAlpha
                 },
                 onReady = onHeroTrailerReady,
+                onUnavailable = onHeroTrailerUnavailable,
                 onEnded = onHeroTrailerFinished,
                 onError = onHeroTrailerFinished,
             )

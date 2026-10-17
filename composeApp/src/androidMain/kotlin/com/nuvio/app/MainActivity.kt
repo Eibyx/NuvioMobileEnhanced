@@ -216,6 +216,8 @@ open class MainActivity : AppCompatActivity() {
             }
         }
         contentReady = true
+        com.nuvio.app.core.ui.ImagePerformance.mark("app.content")
+        StartupPreloader.startSecondary()
     }
 
     override fun onNewIntent(intent: Intent) {

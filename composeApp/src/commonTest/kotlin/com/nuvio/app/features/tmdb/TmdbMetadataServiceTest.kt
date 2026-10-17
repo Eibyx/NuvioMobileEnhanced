@@ -11,6 +11,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TmdbMetadataServiceTest {
+    @Test fun `season planning preserves all seasons and prioritizes selected season`() {
+        assertEquals(listOf(4, 1, 2, 3, 0), prioritizedArtworkSeasons(listOf(0, 1, 2, 3, 4, 2), 4))
+        assertEquals(listOf(1, 2, 0), prioritizedArtworkSeasons(listOf(0, 2, 1)))
+        assertEquals(emptyList(), prioritizedArtworkSeasons(emptyList()))
+    }
+
     @Test
     fun `buildStandaloneMeta maps tmdb enrichment without addon meta`() {
         val enrichment = TmdbEnrichment(

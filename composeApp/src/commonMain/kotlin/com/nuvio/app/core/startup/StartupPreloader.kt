@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.cancellation.CancellationException
@@ -54,12 +55,25 @@ object StartupPreloader {
             step("p2pSettings") { P2pSettingsRepository.ensureLoaded() }
             step("servers") { ServerRepository.ensureLoaded() }
             step("metaScreen") { MetaScreenSettingsRepository.ensureLoaded() }
-            step("releaseNotifications") { EpisodeReleaseNotificationsRepository.ensureLoaded() }
+            // Visibility of the Live TV tab is a profile preference needed by first composition.
             step("liveTv") { LiveTvRepository.ensureLoaded() }
             step("homeSnapshot") { HomeRepository.preloadSnapshot() }
         }
         InAppLogger.info(LogTag, "preloaded in ${started.elapsedNow().inWholeMilliseconds}ms")
     }.also { job = it }
+
+    private var secondaryJob: kotlinx.coroutines.Job? = null
+
+    fun startSecondary() {
+        if (secondaryJob != null) return
+        secondaryJob = scope.launch {
+            // These repositories also react to profile switches on Main; serialize publication.
+            kotlinx.coroutines.yield()
+            run {
+                step("releaseNotifications") { EpisodeReleaseNotificationsRepository.ensureLoaded() }
+            }
+        }
+    }
 
     private inline fun step(name: String, block: () -> Unit) {
         try {

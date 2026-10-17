@@ -76,6 +76,7 @@ internal fun AppEnvironment(content: @Composable () -> Unit) {
         setSingletonImageLoaderFactory { context ->
             ImageLoader.Builder(context)
                 .crossfade(true)
+                .eventListenerFactory(com.nuvio.app.core.ui.ImagePerformance.listenerFactory)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .components {
@@ -83,7 +84,8 @@ internal fun AppEnvironment(content: @Composable () -> Unit) {
                     add(SvgDecoder.Factory())
                     add(
                         coil3.network.ktor3.KtorNetworkFetcherFactory(
-                            cacheStrategy = { coil3.network.cachecontrol.CacheControlCacheStrategy() },
+                            cacheStrategy = { com.nuvio.app.core.ui.ObservedImageCacheStrategy() },
+                            concurrentRequestStrategy = { coil3.network.DeDupeConcurrentRequestStrategy() },
                         ),
                     )
                 }

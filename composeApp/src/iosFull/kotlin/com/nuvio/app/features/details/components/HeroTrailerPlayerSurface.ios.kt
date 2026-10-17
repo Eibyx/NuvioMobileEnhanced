@@ -7,6 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,20 +35,24 @@ actual fun HeroTrailerPlayerSurface(
     onReady: () -> Unit,
     onEnded: () -> Unit,
     onError: () -> Unit,
+    onUnavailable: () -> Unit,
     onPositionUpdate: (Long) -> Unit,
 ) {
+    val latestOnUnavailable = rememberUpdatedState(onUnavailable)
     val latestOnReady = rememberUpdatedState(onReady)
     val latestOnEnded = rememberUpdatedState(onEnded)
     val latestOnError = rememberUpdatedState(onError)
     val latestOnPositionUpdate = rememberUpdatedState(onPositionUpdate)
-    val bridge = remember { NuvioPlayerBridgeFactory.create() }
+    val bridge = remember(sourceUrl, sourceAudioUrl) { NuvioPlayerBridgeFactory.create() }
 
     if (bridge == null) {
         LaunchedEffect(Unit) { latestOnError.value() }
         return
     }
 
+    var presentable by remember(bridge) { mutableStateOf(false) }
     LaunchedEffect(bridge, sourceUrl, sourceAudioUrl) {
+        latestOnUnavailable.value()
         runCatching {
             bridge.setEmbeddedPreviewMode(true)
             bridge.setResizeMode(1)
@@ -94,13 +102,14 @@ actual fun HeroTrailerPlayerSurface(
                     bridge.getVideoWidth() > 0 && bridge.getVideoHeight() > 0
                 }.getOrDefault(false)
                 val isPlaying = runCatching { bridge.getIsPlaying() }.getOrDefault(false)
-                if (hasVideo || isPlaying) {
+                if (hasVideo && isPlaying) {
                     readyReported = true
                     // Only safe to seek once the file is actually loaded — seeking right after
                     // loadFileWithAudio() is issued is silently ignored since nothing is ready yet.
                     if (startPositionMs > 0L) {
                         runCatching { bridge.seekTo(startPositionMs) }
                     }
+                    presentable = true
                     latestOnReady.value()
                 }
             }
@@ -118,6 +127,7 @@ actual fun HeroTrailerPlayerSurface(
 
     DisposableEffect(bridge) {
         onDispose {
+            latestOnUnavailable.value()
             runCatching {
                 bridge.pause()
                 latestOnPositionUpdate.value(bridge.getPositionMs())
@@ -128,7 +138,7 @@ actual fun HeroTrailerPlayerSurface(
         }
     }
 
-    Box(modifier = modifier.background(Color.Black)) {
+    Box(modifier = modifier.graphicsLayer { alpha = if (presentable) 1f else 0f }.background(Color.Black)) {
         UIKitViewController(
             factory = { bridge.createPlayerViewController() },
             modifier = Modifier.fillMaxSize(),

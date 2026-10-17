@@ -83,9 +83,10 @@ internal object HomeSnapshotStore {
         "home/${profileKey.length}_${profileKey.hashCode().toUInt()}.json"
 
     fun load(profileKey: String): HomeSnapshot? = runCatching {
-        val payload = AppFileCache.read(pathFor(profileKey))?.takeIf(String::isNotBlank) ?: return null
+        val payload = AppFileCache.read(pathFor(profileKey))?.takeIf { it.isNotBlank() && it.length <= 8 * 1024 * 1024 } ?: return null
         val decoded = homeSnapshotJson.decodeFromString<SnapshotPayload>(payload)
-        if (decoded.profileKey != profileKey) return null
+        if (decoded.profileKey != profileKey || decoded.savedAtMillis > kotlin.time.Clock.System.now().toEpochMilliseconds() ||
+            kotlin.time.Clock.System.now().toEpochMilliseconds() - decoded.savedAtMillis > 7 * 24 * 60 * 60 * 1000L) return null
         HomeSnapshot(
             profileKey = profileKey,
             sections = decoded.sections.mapNotNull { section ->
@@ -115,7 +116,7 @@ internal object HomeSnapshotStore {
             val payload = SnapshotPayload(
                 profileKey = profileKey,
                 savedAtMillis = savedAtMillis,
-                sections = sections.mapNotNull { (cacheKey, section) ->
+                sections = sections.take(40).mapNotNull { (cacheKey, section) ->
                     val target = section.target.toSnapshotTarget() ?: return@mapNotNull null
                     SnapshotSection(
                         cacheKey = cacheKey,
@@ -124,14 +125,15 @@ internal object HomeSnapshotStore {
                         subtitle = section.subtitle,
                         addonName = section.addonName,
                         target = target,
-                        items = section.items.map { it.toSnapshotMeta() },
+                        items = section.items.take(100).map { it.toSnapshotMeta() },
                         availableItemCount = section.availableItemCount,
                         hasMore = section.hasMore,
                     )
                 },
-                heroItems = heroItems.map { it.toSnapshotMeta() },
+                heroItems = heroItems.take(8).map { it.toSnapshotMeta() },
             )
-            AppFileCache.write(pathFor(profileKey), homeSnapshotJson.encodeToString(payload))
+            val encoded = homeSnapshotJson.encodeToString(payload)
+            if (encoded.encodeToByteArray().size <= 8 * 1024 * 1024) AppFileCache.write(pathFor(profileKey), encoded)
         }
     }
 }

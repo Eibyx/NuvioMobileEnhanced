@@ -51,16 +51,18 @@ actual fun HeroTrailerPlayerSurface(
     onReady: () -> Unit,
     onEnded: () -> Unit,
     onError: () -> Unit,
+    onUnavailable: () -> Unit,
     onPositionUpdate: (Long) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val latestPlayWhenReady = rememberUpdatedState(playWhenReady)
+    val latestOnUnavailable = rememberUpdatedState(onUnavailable)
     val latestOnReady = rememberUpdatedState(onReady)
     val latestOnEnded = rememberUpdatedState(onEnded)
     val latestOnError = rememberUpdatedState(onError)
     val latestOnPositionUpdate = rememberUpdatedState(onPositionUpdate)
-    var playerContainer by remember { mutableStateOf<HeroTrailerTextureContainer?>(null) }
+    var playerContainer by remember(sourceUrl, sourceAudioUrl, lifecycleOwner) { mutableStateOf<HeroTrailerTextureContainer?>(null) }
 
     val dataSourceFactory = remember(context) {
         PlatformPlaybackDataSourceFactory.create(
@@ -70,7 +72,7 @@ actual fun HeroTrailerPlayerSurface(
             useYoutubeChunkedPlayback = true,
         )
     }
-    val exoPlayer = remember(sourceUrl, sourceAudioUrl, dataSourceFactory) {
+    val exoPlayer = remember(sourceUrl, sourceAudioUrl, dataSourceFactory, lifecycleOwner) {
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(mediaSourceFactory)
@@ -89,7 +91,6 @@ actual fun HeroTrailerPlayerSurface(
                 }
                 repeatMode = Player.REPEAT_MODE_OFF
                 volume = if (muted) 0f else 1f
-                prepare()
             }
     }
     var hasRenderedFirstFrame by remember(exoPlayer) { mutableStateOf(false) }
@@ -101,23 +102,21 @@ actual fun HeroTrailerPlayerSurface(
     )
 
     DisposableEffect(exoPlayer, lifecycleOwner) {
+        var active = true
+        latestOnUnavailable.value()
         fun detachVideoSurface() {
+            hasRenderedFirstFrame = false
+            latestOnUnavailable.value()
             playerContainer?.detachPlayer(exoPlayer)
             playerContainer?.alpha = 0f
         }
 
         val listener = object : Player.Listener {
-            private var readyReported = false
             private var endedReported = false
 
             override fun onPlaybackStateChanged(playbackState: Int) {
+                if (!active) return
                 when (playbackState) {
-                    Player.STATE_READY -> {
-                        if (!readyReported) {
-                            readyReported = true
-                            latestOnReady.value()
-                        }
-                    }
                     Player.STATE_ENDED -> {
                         if (!endedReported) {
                             endedReported = true
@@ -129,14 +128,19 @@ actual fun HeroTrailerPlayerSurface(
             }
 
             override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (!active) return
                 playerContainer?.setVideoSize(videoSize)
             }
 
             override fun onRenderedFirstFrame() {
+                if (!active) return
                 hasRenderedFirstFrame = true
+                playerContainer?.alpha = 1f
+                latestOnReady.value()
             }
 
             override fun onPlayerError(error: PlaybackException) {
+                if (!active) return
                 detachVideoSurface()
                 latestOnError.value()
             }
@@ -146,7 +150,7 @@ actual fun HeroTrailerPlayerSurface(
                 Lifecycle.Event.ON_START -> {
                     if (latestPlayWhenReady.value && exoPlayer.playbackState != Player.STATE_ENDED) {
                         playerContainer?.attachPlayer(exoPlayer)
-                        playerContainer?.alpha = 1f
+                        playerContainer?.alpha = if (hasRenderedFirstFrame) 1f else 0f
                         exoPlayer.play()
                     }
                 }
@@ -158,11 +162,13 @@ actual fun HeroTrailerPlayerSurface(
             }
         }
         exoPlayer.addListener(listener)
+        exoPlayer.prepare()
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
+            active = false
             lifecycleOwner.lifecycle.removeObserver(observer)
             exoPlayer.removeListener(listener)
-            latestOnPositionUpdate.value(exoPlayer.currentPosition)
+            onPositionUpdate(exoPlayer.currentPosition)
             detachVideoSurface()
             exoPlayer.stop()
             exoPlayer.release()
@@ -177,7 +183,7 @@ actual fun HeroTrailerPlayerSurface(
         exoPlayer.playWhenReady = playWhenReady
         if (playWhenReady) {
             playerContainer?.attachPlayer(exoPlayer)
-            playerContainer?.alpha = 1f
+            playerContainer?.alpha = if (hasRenderedFirstFrame) 1f else 0f
             exoPlayer.play()
         } else {
             exoPlayer.pause()
@@ -219,12 +225,14 @@ actual fun HeroTrailerPlayerSurface(
         modifier = modifier
             .clipToBounds()
             .graphicsLayer {
+                alpha = if (hasRenderedFirstFrame) 1f else 0f
                 scaleX = letterboxZoomState.value
                 scaleY = letterboxZoomState.value
             },
         factory = { viewContext ->
             HeroTrailerTextureContainer(viewContext).apply {
                 layoutParams = android.view.ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                alpha = 0f
                 attachPlayer(exoPlayer)
                 playerContainer = this
             }

@@ -6,6 +6,21 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class HomeHeroSectionTest {
+    @Test fun `visual layers have unique identities for one two three and eight items`() {
+        for (count in listOf(1, 2, 3, 8)) {
+            val pages = heroVisiblePages(if (count == 1) 0 else 800, if (count == 1) 1 else Int.MAX_VALUE)
+            assertEquals(pages.size, pages.toSet().size)
+            assertTrue(pages.all { it >= 0 })
+            assertTrue(pages.map { it % count }.all { it in 0 until count })
+            if (count == 2) assertTrue(pages.map { it % count }.toSet().size < pages.size)
+        }
+    }
+    @Test fun `blank artwork falls back without discarding custom poster selection`() {
+        val item = com.nuvio.app.features.home.MetaPreview("id", "movie", "name", poster = "custom", banner = " ")
+        assertEquals("custom", heroArtworkUrl(item, com.nuvio.app.features.home.HomeHeroArtworkSource.BACKDROP))
+        assertEquals("custom", heroArtworkUrl(item, com.nuvio.app.features.home.HomeHeroArtworkSource.POSTER))
+    }
+
 
     @Test
     fun `first and last indicators select adjacent pages across the loop`() {

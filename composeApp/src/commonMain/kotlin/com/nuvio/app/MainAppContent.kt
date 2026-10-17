@@ -271,7 +271,7 @@ internal fun MainAppContent(
         }
         LaunchedEffect(posterNavigation.active?.to) {
             posterNavigation.active?.to?.let { route ->
-                MetaDetailsRepository.load(route.type, route.id)
+                MetaDetailsRepository.load(route.type, route.id, route.initialSeasonNumber)
             }
         }
         DisposableEffect(posterNavigation) {

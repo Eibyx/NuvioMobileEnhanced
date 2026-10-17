@@ -3,6 +3,7 @@ package com.nuvio.app.features.home
 import android.app.Application
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
@@ -16,11 +17,13 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.features.home.components.HomeHeroSection
+import com.nuvio.app.features.home.components.rememberHeroArtworkContinuityAllowed
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w390dp-h844dp")
@@ -55,11 +58,60 @@ class HomeHeroPagerTest {
         assertWrapFrames(expectedIndex = 0)
     }
 
-    private fun showHero() {
+    @Test fun validArtworkRemainsEligibleForContinuityAfterLongIdle() {
+        var allowed = false
+        compose.mainClock.autoAdvance = false
+        compose.setContent { allowed = rememberHeroArtworkContinuityAllowed("current", complete = true, failed = false) }
+        compose.mainClock.advanceTimeBy(30_000)
+        compose.runOnIdle { assertTrue(allowed) }
+    }
+
+    @Test fun pendingArtworkRetentionIsBoundedAndRecoversOnSuccessButNotError() {
+        val complete = mutableStateOf(false)
+        val failed = mutableStateOf(false)
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            androidx.compose.foundation.text.BasicText(
+                if (rememberHeroArtworkContinuityAllowed("pending", complete.value, failed.value)) "allowed" else "expired",
+            )
+        }
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.onNodeWithText("allowed").assertIsDisplayed()
+        compose.mainClock.advanceTimeBy(16_000)
+        compose.onNodeWithText("expired").assertIsDisplayed()
+        // Let the rule synchronize recomposition for externally delivered success/error.
+        compose.mainClock.autoAdvance = true
+        compose.runOnIdle { complete.value = true }
+        compose.onNodeWithText("allowed").assertIsDisplayed()
+        compose.runOnIdle { failed.value = true }
+        compose.onNodeWithText("expired").assertIsDisplayed()
+    }
+
+    @Test fun twoItemsCanChangePagesWithoutDuplicateCompositionKeys() {
+        showHero(2)
+        swipeRight()
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.onNodeWithText("Hero 1").assertIsDisplayed()
+    }
+
+    @Test fun oneItemDoesNotCreateAdditionalLayers() {
+        showHero(1)
+        compose.mainClock.advanceTimeBy(12_000)
+        compose.onNodeWithText("Hero 0").assertIsDisplayed()
+    }
+
+    @Test fun threeItemsCanChangePages() {
+        showHero(3)
+        swipeRight()
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.onNodeWithText("Hero 2").assertIsDisplayed()
+    }
+
+    private fun showHero(itemCount: Int = 8) {
         compose.setContent {
             MaterialTheme {
                 HomeHeroSection(
-                    items = items,
+                    items = items.take(itemCount),
                     modifier = Modifier.width(390.dp).testTag("hero"),
                 )
             }

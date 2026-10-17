@@ -66,6 +66,27 @@ class HomeCatalogSettingsRepositoryTest {
     }
 
     @Test
+    fun restoredCollectionHeroSurvivesPublicationBeforeItsRefreshStarts() {
+        val context = RuntimeEnvironment.getApplication()
+        CollectionStorage.initialize(context)
+        CollectionMobileSettingsStorage.initialize(context)
+        CollectionMobileSettingsRepository.clearLocalState()
+        HomeCatalogSettingsRepository.setHeroEnabled(true)
+        CollectionRepository.setCollections(listOf(collection().copy(folders = listOf(CollectionFolder(
+            id = "movies", title = "Movies",
+            sources = listOf(CollectionSource(addonId = "test", type = "movie", catalogId = "popular")),
+        )))))
+        val hero = MetaPreview("restored", "movie", "Restored")
+        HomeRepository.javaClass.getDeclaredMethod("applySnapshot", HomeSnapshot::class.java)
+            .apply { isAccessible = true }
+            .invoke(HomeRepository, HomeSnapshot("test", emptyList(), listOf(hero)))
+        HomeRepository.javaClass.getDeclaredMethod("publishCurrentState", Boolean::class.javaPrimitiveType, String::class.java)
+            .apply { isAccessible = true }
+            .invoke(HomeRepository, false, "")
+        assertEquals(listOf(hero), HomeRepository.uiState.value.heroItems)
+    }
+
+    @Test
     fun unchangedCatalogsDoNotRewriteSettings() {
         val addons = listOf(addon())
         HomeCatalogSettingsRepository.syncCatalogs(addons)

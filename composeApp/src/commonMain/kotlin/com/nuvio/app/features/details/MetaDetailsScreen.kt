@@ -200,6 +200,7 @@ fun MetaDetailsScreen(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(type, id) { com.nuvio.app.core.ui.ImagePerformance.mark("details.compose", "$type:$id") }
     val playbackAvailability = rememberPlaybackAvailability()
     val shuffleProfile by remember {
         EpisodeShuffleRepository.ensureLoaded()
@@ -379,7 +380,7 @@ fun MetaDetailsScreen(
     LaunchedEffect(type, id, displayedMeta, uiState.isLoading, autoLoadAttempted) {
         if (!autoLoadAttempted && displayedMeta == null && !uiState.isLoading) {
             autoLoadAttempted = true
-            MetaDetailsRepository.load(type, id)
+            MetaDetailsRepository.load(type, id, initialSeasonNumber)
         }
     }
 
@@ -397,7 +398,7 @@ fun MetaDetailsScreen(
         mdbListSettings,
     ) {
         if (displayedMeta != null && !uiState.isLoading) {
-            MetaDetailsRepository.load(type, id)
+            MetaDetailsRepository.load(type, id, initialSeasonNumber)
         }
     }
 
@@ -413,7 +414,7 @@ fun MetaDetailsScreen(
                 if (!observedOfflineState) return@LaunchedEffect
                 observedOfflineState = false
                 if (displayedMeta == null && !uiState.isLoading) {
-                    MetaDetailsRepository.load(type, id)
+                    MetaDetailsRepository.load(type, id, initialSeasonNumber)
                 }
             }
 
@@ -473,7 +474,7 @@ fun MetaDetailsScreen(
                     Button(
                         onClick = {
                             NetworkStatusRepository.requestRefresh(force = true)
-                            MetaDetailsRepository.load(type, id)
+                            MetaDetailsRepository.load(type, id, initialSeasonNumber)
                         },
                     ) {
                         Text(stringResource(Res.string.action_retry))
@@ -1184,13 +1185,56 @@ fun MetaDetailsScreen(
                     val isTabletLandscape = maxWidth > maxHeight
                     val contentHorizontalPadding = if (isTablet) 32.dp else 18.dp
                     val contentMaxWidth = detailTabletContentMaxWidth(maxWidth, isTablet)
-                    val backdropUrl = meta.background ?: meta.poster
+                    val backdropUrl = meta.background?.takeIf { it.isNotBlank() } ?: meta.poster
+                    val backdropContext = coil3.compose.LocalPlatformContext.current
+                    val backdropDensity = androidx.compose.ui.platform.LocalDensity.current
+                    val backdropWidth = with(backdropDensity) { maxWidth.roundToPx() }.coerceAtLeast(1)
+                    val backdropHeight = with(backdropDensity) {
+                        (if (useTabletLayout || metaScreenSettingsUiState.backgroundMode == MetaScreenBackgroundMode.Cinematic)
+                            maxHeight else com.nuvio.app.features.details.components.detailHeroHeight(maxWidth, isTablet)).roundToPx()
+                    }.coerceAtLeast(1)
+                    val backdropRequest = remember(meta.type, meta.id, backdropUrl, meta.poster, backdropWidth, backdropHeight) {
+                        coil3.request.ImageRequest.Builder(backdropContext)
+                            .data(backdropUrl)
+                            .size(backdropWidth, backdropHeight)
+                            .scale(coil3.size.Scale.FILL)
+                            .precision(coil3.size.Precision.INEXACT)
+                            .apply {
+                                meta.poster?.takeIf { it.isNotBlank() && it != backdropUrl }?.let {
+                                    extras[com.nuvio.app.core.poster.CustomPosterFallbackInterceptor.REQUEST_FALLBACK_URL] = it
+                                }
+                            }.build()
+                    }
+                    var previousBackdrop by remember(type, id) { mutableStateOf<Painter?>(null) }
+                    val requestedBackdropPainter = coil3.compose.rememberAsyncImagePainter(
+                        backdropRequest, contentScale = ContentScale.Crop,
+                        transform = { state ->
+                            if (state is coil3.compose.AsyncImagePainter.State.Loading && previousBackdrop != null)
+                                state.copy(painter = previousBackdrop) else state
+                        },
+                    )
+                    val backdropState by requestedBackdropPainter.state.collectAsStateWithLifecycle()
+                    val backdropPainter: Painter = requestedBackdropPainter
+                    LaunchedEffect(backdropState) {
+                        when (val state = backdropState) {
+                            is coil3.compose.AsyncImagePainter.State.Success -> previousBackdrop = state.painter
+                            is coil3.compose.AsyncImagePainter.State.Error -> previousBackdrop = null
+                            else -> Unit
+                        }
+                    }
+                    val backdropSuccess = backdropState as? coil3.compose.AsyncImagePainter.State.Success
                     val backgroundMode = metaScreenSettingsUiState.backgroundMode
                     val dominantColorEnabled = backgroundMode == MetaScreenBackgroundMode.DominantColor &&
                         !backdropUrl.isNullOrBlank()
+                    val backdropBitmap = remember(backdropSuccess, dominantColorEnabled) {
+                        if (dominantColorEnabled) backdropSuccess?.result?.let { com.nuvio.app.features.details.components.loadedBackdropImageBitmap(it) } else null
+                    }
                     val extractedDominantColor = rememberArtworkDominantColor(
                         url = backdropUrl,
                         enabled = dominantColorEnabled,
+                        painter = backdropSuccess?.painter,
+                        bitmap = backdropBitmap,
+                        allowFetch = false,
                     )
                     val dominantBackdropTargetColor = if (dominantColorEnabled && extractedDominantColor != null) {
                         dominantBackdropBlendColor(
@@ -1244,15 +1288,17 @@ fun MetaDetailsScreen(
                                     heroTrailerPlayWhenReady = heroTrailerPlayWhenReady,
                                     heroTrailerMuted = heroTrailerMuted,
                                     heroGradientColor = heroGradientColor,
+                                    backdropPainter = backdropPainter,
                                     onBackdropLoaded = onBackdropLoaded,
                                     onHeroTrailerReady = onHeroTrailerReady,
+                                    onHeroTrailerUnavailable = { heroTrailerReady = false },
                                     onHeroTrailerFinished = onHeroTrailerFinished,
                                 )
                             } else when (backgroundMode) {
                                 MetaScreenBackgroundMode.Normal -> Unit
                                 MetaScreenBackgroundMode.Cinematic -> if (deferredMetaWorkAllowed && backdropUrl != null) {
-                                    AsyncImage(
-                                        model = backdropUrl,
+                                    androidx.compose.foundation.Image(
+                                        painter = backdropPainter,
                                         contentDescription = null,
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -1334,9 +1380,11 @@ fun MetaDetailsScreen(
                                             heroTrailerPlayWhenReady = heroTrailerPlayWhenReady,
                                             heroTrailerMuted = heroTrailerMuted,
                                             heroGradientColor = heroGradientColor,
-                                            onBackdropLoaded = onBackdropLoaded,
+                                            backdropPainter = backdropPainter,
+                                    onBackdropLoaded = onBackdropLoaded,
                                             onHeroTrailerMuteToggle = { HeroTrailerAudioState.toggleMuted(HeroTrailerSurface.Details) },
                                             onHeroTrailerReady = onHeroTrailerReady,
+                                    onHeroTrailerUnavailable = { heroTrailerReady = false },
                                             onHeroTrailerEnded = onHeroTrailerFinished,
                                             onHeroTrailerError = onHeroTrailerFinished,
                                         )

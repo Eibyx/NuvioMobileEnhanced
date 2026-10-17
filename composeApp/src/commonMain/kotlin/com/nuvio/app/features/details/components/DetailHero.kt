@@ -71,8 +71,10 @@ fun DetailHero(
     heroTrailerPlayWhenReady: () -> Boolean = { false },
     heroTrailerMuted: Boolean = true,
     heroGradientColor: Color? = null,
+    backdropPainter: Painter? = null,
     onBackdropLoaded: (Painter, ImageBitmap?) -> Unit = { _, _ -> },
     onHeroTrailerMuteToggle: () -> Unit = {},
+    onHeroTrailerUnavailable: () -> Unit = {},
     onHeroTrailerReady: () -> Unit = {},
     onHeroTrailerEnded: () -> Unit = {},
     onHeroTrailerError: () -> Unit = {},
@@ -115,7 +117,8 @@ fun DetailHero(
             ) {
                 val imageUrl = meta.background ?: meta.poster
                 if (imageUrl != null) {
-                    AsyncImage(
+                    com.nuvio.app.core.ui.BackdropImage(
+                        retainedPainter = backdropPainter,
                         model = imageUrl,
                         contentDescription = meta.name,
                         modifier = Modifier
@@ -162,6 +165,7 @@ fun DetailHero(
                                 scaleY = 1.08f
                             },
                         onReady = onHeroTrailerReady,
+                        onUnavailable = onHeroTrailerUnavailable,
                         onEnded = onHeroTrailerEnded,
                         onError = onHeroTrailerError,
                     )
@@ -275,7 +279,7 @@ fun DetailHero(
     }
 }
 
-private fun detailHeroHeight(maxWidth: Dp, isTablet: Boolean): Dp =
+internal fun detailHeroHeight(maxWidth: Dp, isTablet: Boolean): Dp =
     if (!isTablet) {
         (maxWidth * 1.33f).coerceIn(420.dp, 760.dp)
     } else {

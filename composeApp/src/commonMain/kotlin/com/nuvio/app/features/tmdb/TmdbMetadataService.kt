@@ -34,8 +34,11 @@ object TmdbMetadataService {
     private val log = Logger.withTag("TmdbMetadata")
     private val json = Json { ignoreUnknownKeys = true }
 
+    private val enrichmentCacheMutex = Mutex()
     private val enrichmentCache = mutableMapOf<String, TmdbEnrichment>()
-    private val episodeCache = mutableMapOf<String, Map<Pair<Int, Int>, TmdbEpisodeEnrichment>>()
+    private val seasonRequests = com.nuvio.app.core.concurrency.SharedRequests<String, TmdbSeasonDetailsResponse?>(
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default))
+    private val seasonPermits = Semaphore(2)
     private val moreLikeThisCache = mutableMapOf<String, MoreLikeThisPage>()
     private val collectionCache = mutableMapOf<String, Pair<String?, List<MetaPreview>>>()
     private val trailerCache = mutableMapOf<String, List<MetaTrailer>>()
@@ -52,6 +55,9 @@ object TmdbMetadataService {
             val mediaType = TmdbService.normalizeMediaType(type)
             if (mediaType != "movie" && mediaType != "tv") return@withContext null
             val normalizedLanguage = normalizeTmdbLanguage(language)
+            val persistedKey = "localized:${com.nuvio.app.core.storage.MetadataDiskCache.scopeKey(normalizedLanguage)}:$type:$id"
+            com.nuvio.app.core.storage.MetadataDiskCache.read(persistedKey, 6 * 60 * 60 * 1000L)
+                ?.takeIf { it.startsWith("https://image.tmdb.org/") }?.let { return@withContext it }
             backdropRequests.withPermit {
                 val tmdbId = TmdbService.ensureTmdbId(id, mediaType) ?: return@withPermit null
                 val cacheKey = "$tmdbId:$mediaType:$normalizedLanguage"
@@ -70,6 +76,7 @@ object TmdbMetadataService {
                     backdropCache[cacheKey] = backdrop
                     if (backdropCache.size > 256) backdropCache.remove(backdropCache.keys.first())
                 }
+                if (backdrop != null) com.nuvio.app.core.storage.MetadataDiskCache.write(persistedKey, backdrop)
                 backdrop
             }
         }
@@ -685,6 +692,8 @@ object TmdbMetadataService {
         meta: MetaDetails,
         fallbackItemId: String,
         settings: TmdbSettings,
+        includeEpisodes: Boolean = true,
+        onProgress: suspend (MetaDetails) -> Unit = {},
     ): MetaDetails {
         if (!settings.enabled) return meta
 
@@ -696,42 +705,47 @@ object TmdbMetadataService {
         val needsEpisodes = (
             settings.useEpisodes || settings.useEpisodeRatings || settings.useSeasonPosters
         ) && tmdbType == "tv"
-        val (enrichment, episodeMap) = coroutineScope {
-            val enrichmentDeferred = async {
-                fetchEnrichment(
-                    tmdbId = tmdbId,
-                    mediaType = tmdbType,
-                    language = settings.language,
-                    settings = settings,
-                )
-            }
-            val episodeDeferred = if (needsEpisodes) {
-                async {
-                    val seasons = meta.videos.mapNotNull { it.season }.distinct()
-                    fetchEpisodeEnrichment(
-                        tmdbId = tmdbId,
-                        seasonNumbers = seasons,
-                        language = settings.language,
-                    )
-                }
-            } else {
-                null
-            }
-            enrichmentDeferred.await() to episodeDeferred?.await()
-        }
-
-        return applyEnrichment(
-            meta = meta,
-            enrichment = enrichment,
-            episodeMap = episodeMap.orEmpty(),
-            settings = settings,
+        val enrichment = fetchEnrichment(
+            tmdbId, tmdbType, settings.language, settings,
+            onArtwork = { backdrop, poster, logo ->
+                if (settings.useArtwork) onProgress(meta.copy(
+                    background = backdrop ?: meta.background, poster = poster ?: meta.poster,
+                    logo = logo ?: meta.logo,
+                ))
+            },
         )
+        val core = applyEnrichment(meta, enrichment, emptyMap(), settings)
+        onProgress(core)
+        if (!includeEpisodes || !needsEpisodes) return core
+        return enrichEpisodes(core, fallbackItemId, settings, onProgress = onProgress)
+    }
+
+    /** All seasons are retained; two requests at a time, first regular season first. */
+    suspend fun enrichEpisodes(
+        meta: MetaDetails, fallbackItemId: String, settings: TmdbSettings,
+        prioritySeason: Int? = null,
+        onProgress: suspend (MetaDetails) -> Unit = {},
+    ): MetaDetails {
+        if (!settings.enabled || normalizeMetaType(meta.type) != "tv" ||
+            !(settings.useEpisodes || settings.useEpisodeRatings || settings.useSeasonPosters)) return meta
+        val id = TmdbService.ensureTmdbId(meta.id, "tv", fallbackImdbId = meta.imdbId)
+            ?: TmdbService.ensureTmdbId(fallbackItemId, "tv", fallbackImdbId = meta.imdbId) ?: return meta
+        var updated = meta
+        visitArtworkSeasonBatches(meta.videos.mapNotNull { it.season }, prioritySeason,
+            fetch = { fetchEpisodeEnrichment(id, it, settings.language) },
+            publish = { episodes ->
+                updated = applyEnrichment(updated, null, episodes, settings)
+                onProgress(updated)
+            },
+        )
+        return updated
     }
 
     suspend fun fetchStandaloneMeta(
         type: String,
         id: String,
         settings: TmdbSettings,
+        onProgress: suspend (MetaDetails) -> Unit = {},
     ): MetaDetails? {
         val tmdbId = id
             .takeIf { it.startsWith("tmdb:", ignoreCase = true) }
@@ -745,6 +759,11 @@ object TmdbMetadataService {
             mediaType = tmdbType,
             language = settings.language,
             settings = settings,
+            onArtwork = { backdrop, poster, logo ->
+                if (backdrop != null || poster != null) onProgress(MetaDetails(
+                    id = id, type = type, name = "TMDB $tmdbId", background = backdrop, poster = poster, logo = logo,
+                ))
+            },
         ) ?: return null
 
         return buildStandaloneMeta(
@@ -934,10 +953,20 @@ object TmdbMetadataService {
         mediaType: String,
         language: String,
         settings: TmdbSettings,
+        onArtwork: suspend (String?, String?, String?) -> Unit = { _, _, _ -> },
     ): TmdbEnrichment? = withContext(Dispatchers.Default) {
         val normalizedLanguage = normalizeTmdbLanguage(language)
-        val cacheKey = "$tmdbId:$mediaType:$normalizedLanguage"
-        enrichmentCache[cacheKey]?.let { return@withContext it }
+        val cacheKey = "$tmdbId:$mediaType:$normalizedLanguage:${settings.hashCode()}"
+        enrichmentCacheMutex.withLock { enrichmentCache[cacheKey] }?.let {
+            onArtwork(it.backdrop, it.poster, it.logo)
+            return@withContext it
+        }
+        val artworkKey = "artwork:${com.nuvio.app.core.storage.MetadataDiskCache.scopeKey(normalizedLanguage)}:$tmdbId:$mediaType"
+        com.nuvio.app.core.storage.MetadataDiskCache.read(artworkKey, 6 * 60 * 60 * 1000L)?.let { payload ->
+            runCatching { json.decodeFromString<List<String?>>(payload) }.getOrNull()?.takeIf { it.size == 3 }?.let {
+                onArtwork(it[0], it[1], it[2])
+            }
+        }
 
         val numericId = tmdbId.toIntOrNull() ?: return@withContext null
         val includeImageLanguage = tmdbImageLanguages(normalizedLanguage)
@@ -1000,10 +1029,20 @@ object TmdbMetadataService {
                     emptyList()
                 }
             }
+            val basic = details.await()
+            if (basic != null) onArtwork(buildImageUrl(basic.backdropPath, "w1280"), buildImageUrl(basic.posterPath, "w500"), null)
+            val artwork = images.await()
+            if (basic != null) {
+                val backdrop = buildImageUrl(basic.backdropPath, "w1280")
+                val poster = buildImageUrl(basic.posterPath, "w500")
+                val logo = buildImageUrl(artwork?.logos.orEmpty().selectBestLocalizedImagePath(normalizedLanguage), "w500")
+                onArtwork(backdrop, poster, logo)
+                com.nuvio.app.core.storage.MetadataDiskCache.write(artworkKey, json.encodeToString(listOf(backdrop, poster, logo)))
+            }
             Quadruple(
-                first = details.await(),
+                first = basic,
                 second = credits.await(),
-                third = images.await(),
+                third = artwork,
                 fourth = EnrichmentPayload(
                     ageRating = ageRating.await(),
                     moreLikeThis = moreLikeThis.await(),
@@ -1088,7 +1127,10 @@ object TmdbMetadataService {
         )
 
         if (!enrichment.hasContent()) return@withContext null
-        enrichmentCache[cacheKey] = enrichment
+        enrichmentCacheMutex.withLock {
+            if (enrichmentCache.size >= 64) enrichmentCache.remove(enrichmentCache.keys.first())
+            enrichmentCache[cacheKey] = enrichment
+        }
         enrichment
     }
 
@@ -1147,6 +1189,7 @@ object TmdbMetadataService {
                 }
             }
         }.getOrElse { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
             log.w(error) { "Failed to fetch English credits fallback for $numericId" }
             emptyMap()
         }
@@ -1162,16 +1205,22 @@ object TmdbMetadataService {
         val normalizedSeasons = seasonNumbers.distinct().sorted()
         if (normalizedSeasons.isEmpty()) return@withContext emptyMap()
 
-        val cacheKey = "$numericId:${normalizedSeasons.joinToString(",")}:$normalizedLanguage"
-        episodeCache[cacheKey]?.let { return@withContext it }
-
         val pairs = coroutineScope {
             normalizedSeasons.map { season ->
                 async {
-                    val details = fetch<TmdbSeasonDetailsResponse>(
-                        endpoint = "tv/$numericId/season/$season",
-                        query = mapOf("language" to normalizedLanguage),
-                    ) ?: return@async emptyMap()
+                    val key = "season:${com.nuvio.app.core.storage.MetadataDiskCache.scopeKey(normalizedLanguage)}:$numericId:$season"
+                    val details = seasonRequests.await(key) {
+                        val cached = com.nuvio.app.core.storage.MetadataDiskCache.read(key, 24 * 60 * 60 * 1000L)
+                        val restored = cached?.let { runCatching { json.decodeFromString<TmdbSeasonDetailsResponse>(it) }.getOrNull() }
+                        restored ?: seasonPermits.withPermit {
+                            fetch<TmdbSeasonDetailsResponse>(
+                                endpoint = "tv/$numericId/season/$season",
+                                query = mapOf("language" to normalizedLanguage),
+                            )?.also {
+                                com.nuvio.app.core.storage.MetadataDiskCache.write(key, json.encodeToString(it))
+                            }
+                        }
+                    } ?: return@async emptyMap()
 
                     details.episodes
                         .mapNotNull { episode ->
@@ -1192,9 +1241,6 @@ object TmdbMetadataService {
         }
 
         val merged = pairs.fold(emptyMap<Pair<Int, Int>, TmdbEpisodeEnrichment>()) { acc, value -> acc + value }
-        if (merged.isNotEmpty()) {
-            episodeCache[cacheKey] = merged
-        }
         merged
     }
 
@@ -1207,7 +1253,8 @@ object TmdbMetadataService {
         return runCatching {
             json.decodeFromString<T>(httpGetText(url))
         }.onFailure { error ->
-            log.w { "TMDB request failed for $endpoint: ${error.message}" }
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            log.w { "TMDB request failed for $endpoint: ${error::class.simpleName}" }
         }.getOrNull()
     }
 
@@ -2288,3 +2335,21 @@ internal data class TmdbDiscoverResult(
     @SerialName("vote_average") val voteAverage: Double? = null,
     @SerialName("vote_count") val voteCount: Int? = null,
 )
+
+/** Regular seasons precede specials; retain every distinct provider season. */
+internal fun prioritizedArtworkSeasons(seasons: List<Int>, priority: Int? = null): List<Int> =
+    seasons.distinct().sortedWith(compareBy<Int> { it != priority }.thenBy { it == 0 }.thenBy { it })
+
+/** Publish the priority season before waiting for secondary batches; never publish an empty failure. */
+internal suspend fun visitArtworkSeasonBatches(
+    seasons: List<Int>, priority: Int?,
+    fetch: suspend (List<Int>) -> Map<Pair<Int, Int>, TmdbEpisodeEnrichment>,
+    publish: suspend (Map<Pair<Int, Int>, TmdbEpisodeEnrichment>) -> Unit,
+) {
+    val ordered = prioritizedArtworkSeasons(seasons, priority)
+    val batches = ordered.take(1).map { listOf(it) } + ordered.drop(1).chunked(2)
+    for (batch in batches) {
+        val result = fetch(batch)
+        if (result.isNotEmpty()) publish(result)
+    }
+}

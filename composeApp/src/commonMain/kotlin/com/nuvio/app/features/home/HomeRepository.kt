@@ -19,6 +19,7 @@ import com.nuvio.app.features.trakt.TraktPublicListSourceResolver
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -77,7 +78,6 @@ object HomeRepository {
 
         if (!force && activeRequestKey == requestKey && _uiState.value.isLoading) return
         activeRequestKey = requestKey
-        snapshotGeneration++
 
         if (requests.isEmpty()) {
             activeJob?.cancel()
@@ -180,6 +180,7 @@ object HomeRepository {
     }
 
     fun clear() {
+        snapshotGeneration++
         activeJob?.cancel()
         activeJob = null
         activeRequestKey = null
@@ -211,17 +212,18 @@ object HomeRepository {
             return
         }
         scope.launch {
-            val loaded = HomeSnapshotStore.load(profileKey) ?: return@launch
-            if (generation != snapshotGeneration || cachedSections.isNotEmpty()) return@launch
+            val loaded = kotlinx.coroutines.withContext(Dispatchers.IO) { HomeSnapshotStore.load(profileKey) } ?: return@launch
+            if (generation != snapshotGeneration || HomeSnapshotStore.currentProfileKey() != profileKey || cachedSections.isNotEmpty() || _uiState.value.heroItems.isNotEmpty()) return@launch
             applySnapshot(loaded)
         }
     }
 
     private fun applySnapshot(snapshot: HomeSnapshot) {
-        if (snapshot.sections.isEmpty()) return
+        if (snapshot.sections.isEmpty() && snapshot.heroItems.isEmpty()) return
         cachedSections = snapshot.sections.toMap()
+        com.nuvio.app.core.ui.ImagePerformance.mark("home.snapshot", snapshot.profileKey, "hero=${snapshot.heroItems.size}")
         _uiState.value = HomeUiState(
-            isLoading = true,
+            isLoading = activeJob?.isActive == true || collectionHeroResolving,
             heroItems = snapshot.heroItems,
             sections = snapshot.sections.map { (_, section) -> section },
         )
@@ -230,17 +232,17 @@ object HomeRepository {
     private fun scheduleSnapshotSave() {
         val profileKey = HomeSnapshotStore.currentProfileKey() ?: return
         val entries = lastPublishedEntries
-        if (entries.isEmpty()) return
         val heroItems = _uiState.value.heroItems
+        if (entries.isEmpty() && heroItems.isEmpty()) return
         snapshotSaveJob?.cancel()
         snapshotSaveJob = scope.launch {
             delay(HOME_SNAPSHOT_SAVE_DELAY_MS)
-            HomeSnapshotStore.save(
+            kotlinx.coroutines.withContext(Dispatchers.IO) { HomeSnapshotStore.save(
                 profileKey = profileKey,
                 savedAtMillis = Clock.System.now().toEpochMilliseconds(),
                 sections = entries,
                 heroItems = heroItems,
-            )
+            ) }
         }
     }
 
@@ -295,8 +297,12 @@ object HomeRepository {
         }
         lastPublishedCatalogHeroEmpty = snapshot.heroEnabled && catalogHeroItems.isEmpty()
         val visibleHeroItems = _uiState.value.heroItems
+        // A collection-only snapshot can be published before its first refresh job starts.
+        // This bootstrap allowance must not delay artwork already supplied by live catalogs.
+        val collectionBootstrapPending = catalogHeroItems.isEmpty() && collectionHeroRequestKey == null &&
+            enabledCollectionsForHero(snapshot).isNotEmpty()
         val heroItems = if (snapshot.heroEnabled) {
-            if (visibleHeroItems.isNotEmpty() && isHeroResolutionPending(isLoading)) {
+            if (visibleHeroItems.isNotEmpty() && (isHeroResolutionPending(isLoading) || collectionBootstrapPending)) {
                 visibleHeroItems
             } else {
                 catalogHeroItems.ifEmpty { cachedCollectionHeroItems }
@@ -311,6 +317,7 @@ object HomeRepository {
             sections = sections,
             errorMessage = if (sections.isEmpty()) lastErrorMessage else null,
         )
+        scheduleSnapshotSave()
     }
 
     private fun isHeroResolutionPending(isLoading: Boolean): Boolean {
@@ -442,6 +449,7 @@ object HomeRepository {
                 isLoading = _uiState.value.isLoading,
                 requestKey = requestKey,
             )
+            scheduleSnapshotSave()
         }
     }
 

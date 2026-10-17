@@ -14,5 +14,6 @@ expect fun HeroTrailerPlayerSurface(
     onReady: () -> Unit,
     onEnded: () -> Unit,
     onError: () -> Unit,
+    onUnavailable: () -> Unit = {},
     onPositionUpdate: (Long) -> Unit = {},
 )

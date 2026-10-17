@@ -26,25 +26,28 @@ private const val CACHE_CAPACITY = 256
 private val NoTint = Color.Transparent
 
 object ArtworkDominantColorCache {
-    private val entries = LinkedHashMap<String, Color>()
+    private val entries = androidx.compose.runtime.mutableStateMapOf<String, Color>()
+    private val order = ArrayDeque<String>()
 
     fun get(url: String): Color? {
-        val color = entries.remove(url) ?: return null
-        entries[url] = color
-        return color
+        return entries[url]
     }
 
     fun put(url: String, color: Color) {
-        entries.remove(url)
+        order.remove(url)
+        order.addLast(url)
         entries[url] = color
         if (entries.size > CACHE_CAPACITY) {
-            entries.remove(entries.keys.first())
+            entries.remove(order.removeFirst())
         }
     }
 }
 
 @Composable
-fun rememberArtworkDominantColor(url: String?, enabled: Boolean = true): Color? {
+fun rememberArtworkDominantColor(
+    url: String?, enabled: Boolean = true, painter: Painter? = null,
+    bitmap: ImageBitmap? = null, allowFetch: Boolean = false,
+): Color? {
     val key = url?.takeIf { it.isNotBlank() }
     var color by remember(key) { mutableStateOf(key?.let(ArtworkDominantColorCache::get)) }
     val platformContext = LocalPlatformContext.current
@@ -60,12 +63,26 @@ fun rememberArtworkDominantColor(url: String?, enabled: Boolean = true): Color? 
         isSwatchValid = isBrightDominantSwatch,
     )
 
-    LaunchedEffect(key, enabled) {
+    LaunchedEffect(key, enabled, painter, bitmap, allowFetch) {
         if (!enabled || key == null || color != null) return@LaunchedEffect
-        color = sampleArtworkDominantColor(key, platformContext, bitmapState, painterState) ?: return@LaunchedEffect
+        if (painter != null || bitmap != null) {
+            try {
+                if (bitmap != null) bitmapState.updateFrom(bitmap) else painterState.updateFrom(painter!!)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                // Palette extraction must never turn a successfully displayed image into a UI failure.
+                return@LaunchedEffect
+            }
+            val resolved = (if (bitmap != null) bitmapState.color else painterState.color).brightenedDominant(fallback = NoTint)
+            ArtworkDominantColorCache.put(key, resolved)
+            color = resolved
+        } else if (allowFetch) {
+            color = sampleArtworkDominantColor(key, platformContext, bitmapState, painterState)
+        }
     }
 
-    return color?.takeIf { it != NoTint }
+    return (key?.let(ArtworkDominantColorCache::get) ?: color)?.takeIf { it != NoTint }
 }
 
 @Composable
@@ -99,6 +116,7 @@ private suspend fun sampleArtworkDominantColor(
     val request = ImageRequest.Builder(platformContext)
         .data(url)
         .size(PALETTE_SAMPLE_PX, PALETTE_SAMPLE_PX)
+        .memoryCacheKey("palette:$url")
         .build()
     val result = SingletonImageLoader.get(platformContext).execute(request) as? SuccessResult ?: return null
     val bitmap = loadedBackdropImageBitmap(result)

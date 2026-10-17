@@ -117,6 +117,7 @@ class MetaDetailsPosterNavigationTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun cache(meta: MetaDetails, enriched: Boolean = false) {
+        MetaDetailsRepository.peek("movie", "initialize-cache-context")
         val repositoryClass = MetaDetailsRepository::class.java
         val fingerprint = repositoryClass.getDeclaredMethod(
             "buildMetaScreenSettingsFingerprint",
@@ -126,10 +127,13 @@ class MetaDetailsPosterNavigationTest {
         val entryClass = repositoryClass.declaredClasses.single { it.simpleName == "CachedMetaEntry" }
         val entry = entryClass.getDeclaredConstructor(
             MetaDetails::class.java,
+            Boolean::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
+            Long::class.javaPrimitiveType,
             MetaDetails::class.java,
             String::class.java,
         ).apply { isAccessible = true }
-            .newInstance(meta, meta.takeIf { enriched }, fingerprint.takeIf { enriched })
+            .newInstance(meta, true, true, System.currentTimeMillis(), meta.takeIf { enriched }, fingerprint.takeIf { enriched })
         val cache = repositoryClass.getDeclaredField("cachedMetaByRequestKey")
             .apply { isAccessible = true }
             .get(MetaDetailsRepository) as MutableMap<String, Any>

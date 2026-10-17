@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -326,6 +327,7 @@ fun HomeScreen(
     }
     val profileState by ProfileRepository.state.collectAsStateWithLifecycle()
     val activeProfileId = profileState.activeProfile?.profileIndex ?: 1
+    LaunchedEffect(activeProfileId) { com.nuvio.app.core.ui.ImagePerformance.mark("home.compose") }
     val cwCacheGeneration by ContinueWatchingEnrichmentCache.generation.collectAsStateWithLifecycle()
     var hasUserScrolledContinueWatching by remember(activeProfileId) { mutableStateOf(false) }
     var hasUserScrolledUpcoming by remember(activeProfileId) { mutableStateOf(false) }
@@ -1031,7 +1033,7 @@ fun HomeScreen(
                                 heroStyle = homeSettingsUiState.heroStyle,
                             )
 
-                            homeUiState.heroItems.isNotEmpty() -> HomeHeroSection(
+                            homeUiState.heroItems.isNotEmpty() -> key(profileState.activeProfile?.userId, activeProfileId) { HomeHeroSection(
                                 items = homeUiState.heroItems,
                                 modifier = Modifier,
                                 viewportHeight = maxHeight,
@@ -1050,7 +1052,7 @@ fun HomeScreen(
                                 onActiveArtworkChange = onActiveHeroArtworkChange,
                                 autoScrollEnabled = avixHomeLayout.heroAutoScroll,
                                 heroOptions = avixHomeLayout.hero,
-                            )
+                            ) }
 
                             else -> HomeHeroReservedSpace(
                                 modifier = Modifier,
